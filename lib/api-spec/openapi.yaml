@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Electrical Installers business management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: bookings
+    description: Customer booking requests
+  - name: portfolio
+    description: Job portfolio management
+  - name: reviews
+    description: Customer reviews
+  - name: quotes
+    description: Virtual quote requests
+  - name: analytics
+    description: Site analytics and dashboard stats
+  - name: jobs
+    description: Job tracking with map pins
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +36,398 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /bookings:
+    get:
+      operationId: listBookings
+      tags: [bookings]
+      summary: List all bookings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, confirmed, completed, cancelled]
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Submit a new booking request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingBody"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get a booking by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+    patch:
+      operationId: updateBookingStatus
+      tags: [bookings]
+      summary: Update booking status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBookingStatusBody"
+      responses:
+        "200":
+          description: Updated booking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+    delete:
+      operationId: deleteBooking
+      tags: [bookings]
+      summary: Delete a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /portfolio:
+    get:
+      operationId: listPortfolioItems
+      tags: [portfolio]
+      summary: List portfolio items
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Portfolio items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PortfolioItem"
+    post:
+      operationId: createPortfolioItem
+      tags: [portfolio]
+      summary: Add a new portfolio item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePortfolioItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioItem"
+
+  /portfolio/{id}:
+    delete:
+      operationId: deletePortfolioItem
+      tags: [portfolio]
+      summary: Delete a portfolio item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: List reviews
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Submit a customer review
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewBody"
+      responses:
+        "201":
+          description: Review submitted (pending approval)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  /reviews/{id}:
+    patch:
+      operationId: updateReviewStatus
+      tags: [reviews]
+      summary: Approve or reject a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReviewStatusBody"
+      responses:
+        "200":
+          description: Updated review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+    delete:
+      operationId: deleteReview
+      tags: [reviews]
+      summary: Delete a review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /quotes:
+    get:
+      operationId: listQuotes
+      tags: [quotes]
+      summary: List all quote requests
+      responses:
+        "200":
+          description: Quote requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuoteRequest"
+    post:
+      operationId: createQuote
+      tags: [quotes]
+      summary: Submit a virtual quote request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuoteBody"
+      responses:
+        "201":
+          description: Quote request submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteRequest"
+
+  /quotes/{id}:
+    patch:
+      operationId: updateQuoteStatus
+      tags: [quotes]
+      summary: Update quote status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuoteStatusBody"
+      responses:
+        "200":
+          description: Updated quote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuoteRequest"
+
+  /analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      tags: [analytics]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /analytics/bookings-by-service:
+    get:
+      operationId: getBookingsByService
+      tags: [analytics]
+      summary: Bookings grouped by service type
+      responses:
+        "200":
+          description: Bookings by service
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceCount"
+
+  /analytics/bookings-by-region:
+    get:
+      operationId: getBookingsByRegion
+      tags: [analytics]
+      summary: Bookings grouped by region/suburb
+      responses:
+        "200":
+          description: Bookings by region
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegionCount"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List all jobs with map coordinates
+      responses:
+        "200":
+          description: Jobs list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a new job record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobBody"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    patch:
+      operationId: updateJobStatus
+      tags: [jobs]
+      summary: Update job status (changes map pin colour)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJobStatusBody"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +438,394 @@ components:
       required:
         - status
 
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerPhone:
+          type: string
+        serviceType:
+          type: string
+          enum: [consulting, quoting, work]
+        jobType:
+          type: string
+        suburb:
+          type: string
+        preferredDate:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        createdAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - customerEmail
+        - serviceType
+        - jobType
+        - suburb
+        - preferredDate
+        - status
+        - createdAt
+
+    CreateBookingBody:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerPhone:
+          type: string
+        serviceType:
+          type: string
+          enum: [consulting, quoting, work]
+        jobType:
+          type: string
+        suburb:
+          type: string
+        preferredDate:
+          type: string
+        message:
+          type: string
+      required:
+        - customerName
+        - customerEmail
+        - serviceType
+        - jobType
+        - suburb
+        - preferredDate
+
+    UpdateBookingStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+      required:
+        - status
+
+    PortfolioItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        beforeImageUrl:
+          type: string
+        afterImageUrl:
+          type: string
+        suburb:
+          type: string
+        completedDate:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - title
+        - description
+        - category
+        - afterImageUrl
+        - suburb
+        - completedDate
+        - createdAt
+
+    CreatePortfolioItemBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        beforeImageUrl:
+          type: string
+        afterImageUrl:
+          type: string
+        suburb:
+          type: string
+        completedDate:
+          type: string
+      required:
+        - title
+        - description
+        - category
+        - afterImageUrl
+        - suburb
+        - completedDate
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        suburb:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        serviceType:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        isVerified:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - suburb
+        - rating
+        - comment
+        - serviceType
+        - status
+        - isVerified
+        - createdAt
+
+    CreateReviewBody:
+      type: object
+      properties:
+        customerName:
+          type: string
+        suburb:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+        serviceType:
+          type: string
+      required:
+        - customerName
+        - suburb
+        - rating
+        - comment
+        - serviceType
+
+    UpdateReviewStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+      required:
+        - status
+
+    QuoteRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerPhone:
+          type: string
+        suburb:
+          type: string
+        jobType:
+          type: string
+        description:
+          type: string
+        switchboardImageUrl:
+          type: string
+        fasciImageUrl:
+          type: string
+        streetImageUrl:
+          type: string
+        status:
+          type: string
+          enum: [pending, reviewed, quoted, accepted, declined]
+        createdAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - customerEmail
+        - suburb
+        - jobType
+        - description
+        - status
+        - createdAt
+
+    CreateQuoteBody:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerEmail:
+          type: string
+        customerPhone:
+          type: string
+        suburb:
+          type: string
+        jobType:
+          type: string
+        description:
+          type: string
+        switchboardImageUrl:
+          type: string
+        fasciImageUrl:
+          type: string
+        streetImageUrl:
+          type: string
+      required:
+        - customerName
+        - customerEmail
+        - suburb
+        - jobType
+        - description
+
+    UpdateQuoteStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, reviewed, quoted, accepted, declined]
+      required:
+        - status
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        totalQuotes:
+          type: integer
+        pendingReviews:
+          type: integer
+        totalPortfolioItems:
+          type: integer
+        recentBookingsCount:
+          type: integer
+        topService:
+          type: string
+        topRegion:
+          type: string
+      required:
+        - totalBookings
+        - pendingBookings
+        - totalQuotes
+        - pendingReviews
+        - totalPortfolioItems
+        - recentBookingsCount
+        - topService
+        - topRegion
+
+    ServiceCount:
+      type: object
+      properties:
+        service:
+          type: string
+        count:
+          type: integer
+      required:
+        - service
+        - count
+
+    RegionCount:
+      type: object
+      properties:
+        region:
+          type: string
+        count:
+          type: integer
+      required:
+        - region
+        - count
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        address:
+          type: string
+        suburb:
+          type: string
+        jobType:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        status:
+          type: string
+          enum: [pending, accepted, in_progress, completed]
+        scheduledDate:
+          type: string
+        notes:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - address
+        - suburb
+        - jobType
+        - latitude
+        - longitude
+        - status
+        - createdAt
+
+    CreateJobBody:
+      type: object
+      properties:
+        customerName:
+          type: string
+        address:
+          type: string
+        suburb:
+          type: string
+        jobType:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        scheduledDate:
+          type: string
+        notes:
+          type: string
+      required:
+        - customerName
+        - address
+        - suburb
+        - jobType
+        - latitude
+        - longitude
+
+    UpdateJobStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, accepted, in_progress, completed]
+      required:
+        - status
