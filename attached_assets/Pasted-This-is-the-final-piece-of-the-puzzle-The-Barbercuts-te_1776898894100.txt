@@ -1,0 +1,49 @@
+This is the final piece of the puzzle. The **Barbercuts** template on Replit is famous for its "Dashboard" that tracks bookings and revenue. By integrating that with your **Job Gallery** and **Review System**, you’re moving from a simple website to a full **Business Management Tool**.
+
+Adding an **Analytics System** means you can see exactly where your leads are coming from (e.g., "Are more people from Warragul or St Kilda clicking my 'Underground Power' page?").
+
+---
+
+### The "Master Prompt" for Replit
+Copy and paste this entire block into the **Replit Agent**. It combines your United Energy workflow, the Australian-specific imagery, the Barbercuts backend logic, and the analytics.
+
+> **"Build a comprehensive, multi-page business website for 'Electrical Installers'.**
+> 
+> **1. Core Identity & Design:**
+> - Business: Electrical Installers (Mornington Peninsula, St Kilda, Warragul).
+> - Style: Professional Australian Tradie aesthetic. Navy/Orange/White.
+> - Images: Realistic Australian electricians in high-vis polos (no hard hats/overalls) working on local homes and factories.
+>
+> **2. Services & Workflow:**
+> - Create pages for: New Homes/Renovations, Commercial/Industrial (Machinery), and Specialized Upgrades (3-Phase).
+> - **Underground Power Page:** Must explain the United Energy process: On-site inspection -> Site Plan submission -> 20-day UE quote window -> Trenching/Cables -> Truck Appointment. Add a disclaimer that UE/Retailer fees are separate.
+>
+> **3. Barbercuts-Style Backend & Admin:**
+> - **Database:** Use the Supabase/Firebase backend logic from the Barbercuts template.
+> - **Admin Dashboard:** Create a secure login for me to:
+>    - **Upload Work:** Add photos and descriptions of recent jobs to a 'Live Portfolio'.
+>    - **Manage Reviews:** View, approve, or delete customer reviews (Barbercuts style).
+>    - **Analytics:** Include a dashboard to track site visits, booking requests, and the geographical location of leads.
+>
+> **4. Customer Features:**
+> - **Smart Booking:** A calendar system where customers choose: Consulting, Quoting, or Work.
+> - **Virtual Quote Tool:** A form allowing customers to upload photos of their switchboard, house fascia (Point of Attachment), and street curb (for underground pits).
+> - **Review System:** A 'Verified Customer' review section where locals can leave feedback.
+>
+> **5. Technical Specs:**
+> - Mobile-responsive (Priority).
+> - SEO-optimized for 'Electrician Mornington Peninsula', '3 Phase Upgrade Melbourne', and 'Underground Power Victoria'.
+> - Include REC Number and Victorian safety compliance in the footer."
+
+---
+
+### What to look for once Replit finishes:
+
+1.  **The Admin URL:** Replit will likely create a link like `yoursite.replit.app/admin`. This is where you will go to see your "Barbercuts-style" analytics.
+2.  **The Analytics Dashboard:** You should see a screen that shows **Total Bookings**, **Pending Reviews**, and **Top Services**. This helps you decide if you need to spend more time advertising your factory work or your residential undergrounding.
+3.  **The "Live" Upload:** Test the photo upload immediately from your phone. If you can take a photo of a switchboard and have it appear on your "Recent Work" page in seconds, the backend is working correctly.
+
+### Final Pro-Tip for your Business:
+In the "Analytics" section, ask Replit to track **"Form Abandonment."** If people start the "Underground Power" form but stop when they see the 20-day wait period, you’ll know you need to adjust the wording on that page to be more encouraging!
+
+**Ready to build? Just paste that prompt into Replit and let the Agent do the heavy lifting.**
