@@ -39,7 +39,7 @@ export default function ServicesPage() {
       <div className="bg-[hsl(214,60%,14%)] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Our Services</h1>
-          <p className="text-gray-300 text-lg max-w-2xl">Licensed electrical work across the Mornington Peninsula, St Kilda, and Warragul. Residential, commercial, and industrial.</p>
+          <p className="text-gray-300 text-lg max-w-2xl">Licensed electrical work across the Mornington Peninsula and surrounding areas. Residential, commercial, and industrial.</p>
         </div>
       </div>
 

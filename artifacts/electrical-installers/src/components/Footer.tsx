@@ -14,7 +14,7 @@ export default function Footer() {
               Electrical Installers
             </div>
             <p className="text-sm leading-relaxed mb-4">
-              Licensed electricians serving the Mornington Peninsula, St Kilda, and Warragul areas. Residential, commercial, industrial, and underground power specialists.
+              Licensed electricians serving the Mornington Peninsula and surrounding areas. Residential, commercial, industrial, and underground power specialists.
             </p>
             <div className="flex items-center gap-2 text-sm">
               <Shield size={16} className="text-[hsl(25,95%,53%)]" />
@@ -45,7 +45,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <MapPin size={14} className="text-[hsl(25,95%,53%)] mt-0.5" />
-                <span>Mornington Peninsula | St Kilda | Warragul</span>
+                <span>Mornington Peninsula & Surrounding Areas</span>
               </li>
             </ul>
           </div>

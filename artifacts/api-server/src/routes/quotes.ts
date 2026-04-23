@@ -33,8 +33,8 @@ async function sendThankYouEmail(to: string, name: string) {
       from: `"Electrical Installers" <${process.env["SMTP_USER"] || "noreply@electricalinstallers.com.au"}>`,
       to,
       subject: "Thank you for contacting Electrical Installers",
-      text: `Hi ${name},\n\nThank you for contacting Electrical Installers. We've received your quote request and will be in touch shortly.\n\nKind regards,\nElectrical Installers\nMornington Peninsula | St Kilda | Warragul`,
-      html: `<p>Hi ${name},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will be in touch shortly.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula | St Kilda | Warragul</p>`,
+      text: `Hi ${name},\n\nThank you for contacting Electrical Installers. We've received your quote request and will be in touch shortly.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
+      html: `<p>Hi ${name},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will be in touch shortly.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula & Surrounding Areas</p>`,
     });
   } catch {
     // Email sending is best-effort; don't fail the request

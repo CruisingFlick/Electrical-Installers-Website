@@ -23,7 +23,7 @@ export default function HomePage() {
               Mornington Peninsula&apos;s Trusted Electrical Specialists
             </h1>
             <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-              From new homes to 3-phase industrial upgrades and underground power. Serving Mornington Peninsula, St Kilda, and Warragul with over 15 years of experience.
+              From new homes to 3-phase industrial upgrades and underground power. Serving Mornington Peninsula and surrounding areas with over 15 years of experience.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
