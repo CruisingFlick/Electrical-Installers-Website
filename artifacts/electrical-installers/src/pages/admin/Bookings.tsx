@@ -1,7 +1,8 @@
 import { useListBookings, useUpdateBookingStatus, useDeleteBooking, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { Trash2, ImageIcon } from "lucide-react";
 import AdminLayout from "./AdminLayout";
+import { useState } from "react";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -15,6 +16,7 @@ export default function AdminBookings() {
   const { data: bookings = [], isLoading } = useListBookings();
   const updateStatus = useUpdateBookingStatus();
   const deleteBooking = useDeleteBooking();
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   function handleStatusChange(id: number, status: string) {
     updateStatus.mutate({ id, data: { status: status as "pending" | "confirmed" | "completed" | "cancelled" } }, {
@@ -49,6 +51,7 @@ export default function AdminBookings() {
                     <th className="px-4 py-3 text-left">Job Type</th>
                     <th className="px-4 py-3 text-left">Suburb</th>
                     <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Photo</th>
                     <th className="px-4 py-3 text-left">Status</th>
                     <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
@@ -65,6 +68,24 @@ export default function AdminBookings() {
                       <td className="px-4 py-3">{b.jobType}</td>
                       <td className="px-4 py-3">{b.suburb}</td>
                       <td className="px-4 py-3">{b.preferredDate}</td>
+                      <td className="px-4 py-3">
+                        {b.photoUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => setLightboxUrl(b.photoUrl!)}
+                            className="block"
+                            data-testid={`booking-photo-${b.id}`}
+                          >
+                            <img
+                              src={b.photoUrl}
+                              alt="Job photo"
+                              className="w-12 h-12 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                            />
+                          </button>
+                        ) : (
+                          <span className="text-gray-300"><ImageIcon size={20} /></span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <select
                           value={b.status}
@@ -92,6 +113,21 @@ export default function AdminBookings() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Photo lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <img
+              src={lightboxUrl}
+              alt="Job photo"
+              className="max-w-full max-h-[80vh] rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         )}
       </div>

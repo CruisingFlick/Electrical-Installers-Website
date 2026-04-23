@@ -33,6 +33,7 @@ export const ListBookingsResponseItem = zod.object({
   suburb: zod.string(),
   preferredDate: zod.string(),
   message: zod.string().optional(),
+  photoUrl: zod.string().optional(),
   status: zod.enum(["pending", "confirmed", "completed", "cancelled"]),
   createdAt: zod.string(),
 });
@@ -50,6 +51,7 @@ export const CreateBookingBody = zod.object({
   suburb: zod.string(),
   preferredDate: zod.string(),
   message: zod.string().optional(),
+  photoUrl: zod.string().optional(),
 });
 
 /**
@@ -69,6 +71,7 @@ export const GetBookingResponse = zod.object({
   suburb: zod.string(),
   preferredDate: zod.string(),
   message: zod.string().optional(),
+  photoUrl: zod.string().optional(),
   status: zod.enum(["pending", "confirmed", "completed", "cancelled"]),
   createdAt: zod.string(),
 });
@@ -94,6 +97,7 @@ export const UpdateBookingStatusResponse = zod.object({
   suburb: zod.string(),
   preferredDate: zod.string(),
   message: zod.string().optional(),
+  photoUrl: zod.string().optional(),
   status: zod.enum(["pending", "confirmed", "completed", "cancelled"]),
   createdAt: zod.string(),
 });

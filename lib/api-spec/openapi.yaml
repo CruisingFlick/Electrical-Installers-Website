@@ -460,6 +460,8 @@ components:
           type: string
         message:
           type: string
+        photoUrl:
+          type: string
         status:
           type: string
           enum: [pending, confirmed, completed, cancelled]
@@ -495,6 +497,8 @@ components:
         preferredDate:
           type: string
         message:
+          type: string
+        photoUrl:
           type: string
       required:
         - customerName

@@ -37,6 +37,7 @@ export interface Booking {
   suburb: string;
   preferredDate: string;
   message?: string;
+  photoUrl?: string;
   status: BookingStatus;
   createdAt: string;
 }
@@ -59,6 +60,7 @@ export interface CreateBookingBody {
   suburb: string;
   preferredDate: string;
   message?: string;
+  photoUrl?: string;
 }
 
 export type UpdateBookingStatusBodyStatus =

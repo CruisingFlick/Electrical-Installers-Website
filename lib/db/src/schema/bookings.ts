@@ -12,6 +12,7 @@ export const bookingsTable = pgTable("bookings", {
   suburb: text("suburb").notNull(),
   preferredDate: text("preferred_date").notNull(),
   message: text("message"),
+  photoUrl: text("photo_url"),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

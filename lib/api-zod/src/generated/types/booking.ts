@@ -18,6 +18,7 @@ export interface Booking {
   suburb: string;
   preferredDate: string;
   message?: string;
+  photoUrl?: string;
   status: BookingStatus;
   createdAt: string;
 }

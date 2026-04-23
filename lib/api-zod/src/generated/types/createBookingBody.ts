@@ -16,4 +16,5 @@ export interface CreateBookingBody {
   suburb: string;
   preferredDate: string;
   message?: string;
+  photoUrl?: string;
 }

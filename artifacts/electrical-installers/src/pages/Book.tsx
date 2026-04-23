@@ -2,8 +2,8 @@ import { useCreateBooking } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star, ImagePlus, X } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
 
 const bookingSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
@@ -14,6 +14,7 @@ const bookingSchema = z.object({
   suburb: z.string().min(2, "Suburb is required"),
   preferredDate: z.string().min(1, "Preferred date is required"),
   message: z.string().optional(),
+  photoUrl: z.string().optional(),
 });
 type BookingForm = z.infer<typeof bookingSchema>;
 
@@ -33,6 +34,10 @@ export default function BookPage() {
   const createBooking = useCreateBooking();
   const [submitted, setSubmitted] = useState(false);
 
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -44,8 +49,33 @@ export default function BookPage() {
       suburb: "",
       preferredDate: "",
       message: "",
+      photoUrl: "",
     },
   });
+
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setPhotoPreview(dataUrl);
+      form.setValue("photoUrl", dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }, [form]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }, [handleFile]);
+
+  const clearPhoto = () => {
+    setPhotoPreview(null);
+    form.setValue("photoUrl", "");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   async function onSubmit(data: BookingForm) {
     await createBooking.mutateAsync({ data }, {
@@ -101,7 +131,7 @@ export default function BookPage() {
                   Thanks for reaching out. We'll call you within one business day to confirm your appointment.
                 </p>
                 <button
-                  onClick={() => { setSubmitted(false); form.reset(); }}
+                  onClick={() => { setSubmitted(false); form.reset(); setPhotoPreview(null); }}
                   className="mt-6 text-[hsl(25,95%,53%)] underline text-sm"
                   data-testid="button-book-again"
                 >
@@ -221,6 +251,58 @@ export default function BookPage() {
                     placeholder="Any additional details about your job..."
                     data-testid="input-booking-message"
                   />
+                </div>
+
+                {/* Photo upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Photo <span className="text-gray-400 font-normal">(optional)</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">Helps our electricians understand your job before they arrive.</p>
+
+                  {photoPreview ? (
+                    <div className="relative inline-block">
+                      <img
+                        src={photoPreview}
+                        alt="Uploaded preview"
+                        className="w-full max-h-48 object-cover rounded-xl border border-gray-200"
+                        data-testid="photo-preview"
+                      />
+                      <button
+                        type="button"
+                        onClick={clearPhoto}
+                        className="absolute top-2 right-2 bg-white rounded-full p-1 shadow border border-gray-200 text-gray-600 hover:text-red-500"
+                        data-testid="button-clear-photo"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-8 px-4 cursor-pointer transition-colors ${
+                        isDragOver
+                          ? "border-[hsl(25,95%,53%)] bg-[hsl(25,95%,53%)]/5"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }`}
+                      data-testid="photo-drop-zone"
+                    >
+                      <ImagePlus size={28} className="text-gray-400" />
+                      <p className="text-sm text-gray-500">Drag &amp; drop a photo here</p>
+                      <p className="text-xs text-gray-400">or click to browse files</p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                        data-testid="input-photo-file"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <button
