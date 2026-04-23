@@ -219,7 +219,7 @@ export default function AdminPortfolio() {
                     <div>
                       <span className="text-xs text-[hsl(25,95%,53%)] font-semibold">{item.category}</span>
                       <h3 className="font-semibold text-sm text-[hsl(214,60%,14%)] mt-0.5">{item.title}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{item.suburb} &bull; {item.completedDate}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{item.suburb}</p>
                     </div>
                     <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-600 p-1" data-testid={`button-delete-portfolio-${item.id}`}>
                       <Trash2 size={16} />

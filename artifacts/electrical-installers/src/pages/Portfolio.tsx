@@ -80,9 +80,8 @@ export default function PortfolioPage() {
                   <span className="text-xs font-semibold text-[hsl(25,95%,53%)] uppercase tracking-wide">{item.category}</span>
                   <h3 className="font-semibold text-[hsl(214,60%,14%)] mt-1 mb-2">{item.title}</h3>
                   <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
-                  <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
+                  <div className="mt-4 text-xs text-gray-500">
                     <span>{item.suburb}</span>
-                    <span>{item.completedDate}</span>
                   </div>
                 </div>
               </div>

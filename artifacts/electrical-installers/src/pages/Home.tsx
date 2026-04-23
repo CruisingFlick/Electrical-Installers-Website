@@ -111,7 +111,7 @@ export default function HomePage() {
                   <div className="p-4">
                     <span className="text-xs font-semibold text-[hsl(25,95%,53%)] uppercase tracking-wide">{item.category}</span>
                     <h3 className="font-semibold text-[hsl(214,60%,14%)] mt-1">{item.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{item.suburb} &bull; {item.completedDate}</p>
+                    <p className="text-sm text-gray-500 mt-1">{item.suburb}</p>
                   </div>
                 </div>
               ))}
