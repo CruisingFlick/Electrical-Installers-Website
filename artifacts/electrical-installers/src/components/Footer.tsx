@@ -53,7 +53,7 @@ export default function Footer() {
 
         <div className="mt-10 pt-6 border-t border-[hsl(214,40%,20%)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-gray-500">
           <div className="space-y-1">
-            <p>REC Number: <span className="text-gray-400">REC 12345</span></p>
+            <p>REC Number: <span className="text-gray-400">REC 25510</span></p>
             <p>ABN: <span className="text-gray-400">12 345 678 901</span></p>
             <p>Victorian Electrical Work Licence No. <span className="text-gray-400">EW 000001</span></p>
           </div>
