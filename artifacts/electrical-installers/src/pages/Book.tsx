@@ -67,7 +67,6 @@ export default function BookPage() {
           </p>
         </div>
       </div>
-
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="lg:grid lg:grid-cols-3 lg:gap-14 items-start">
@@ -301,9 +300,7 @@ export default function BookPage() {
               <a
                 href="tel:0312345678"
                 className="block text-center bg-[hsl(25,95%,53%)] text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-[hsl(25,95%,45%)] transition-colors"
-              >
-                03 1234 5678
-              </a>
+              >0419868703</a>
             </div>
           </div>
 
