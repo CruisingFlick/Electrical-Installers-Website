@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useListPortfolioItems, useCreatePortfolioItem, useDeletePortfolioItem, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, ImagePlus } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 interface PortfolioForm {
@@ -14,13 +14,87 @@ interface PortfolioForm {
   completedDate: string;
 }
 
+function PhotoDropZone({
+  label,
+  required,
+  value,
+  onChange,
+  testId,
+}: {
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (dataUrl: string) => void;
+  testId?: string;
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const ref = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = (e) => onChange(e.target?.result as string);
+    reader.readAsDataURL(file);
+  }, [onChange]);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {value ? (
+        <div className="relative">
+          <img src={value} alt="Preview" className="w-full h-36 object-cover rounded-lg border border-gray-200" />
+          <button
+            type="button"
+            onClick={() => { onChange(""); if (ref.current) ref.current.value = ""; }}
+            className="absolute top-1.5 right-1.5 bg-white rounded-full p-1 shadow border border-gray-200 text-gray-500 hover:text-red-500"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      ) : (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          onClick={() => ref.current?.click()}
+          className={`flex flex-col items-center justify-center gap-1.5 border-2 border-dashed rounded-lg py-6 cursor-pointer transition-colors text-center ${
+            isDragOver ? "border-[hsl(25,95%,53%)] bg-[hsl(25,95%,53%)]/5" : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+          }`}
+          data-testid={testId}
+        >
+          <ImagePlus size={22} className="text-gray-400" />
+          <p className="text-xs text-gray-500">Drag &amp; drop or click to upload</p>
+          <input
+            ref={ref}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPortfolio() {
   const queryClient = useQueryClient();
   const { data: items = [], isLoading } = useListPortfolioItems();
   const create = useCreatePortfolioItem();
   const del = useDeletePortfolioItem();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<PortfolioForm>({ title: "", description: "", category: "", beforeImageUrl: "", afterImageUrl: "", suburb: "", completedDate: "" });
+  const [form, setForm] = useState<PortfolioForm>({
+    title: "", description: "", category: "", beforeImageUrl: "", afterImageUrl: "", suburb: "", completedDate: "",
+  });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -66,16 +140,16 @@ export default function AdminPortfolio() {
               </div>
               <form onSubmit={handleSubmit} className="p-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
                   <input name="title" value={form.title} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-title" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-red-500">*</span></label>
                   <textarea name="description" value={form.description} onChange={handleChange} required rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-description" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
                     <select name="category" value={form.category} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="select-portfolio-category">
                       <option value="">Select...</option>
                       <option value="New Homes">New Homes</option>
@@ -86,24 +160,36 @@ export default function AdminPortfolio() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Suburb *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Suburb <span className="text-red-500">*</span></label>
                     <input name="suburb" value={form.suburb} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-suburb" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Completed Date *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Completed Date <span className="text-red-500">*</span></label>
                   <input name="completedDate" value={form.completedDate} onChange={handleChange} required type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-date" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">After Image URL *</label>
-                  <input name="afterImageUrl" value={form.afterImageUrl} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-after-image" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Before Image URL</label>
-                  <input name="beforeImageUrl" value={form.beforeImageUrl} onChange={handleChange} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-before-image" />
-                </div>
+
+                <PhotoDropZone
+                  label="After Photo"
+                  required
+                  value={form.afterImageUrl}
+                  onChange={(url) => setForm(f => ({ ...f, afterImageUrl: url }))}
+                  testId="input-portfolio-after-image"
+                />
+                <PhotoDropZone
+                  label="Before Photo (optional)"
+                  value={form.beforeImageUrl}
+                  onChange={(url) => setForm(f => ({ ...f, beforeImageUrl: url }))}
+                  testId="input-portfolio-before-image"
+                />
+
                 <div className="flex gap-3 pt-2">
-                  <button type="submit" disabled={create.isPending} className="flex-1 bg-[hsl(25,95%,53%)] text-white font-medium py-2 rounded-lg text-sm hover:bg-[hsl(25,95%,45%)] disabled:opacity-60" data-testid="button-save-portfolio">
+                  <button
+                    type="submit"
+                    disabled={create.isPending || !form.afterImageUrl}
+                    className="flex-1 bg-[hsl(25,95%,53%)] text-white font-medium py-2 rounded-lg text-sm hover:bg-[hsl(25,95%,45%)] disabled:opacity-60"
+                    data-testid="button-save-portfolio"
+                  >
                     {create.isPending ? "Saving..." : "Save Item"}
                   </button>
                   <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 text-gray-600 font-medium py-2 rounded-lg text-sm hover:bg-gray-50">
