@@ -63,6 +63,9 @@ export default function Footer() {
             <p className="mt-2">&copy; {new Date().getFullYear()} Electrical Installers Pty Ltd</p>
           </div>
         </div>
+        <p className="mt-4 text-xs text-gray-600 leading-relaxed">
+          Electrical Installers is a registered business name of Design Quote Electrical PTY LTD (ABN: 12 345 678 901). All works are covered by our Registered Electrical Contractor licence: REC 25510.
+        </p>
       </div>
     </footer>
   );
