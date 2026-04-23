@@ -54,7 +54,7 @@ export default function Footer() {
         <div className="mt-10 pt-6 border-t border-[hsl(214,40%,20%)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-gray-500">
           <div className="space-y-1">
             <p>REC Number: <span className="text-gray-400">REC 25510</span></p>
-            <p>ABN: <span className="text-gray-400">12 345 678 901</span></p>
+            <p>ABN: <span className="text-gray-400">35 608 171 802</span></p>
             <p>Victorian Electrical Work Licence No. <span className="text-gray-400">EW 000001</span></p>
           </div>
           <div className="text-right">
@@ -64,7 +64,7 @@ export default function Footer() {
           </div>
         </div>
         <p className="mt-4 text-xs text-gray-600 leading-relaxed">
-          Electrical Installers is a registered business name of Design Quote Electrical PTY LTD (ABN: 12 345 678 901). All works are covered by our Registered Electrical Contractor licence: REC 25510.
+          Electrical Installers is a registered business name of Design Quote Electrical PTY LTD (ABN: 35 608 171 802). All works are covered by our Registered Electrical Contractor licence: REC 25510.
         </p>
       </div>
     </footer>
