@@ -44,7 +44,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-2 mt-6 text-sm text-gray-400">
               <Phone size={16} />
-              <span>Call us: <strong className="text-white">0400 000 000</strong></span>
+              <span>Call us: <strong className="text-white text-[16px]">0419 868 703</strong></span>
             </div>
           </div>
         </div>
