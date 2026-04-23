@@ -37,7 +37,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
                 <Phone size={14} className="text-[hsl(25,95%,53%)]" />
-                <span>0400 000 000</span>
+                <span>0419 868 703</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail size={14} className="text-[hsl(25,95%,53%)]" />
