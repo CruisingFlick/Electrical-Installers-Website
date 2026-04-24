@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Home, Factory, Zap, Cable, CheckCircle, ArrowRight } from "lucide-react";
+import { Home, Factory, Zap, Cable, Warehouse, CheckCircle, ArrowRight } from "lucide-react";
 
 const services = [
   {
@@ -22,6 +22,13 @@ const services = [
     description: "Running a workshop, small business, or heavy equipment at home? 3-phase power gives you the capacity you need. We manage the upgrade from quote to energisation.",
     features: ["3-phase switchboard design", "Load assessment and planning", "Meter reconfiguration", "Equipment connection", "Full compliance certification"],
     image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800",
+  },
+  {
+    icon: Warehouse,
+    title: "Sheds & Garages",
+    description: "A properly wired shed or garage adds real value to your property. Whether it's a workshop, man cave, or home gym, we install the right circuits, lighting, and safety protection to handle your equipment safely.",
+    features: ["Single and 3-phase power for workshops", "LED lighting design and installation", "Safety switch (RCD) protection", "Power points and USB outlets", "Sub-board installation"],
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
   },
   {
     icon: Cable,

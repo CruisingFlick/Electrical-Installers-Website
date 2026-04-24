@@ -12,8 +12,8 @@ const steps = [
   {
     icon: FileText,
     step: "2",
-    title: "Site Plan Submission to United Energy",
-    description: "We prepare a detailed site plan showing the proposed underground cable route, pit locations, and service entry point. This is lodged with United Energy (your local Distribution Network Service Provider) for approval and quotation.",
+    title: "UE Application & Site Plan (UE-PR-0719)",
+    description: "We prepare a detailed site plan showing the proposed underground cable route, pit locations, and service entry point. This is lodged with United Energy using form UE-PR-0719 for approval and quotation.",
     duration: "1-3 days to prepare",
   },
   {
@@ -26,15 +26,15 @@ const steps = [
   {
     icon: Shovel,
     step: "4",
-    title: "Trenching & Cable Installation",
-    description: "Once you accept the quotes (both ours and United Energy's), we coordinate the trenching of your property. We install the underground conduit and service cable from the street pit to your meter box, ensuring all work meets AS/NZS 3000 standards.",
-    duration: "1-3 days",
+    title: "30-Day Install Window & Private Mains",
+    description: "Once you accept all quotes, United Energy schedules the work within a 30-day install window. During this time we complete the private mains installation — trenching your property, laying the underground conduit and service cable from the street pit to your meter box to AS/NZS 3000 standard.",
+    duration: "30-day window; site work 1-3 days",
   },
   {
     icon: Truck,
     step: "5",
-    title: "United Energy Truck Appointment",
-    description: "The final step is the United Energy truck appointment where they connect the new underground service to the network, remove the overhead lines, and energise your property. We attend this appointment to manage the cutover.",
+    title: "Truck Appointment & Safety Inspection",
+    description: "United Energy attends to connect the new underground service to the network, remove the overhead lines, and energise your property. We attend this appointment to manage the cutover and conduct the final safety inspection before sign-off.",
     duration: "Half day",
   },
 ];

@@ -1,0 +1,47 @@
+"Build a high-end, multi-page business website for Electrical Installers.
+
+1. Brand Identity & Design:
+
+Parent Company: Clearly state in the footer: 'Electrical Installers is a registered business name of Design Quote Electrical PTY LTD (ABN: [Your ABN]). REC: [Your REC]'.
+
+Visuals: Use a palette of Navy Blue and Safety Orange. Focus on realistic images of Australian tradies in high-vis polos (no hard hats/overalls) working on modern Bayside homes and Peninsula properties.
+
+Tagline: '35 Years of Design Expertise. Precision Installation.'
+
+2. Service Areas & SEO:
+
+Optimize for: Mornington Peninsula (Mount Martha, Mornington, Frankston), Bayside (St Kilda, Brighton), and the South East (Pakenham, Berwick, Cranbourne).
+
+Highlight that we service all surrounding suburbs within this corridor.
+
+3. Specialized Underground Power Page:
+
+Describe the United Energy Pole-to-Pit process.
+
+Explain the workflow: Expert Site Visit & Sketch -> UE Application (UE-PR-0719) -> 20-day Quote Window -> 30-day Install Window -> Private Mains Installation -> Truck Appointment & Safety Inspection.
+
+Add a disclaimer: 'Note: United Energy and Retailer fees for pit and connection are billed separately to the customer.'
+
+4. Core Service Pages:
+
+Residential: New homes, renovations, and 3-phase upgrades for high-power modern appliances.
+
+Commercial & Industrial: Factory machinery wiring and data/power fit-outs.
+
+Sheds & Garages: Professional power and lighting for workshops.
+
+5. Barbercuts-Style Backend (Admin Portal):
+
+Job Gallery: An admin-only section where I can upload photos and descriptions of jobs directly from my phone to a 'Live Portfolio'.
+
+Review Management: A system for customers to submit reviews that I can approve before they go live.
+
+Analytics Dashboard: Track where leads are coming from (e.g., St Kilda vs Pakenham).
+
+6. Conversion Tools:
+
+Sticky 'Call Now' button on mobile.
+
+A 'Book a Consultation' calendar.
+
+A contact form that manages expectations by explaining the United Energy timeline from the start."

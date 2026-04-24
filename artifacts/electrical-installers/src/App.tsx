@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { Phone } from "lucide-react";
 
 import HomePage from "@/pages/Home";
 import ServicesPage from "@/pages/Services";
@@ -39,8 +40,17 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-16 sm:pb-0">{children}</main>
       <Footer />
+      {/* Sticky Call Now — mobile only */}
+      <a
+        href="tel:0419868703"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-3 bg-[hsl(25,95%,53%)] text-white font-bold text-lg py-4 sm:hidden shadow-2xl"
+        data-testid="sticky-call-now"
+      >
+        <Phone size={22} />
+        Call Now — 0419 868 703
+      </a>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useListReviews, useListPortfolioItems, useGetAnalyticsSummary } from "@workspace/api-client-react";
-import { Star, Zap, Home as HomeIcon, Factory, Cable, ArrowRight, Phone, CheckCircle } from "lucide-react";
+import { Star, Zap, Home as HomeIcon, Factory, Cable, ArrowRight, Phone, CheckCircle, Warehouse, MapPin } from "lucide-react";
 
 export default function HomePage() {
   const { data: reviews = [] } = useListReviews({ status: "approved" });
@@ -19,11 +19,14 @@ export default function HomePage() {
               <CheckCircle size={14} />
               Victorian Licensed Electricians
             </div>
-            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-6">
+            <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-4">
               Mornington Peninsula&apos;s Trusted Electrical Specialists
             </h1>
+            <p className="text-[hsl(25,95%,63%)] font-semibold text-lg mb-4 tracking-wide">
+              35 Years of Design Expertise. Precision Installation.
+            </p>
             <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-              From new homes to 3-phase industrial upgrades and underground power. Serving Mornington Peninsula and surrounding areas with over 15 years of experience.
+              From new homes to 3-phase industrial upgrades and underground power. Serving the Mornington Peninsula, Bayside, and South East Melbourne corridor.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
@@ -57,11 +60,12 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-[hsl(214,60%,14%)]">Our Services</h2>
             <p className="mt-2 text-gray-500">Professional electrical solutions across Victoria</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {[
               { icon: HomeIcon, title: "New Homes & Renovations", desc: "Complete electrical fit-outs for new builds and renovations.", href: "/services" },
               { icon: Factory, title: "Commercial & Industrial", desc: "Machinery wiring, factory fit-outs, and industrial upgrades.", href: "/services" },
               { icon: Zap, title: "3-Phase Upgrades", desc: "Upgrade to 3-phase power for workshops and heavy equipment.", href: "/services" },
+              { icon: Warehouse, title: "Sheds & Garages", desc: "Professional power and lighting for workshops and home gyms.", href: "/services" },
               { icon: Cable, title: "Underground Power", desc: "Remove overhead lines with the United Energy process.", href: "/underground-power" },
             ].map((s) => (
               <Link
@@ -80,6 +84,29 @@ export default function HomePage() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Service Areas */}
+      <section className="py-12 bg-[hsl(214,60%,14%)] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-3">
+              <MapPin size={24} className="text-[hsl(25,95%,53%)] shrink-0" />
+              <div>
+                <p className="text-xs uppercase tracking-widest text-[hsl(25,95%,63%)] font-semibold mb-1">Service Areas</p>
+                <p className="text-sm text-gray-300">We service all surrounding suburbs in this corridor</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-300 justify-center md:justify-end">
+              {["Mount Martha", "Mornington", "Frankston", "Bayside", "St Kilda", "Brighton", "Pakenham", "Berwick", "Cranbourne"].map((suburb) => (
+                <span key={suburb} className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[hsl(25,95%,53%)] inline-block" />
+                  {suburb}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
