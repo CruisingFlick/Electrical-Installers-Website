@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useListPortfolioItems, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
 import { Filter } from "lucide-react";
 
+declare const GLightbox: (options: Record<string, unknown>) => { destroy: () => void };
+
 const categories = ["All", "New Homes", "3-Phase Upgrade", "Underground Power", "Commercial", "Renovations"];
+
+const FALLBACK_AFTER = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800";
+const FALLBACK_BEFORE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800";
 
 export default function PortfolioPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -10,6 +15,24 @@ export default function PortfolioPage() {
     selectedCategory ? { category: selectedCategory } : undefined,
     { query: { queryKey: getListPortfolioItemsQueryKey(selectedCategory ? { category: selectedCategory } : undefined) } }
   );
+
+  useEffect(() => {
+    if (isLoading || portfolio.length === 0) return;
+
+    let lightbox: { destroy: () => void } | null = null;
+
+    const init = () => {
+      if (typeof GLightbox === "undefined") return;
+      lightbox = GLightbox({ touchNavigation: true, loop: true });
+    };
+
+    const timer = setTimeout(init, 100);
+
+    return () => {
+      clearTimeout(timer);
+      lightbox?.destroy();
+    };
+  }, [portfolio, isLoading]);
 
   return (
     <div>
@@ -21,7 +44,6 @@ export default function PortfolioPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Filter */}
         <div className="flex items-center gap-3 mb-8 flex-wrap">
           <Filter size={16} className="text-gray-500" />
           {categories.map((cat) => (
@@ -58,22 +80,53 @@ export default function PortfolioPage() {
                 {item.beforeImageUrl && item.afterImageUrl ? (
                   <div className="grid grid-cols-2 h-52">
                     <div className="relative overflow-hidden">
-                      <img src={item.beforeImageUrl} alt="Before" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400"; }} />
-                      <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded">Before</div>
+                      <a
+                        href={item.beforeImageUrl || FALLBACK_BEFORE}
+                        className="glightbox block w-full h-full"
+                        data-gallery="portfolio"
+                        data-title={`${item.title} — Before`}
+                      >
+                        <img
+                          src={item.beforeImageUrl}
+                          alt="Before"
+                          className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 hover:brightness-110 hover:scale-105"
+                          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_BEFORE; }}
+                        />
+                        <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded pointer-events-none">Before</div>
+                      </a>
                     </div>
                     <div className="relative overflow-hidden">
-                      <img src={item.afterImageUrl} alt="After" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400"; }} />
-                      <div className="absolute bottom-2 right-2 bg-[hsl(25,95%,53%)]/80 text-white text-xs px-2 py-0.5 rounded">After</div>
+                      <a
+                        href={item.afterImageUrl || FALLBACK_AFTER}
+                        className="glightbox block w-full h-full"
+                        data-gallery="portfolio"
+                        data-title={`${item.title} — After`}
+                      >
+                        <img
+                          src={item.afterImageUrl}
+                          alt="After"
+                          className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 hover:brightness-110 hover:scale-105"
+                          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_AFTER; }}
+                        />
+                        <div className="absolute bottom-2 right-2 bg-[hsl(25,95%,53%)]/80 text-white text-xs px-2 py-0.5 rounded pointer-events-none">After</div>
+                      </a>
                     </div>
                   </div>
                 ) : (
                   <div className="h-52 overflow-hidden">
-                    <img
-                      src={item.afterImageUrl}
-                      alt={item.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400"; }}
-                    />
+                    <a
+                      href={item.afterImageUrl || FALLBACK_AFTER}
+                      className="glightbox block w-full h-full"
+                      data-gallery="portfolio"
+                      data-title={item.title}
+                    >
+                      <img
+                        src={item.afterImageUrl}
+                        alt={item.title}
+                        className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 group-hover:scale-105 hover:brightness-110"
+                        onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_AFTER; }}
+                      />
+                    </a>
                   </div>
                 )}
                 <div className="p-5">
