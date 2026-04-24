@@ -55,7 +55,6 @@ export default function Footer() {
           <div className="space-y-1">
             <p>REC Number: <span className="text-gray-400">REC 25510</span></p>
             <p>ABN: <span className="text-gray-400">35 608 171 802</span></p>
-            <p>Victorian Electrical Work Licence No. <span className="text-gray-400">EW 000001</span></p>
           </div>
           <div className="text-right">
             <p>Compliant with AS/NZS 3000:2018 (Wiring Rules)</p>
