@@ -145,6 +145,23 @@ export const CreatePortfolioItemBody = zod.object({
 });
 
 /**
+ * @summary Update a portfolio item
+ */
+export const UpdatePortfolioItemBody = zod.object({
+  title: zod.string().optional(),
+  description: zod.string().optional(),
+  category: zod.string().optional(),
+  beforeImageUrl: zod.string().optional(),
+  afterImageUrl: zod.string().optional(),
+  suburb: zod.string().optional(),
+  completedDate: zod.string().optional(),
+});
+
+export const UpdatePortfolioItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary Delete a portfolio item
  */
 export const DeletePortfolioItemParams = zod.object({

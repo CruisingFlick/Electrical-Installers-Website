@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
-import { useListPortfolioItems, useCreatePortfolioItem, useDeletePortfolioItem, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
+import { useListPortfolioItems, useCreatePortfolioItem, useDeletePortfolioItem, useUpdatePortfolioItem, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
+import type { PortfolioItem } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X, ImagePlus } from "lucide-react";
+import { Plus, Trash2, X, ImagePlus, Pencil } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 interface PortfolioForm {
@@ -86,29 +87,159 @@ function PhotoDropZone({
   );
 }
 
+const EMPTY_FORM: PortfolioForm = {
+  title: "", description: "", category: "", beforeImageUrl: "", afterImageUrl: "", suburb: "", completedDate: "",
+};
+
+const CATEGORIES = ["New Homes", "Renovations", "3-Phase Upgrade", "Underground Power", "Commercial"];
+
+function PortfolioFormModal({
+  title,
+  form,
+  onChange,
+  onPhotoChange,
+  onSubmit,
+  onClose,
+  isPending,
+  submitLabel,
+  requireAfterPhoto,
+}: {
+  title: string;
+  form: PortfolioForm;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onPhotoChange: (field: "afterImageUrl" | "beforeImageUrl", url: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+  isPending: boolean;
+  submitLabel: string;
+  requireAfterPhoto: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-5 border-b">
+          <h2 className="font-semibold text-[hsl(214,60%,14%)]">{title}</h2>
+          <button type="button" onClick={onClose}><X size={20} /></button>
+        </div>
+        <form onSubmit={onSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
+            <input name="title" value={form.title} onChange={onChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-title" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-red-500">*</span></label>
+            <textarea name="description" value={form.description} onChange={onChange} required rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-description" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+              <select name="category" value={form.category} onChange={onChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="select-portfolio-category">
+                <option value="">Select...</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Suburb <span className="text-red-500">*</span></label>
+              <input name="suburb" value={form.suburb} onChange={onChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-suburb" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Completed Date <span className="text-red-500">*</span></label>
+            <input name="completedDate" value={form.completedDate} onChange={onChange} required type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-date" />
+          </div>
+          <PhotoDropZone
+            label="After Photo"
+            required={requireAfterPhoto}
+            value={form.afterImageUrl}
+            onChange={(url) => onPhotoChange("afterImageUrl", url)}
+            testId="input-portfolio-after-image"
+          />
+          <PhotoDropZone
+            label="Before Photo (optional)"
+            value={form.beforeImageUrl}
+            onChange={(url) => onPhotoChange("beforeImageUrl", url)}
+            testId="input-portfolio-before-image"
+          />
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={isPending || (requireAfterPhoto && !form.afterImageUrl)}
+              className="flex-1 bg-[hsl(25,95%,53%)] text-white font-medium py-2 rounded-lg text-sm hover:bg-[hsl(25,95%,45%)] disabled:opacity-60"
+              data-testid="button-save-portfolio"
+            >
+              {isPending ? "Saving..." : submitLabel}
+            </button>
+            <button type="button" onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 font-medium py-2 rounded-lg text-sm hover:bg-gray-50">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPortfolio() {
   const queryClient = useQueryClient();
   const { data: items = [], isLoading } = useListPortfolioItems();
   const create = useCreatePortfolioItem();
+  const update = useUpdatePortfolioItem();
   const del = useDeletePortfolioItem();
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<PortfolioForm>({
-    title: "", description: "", category: "", beforeImageUrl: "", afterImageUrl: "", suburb: "", completedDate: "",
-  });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addForm, setAddForm] = useState<PortfolioForm>(EMPTY_FORM);
+
+  const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
+  const [editForm, setEditForm] = useState<PortfolioForm>(EMPTY_FORM);
+
+  function handleAddChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    setAddForm(f => ({ ...f, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+    setEditForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  }
+
+  function openEdit(item: PortfolioItem) {
+    setEditingItem(item);
+    setEditForm({
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      beforeImageUrl: item.beforeImageUrl ?? "",
+      afterImageUrl: item.afterImageUrl,
+      suburb: item.suburb,
+      completedDate: item.completedDate,
+    });
+  }
+
+  function handleAddSubmit(e: React.FormEvent) {
     e.preventDefault();
-    create.mutate({ data: { ...form, beforeImageUrl: form.beforeImageUrl || undefined } }, {
+    create.mutate({ data: { ...addForm, beforeImageUrl: addForm.beforeImageUrl || undefined } }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListPortfolioItemsQueryKey() });
-        setShowForm(false);
-        setForm({ title: "", description: "", category: "", beforeImageUrl: "", afterImageUrl: "", suburb: "", completedDate: "" });
+        setShowAddForm(false);
+        setAddForm(EMPTY_FORM);
       },
     });
+  }
+
+  function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingItem) return;
+    update.mutate(
+      {
+        id: editingItem.id,
+        data: { ...editForm, beforeImageUrl: editForm.beforeImageUrl || undefined },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListPortfolioItemsQueryKey() });
+          setEditingItem(null);
+          setEditForm(EMPTY_FORM);
+        },
+      }
+    );
   }
 
   function handleDelete(id: number) {
@@ -123,7 +254,7 @@ export default function AdminPortfolio() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Portfolio</h1>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => setShowAddForm(true)}
             className="flex items-center gap-2 bg-[hsl(25,95%,53%)] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[hsl(25,95%,45%)] transition-colors"
             data-testid="button-add-portfolio"
           >
@@ -131,74 +262,32 @@ export default function AdminPortfolio() {
           </button>
         </div>
 
-        {showForm && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-5 border-b">
-                <h2 className="font-semibold text-[hsl(214,60%,14%)]">Add Portfolio Item</h2>
-                <button onClick={() => setShowForm(false)}><X size={20} /></button>
-              </div>
-              <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-500">*</span></label>
-                  <input name="title" value={form.title} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-title" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description <span className="text-red-500">*</span></label>
-                  <textarea name="description" value={form.description} onChange={handleChange} required rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-description" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-                    <select name="category" value={form.category} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="select-portfolio-category">
-                      <option value="">Select...</option>
-                      <option value="New Homes">New Homes</option>
-                      <option value="Renovations">Renovations</option>
-                      <option value="3-Phase Upgrade">3-Phase Upgrade</option>
-                      <option value="Underground Power">Underground Power</option>
-                      <option value="Commercial">Commercial</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Suburb <span className="text-red-500">*</span></label>
-                    <input name="suburb" value={form.suburb} onChange={handleChange} required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-suburb" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Completed Date <span className="text-red-500">*</span></label>
-                  <input name="completedDate" value={form.completedDate} onChange={handleChange} required type="date" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" data-testid="input-portfolio-date" />
-                </div>
+        {showAddForm && (
+          <PortfolioFormModal
+            title="Add Portfolio Item"
+            form={addForm}
+            onChange={handleAddChange}
+            onPhotoChange={(field, url) => setAddForm(f => ({ ...f, [field]: url }))}
+            onSubmit={handleAddSubmit}
+            onClose={() => { setShowAddForm(false); setAddForm(EMPTY_FORM); }}
+            isPending={create.isPending}
+            submitLabel="Save Item"
+            requireAfterPhoto={true}
+          />
+        )}
 
-                <PhotoDropZone
-                  label="After Photo"
-                  required
-                  value={form.afterImageUrl}
-                  onChange={(url) => setForm(f => ({ ...f, afterImageUrl: url }))}
-                  testId="input-portfolio-after-image"
-                />
-                <PhotoDropZone
-                  label="Before Photo (optional)"
-                  value={form.beforeImageUrl}
-                  onChange={(url) => setForm(f => ({ ...f, beforeImageUrl: url }))}
-                  testId="input-portfolio-before-image"
-                />
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="submit"
-                    disabled={create.isPending || !form.afterImageUrl}
-                    className="flex-1 bg-[hsl(25,95%,53%)] text-white font-medium py-2 rounded-lg text-sm hover:bg-[hsl(25,95%,45%)] disabled:opacity-60"
-                    data-testid="button-save-portfolio"
-                  >
-                    {create.isPending ? "Saving..." : "Save Item"}
-                  </button>
-                  <button type="button" onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 text-gray-600 font-medium py-2 rounded-lg text-sm hover:bg-gray-50">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+        {editingItem && (
+          <PortfolioFormModal
+            title="Edit Portfolio Item"
+            form={editForm}
+            onChange={handleEditChange}
+            onPhotoChange={(field, url) => setEditForm(f => ({ ...f, [field]: url }))}
+            onSubmit={handleEditSubmit}
+            onClose={() => { setEditingItem(null); setEditForm(EMPTY_FORM); }}
+            isPending={update.isPending}
+            submitLabel="Save Changes"
+            requireAfterPhoto={false}
+          />
         )}
 
         {isLoading ? (
@@ -216,14 +305,29 @@ export default function AdminPortfolio() {
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <span className="text-xs text-[hsl(25,95%,53%)] font-semibold">{item.category}</span>
-                      <h3 className="font-semibold text-sm text-[hsl(214,60%,14%)] mt-0.5">{item.title}</h3>
+                      <h3 className="font-semibold text-sm text-[hsl(214,60%,14%)] mt-0.5 truncate">{item.title}</h3>
                       <p className="text-xs text-gray-500 mt-0.5">{item.suburb}</p>
                     </div>
-                    <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-600 p-1" data-testid={`button-delete-portfolio-${item.id}`}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-1 ml-2 shrink-0">
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="text-blue-400 hover:text-blue-600 p-1"
+                        data-testid={`button-edit-portfolio-${item.id}`}
+                        title="Edit"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item.id)}
+                        className="text-red-400 hover:text-red-600 p-1"
+                        data-testid={`button-delete-portfolio-${item.id}`}
+                        title="Delete"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

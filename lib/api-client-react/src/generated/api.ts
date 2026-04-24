@@ -36,6 +36,7 @@ import type {
   ServiceCount,
   UpdateBookingStatusBody,
   UpdateJobStatusBody,
+  UpdatePortfolioItemBody,
   UpdateQuoteStatusBody,
   UpdateReviewStatusBody,
 } from "./api.schemas";
@@ -827,6 +828,89 @@ export const useDeletePortfolioItem = <
   TContext
 > => {
   return useMutation(getDeletePortfolioItemMutationOptions(options));
+};
+
+export const getUpdatePortfolioItemUrl = (id: number) => {
+  return `/api/portfolio/${id}`;
+};
+
+export const updatePortfolioItem = async (
+  id: number,
+  updatePortfolioItemBody: UpdatePortfolioItemBody,
+  options?: RequestInit,
+): Promise<PortfolioItem> => {
+  return customFetch<PortfolioItem>(getUpdatePortfolioItemUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePortfolioItemBody),
+  });
+};
+
+export const getUpdatePortfolioItemMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePortfolioItem>>,
+    TError,
+    { id: number; data: BodyType<UpdatePortfolioItemBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updatePortfolioItem>>,
+  TError,
+  { id: number; data: BodyType<UpdatePortfolioItemBody> },
+  TContext
+> => {
+  const mutationKey = ["updatePortfolioItem"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updatePortfolioItem>>,
+    { id: number; data: BodyType<UpdatePortfolioItemBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+    return updatePortfolioItem(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdatePortfolioItemMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updatePortfolioItem>>
+>;
+export type UpdatePortfolioItemMutationBody = BodyType<UpdatePortfolioItemBody>;
+export type UpdatePortfolioItemMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a portfolio item
+ */
+export const useUpdatePortfolioItem = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePortfolioItem>>,
+    TError,
+    { id: number; data: BodyType<UpdatePortfolioItemBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updatePortfolioItem>>,
+  TError,
+  { id: number; data: BodyType<UpdatePortfolioItemBody> },
+  TContext
+> => {
+  return useMutation(getUpdatePortfolioItemMutationOptions(options));
 };
 
 /**

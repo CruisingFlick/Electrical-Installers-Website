@@ -5,6 +5,8 @@ import {
   CreatePortfolioItemBody,
   DeletePortfolioItemParams,
   ListPortfolioItemsQueryParams,
+  UpdatePortfolioItemBody,
+  UpdatePortfolioItemParams,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -42,6 +44,35 @@ router.post("/", async (req, res) => {
     .returning();
 
   res.status(201).json(formatItem(row));
+});
+
+router.put("/:id", async (req, res) => {
+  const parsedParams = UpdatePortfolioItemParams.safeParse({
+    id: Number(req.params["id"]),
+  });
+  if (!parsedParams.success) {
+    res.status(400).json({ error: "Invalid ID" });
+    return;
+  }
+
+  const parsedBody = UpdatePortfolioItemBody.safeParse(req.body);
+  if (!parsedBody.success) {
+    res.status(400).json({ error: parsedBody.error.message });
+    return;
+  }
+
+  const [row] = await db
+    .update(portfolioTable)
+    .set(parsedBody.data)
+    .where(eq(portfolioTable.id, parsedParams.data.id))
+    .returning();
+
+  if (!row) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  res.json(formatItem(row));
 });
 
 router.delete("/:id", async (req, res) => {

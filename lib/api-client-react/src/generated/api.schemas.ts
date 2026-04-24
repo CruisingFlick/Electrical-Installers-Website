@@ -99,6 +99,16 @@ export interface CreatePortfolioItemBody {
   completedDate: string;
 }
 
+export interface UpdatePortfolioItemBody {
+  title?: string;
+  description?: string;
+  category?: string;
+  beforeImageUrl?: string;
+  afterImageUrl?: string;
+  suburb?: string;
+  completedDate?: string;
+}
+
 export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus];
 
 export const ReviewStatus = {
