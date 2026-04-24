@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -21,9 +21,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="bg-[hsl(25,95%,53%)] rounded p-1">
-              <Zap size={20} className="text-white" />
-            </div>
+            <img src="/logo.png" alt="Electrical Installers logo" className="h-10 w-auto" />
             <span>Electrical Installers</span>
           </Link>
 

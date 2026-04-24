@@ -1,4 +1,4 @@
-import { Zap, Phone, Mail, MapPin, Shield } from "lucide-react";
+import { Phone, Mail, MapPin, Shield } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Footer() {
@@ -8,9 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 font-bold text-white text-lg mb-3">
-              <div className="bg-[hsl(25,95%,53%)] rounded p-1">
-                <Zap size={18} className="text-white" />
-              </div>
+              <img src="/logo.png" alt="Electrical Installers logo" className="h-10 w-auto" />
               Electrical Installers
             </div>
             <p className="text-sm leading-relaxed mb-4">
