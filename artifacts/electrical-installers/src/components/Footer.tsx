@@ -7,10 +7,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 font-bold text-white text-lg mb-3">
-              <img src="/logo.png" alt="Electrical Installers logo" className="h-10 w-auto" />
-              Electrical Installers
-            </div>
+            <Link href="/" className="inline-flex items-center gap-3 mb-3 group">
+              <img src="/logo.png" alt="Electrical Installers logo" className="h-14 w-auto" />
+              <span className="font-bold text-white text-lg group-hover:text-[hsl(25,95%,63%)] transition-colors">Electrical Installers</span>
+            </Link>
             <p className="text-sm leading-relaxed mb-4">
               Licensed electricians serving the Mornington Peninsula and surrounding areas. Residential, commercial, industrial, and underground power specialists.
             </p>
