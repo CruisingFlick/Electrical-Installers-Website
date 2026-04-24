@@ -25,9 +25,7 @@ export default function HomePage() {
             <p className="text-[hsl(25,95%,63%)] font-semibold text-lg mb-4 tracking-wide">
               35 Years of Design Expertise. Precision Installation.
             </p>
-            <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-              From new homes to 3-phase industrial upgrades and underground power. Serving the Mornington Peninsula, Bayside, and South East Melbourne corridor.
-            </p>
+            <p className="text-lg text-gray-300 mb-8 leading-relaxed">From new Homes-Renovation's to 3-phase industrial upgrades and underground power. Serving the Mornington Peninsula, Bayside, and South East Melbourne corridor.</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/book"
@@ -52,7 +50,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Services */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -87,7 +84,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Service Areas */}
       <section className="py-12 bg-[hsl(214,60%,14%)] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,7 +106,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Portfolio Highlights */}
       {recentPortfolio.length > 0 && (
         <section className="py-16 bg-[hsl(210,20%,96%)]">
@@ -146,7 +141,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
       {/* Reviews */}
       {approvedReviews.length > 0 && (
         <section className="py-16 bg-white">
@@ -191,7 +185,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
       {/* CTA */}
       <section className="bg-[hsl(25,95%,53%)] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
