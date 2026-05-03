@@ -82,10 +82,10 @@ export interface PortfolioItem {
   title: string;
   description: string;
   category: string;
-  beforeImageUrl?: string;
-  afterImageUrl: string;
+  beforeImageUrls?: string[] | null;
+  afterImageUrls: string[];
   suburb: string;
-  completedDate: string;
+  completedDate?: string | null;
   createdAt: string;
 }
 
@@ -93,18 +93,18 @@ export interface CreatePortfolioItemBody {
   title: string;
   description: string;
   category: string;
-  beforeImageUrl?: string;
-  afterImageUrl: string;
+  beforeImageUrls?: string[];
+  afterImageUrls: string[];
   suburb: string;
-  completedDate: string;
+  completedDate?: string;
 }
 
 export interface UpdatePortfolioItemBody {
   title?: string;
   description?: string;
   category?: string;
-  beforeImageUrl?: string;
-  afterImageUrl?: string;
+  beforeImageUrls?: string[];
+  afterImageUrls?: string[];
   suburb?: string;
   completedDate?: string;
 }

@@ -14,6 +14,8 @@ const router = Router();
 function formatItem(item: typeof portfolioTable.$inferSelect) {
   return {
     ...item,
+    beforeImageUrls: item.beforeImageUrls ?? [],
+    afterImageUrls: item.afterImageUrls ?? [],
     createdAt: item.createdAt.toISOString(),
   };
 }
@@ -40,7 +42,15 @@ router.post("/", async (req, res) => {
 
   const [row] = await db
     .insert(portfolioTable)
-    .values(parsed.data)
+    .values({
+      title: parsed.data.title,
+      description: parsed.data.description,
+      category: parsed.data.category,
+      suburb: parsed.data.suburb,
+      completedDate: parsed.data.completedDate,
+      afterImageUrls: parsed.data.afterImageUrls,
+      beforeImageUrls: parsed.data.beforeImageUrls ?? [],
+    })
     .returning();
 
   res.status(201).json(formatItem(row));

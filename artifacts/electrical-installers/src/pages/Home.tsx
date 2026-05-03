@@ -124,7 +124,7 @@ export default function HomePage() {
                 <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100" data-testid={`portfolio-card-${item.id}`}>
                   <div className="h-48 bg-gray-100 overflow-hidden">
                     <img
-                      src={item.afterImageUrl}
+                      src={item.afterImageUrls?.[0]}
                       alt={item.title}
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400"; }}

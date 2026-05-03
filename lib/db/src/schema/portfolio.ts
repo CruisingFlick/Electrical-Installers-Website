@@ -7,10 +7,10 @@ export const portfolioTable = pgTable("portfolio", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   category: text("category").notNull(),
-  beforeImageUrl: text("before_image_url"),
-  afterImageUrl: text("after_image_url").notNull(),
+  beforeImageUrls: text("before_image_urls").array(),
+  afterImageUrls: text("after_image_urls").array().notNull(),
   suburb: text("suburb").notNull(),
-  completedDate: text("completed_date").notNull(),
+  completedDate: text("completed_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -121,10 +121,10 @@ export const ListPortfolioItemsResponseItem = zod.object({
   title: zod.string(),
   description: zod.string(),
   category: zod.string(),
-  beforeImageUrl: zod.string().optional(),
-  afterImageUrl: zod.string(),
+  beforeImageUrls: zod.array(zod.string()).nullable(),
+  afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
-  completedDate: zod.string(),
+  completedDate: zod.string().nullable(),
   createdAt: zod.string(),
 });
 export const ListPortfolioItemsResponse = zod.array(
@@ -138,10 +138,10 @@ export const CreatePortfolioItemBody = zod.object({
   title: zod.string(),
   description: zod.string(),
   category: zod.string(),
-  beforeImageUrl: zod.string().optional(),
-  afterImageUrl: zod.string(),
+  beforeImageUrls: zod.array(zod.string()).optional(),
+  afterImageUrls: zod.array(zod.string()).min(1),
   suburb: zod.string(),
-  completedDate: zod.string(),
+  completedDate: zod.string().optional(),
 });
 
 /**
@@ -151,8 +151,8 @@ export const UpdatePortfolioItemBody = zod.object({
   title: zod.string().optional(),
   description: zod.string().optional(),
   category: zod.string().optional(),
-  beforeImageUrl: zod.string().optional(),
-  afterImageUrl: zod.string().optional(),
+  beforeImageUrls: zod.array(zod.string()).optional(),
+  afterImageUrls: zod.array(zod.string()).optional(),
   suburb: zod.string().optional(),
   completedDate: zod.string().optional(),
 });

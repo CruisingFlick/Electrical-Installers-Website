@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useListPortfolioItems, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
-import { Filter } from "lucide-react";
+import { Filter, Images } from "lucide-react";
 
 declare const GLightbox: (options: Record<string, unknown>) => { destroy: () => void };
 
 const categories = ["All", "New Homes", "3-Phase Upgrade", "Underground Power", "Commercial", "Renovations"];
 
-const FALLBACK_AFTER = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800";
+const FALLBACK = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800";
 const FALLBACK_BEFORE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800";
 
 export default function PortfolioPage() {
@@ -18,16 +18,11 @@ export default function PortfolioPage() {
 
   useEffect(() => {
     if (isLoading || portfolio.length === 0) return;
-
     let lightbox: { destroy: () => void } | null = null;
-
-    const init = () => {
+    const timer = setTimeout(() => {
       if (typeof GLightbox === "undefined") return;
       lightbox = GLightbox({ touchNavigation: true, loop: true });
-    };
-
-    const timer = setTimeout(init, 100);
-
+    }, 100);
     return () => {
       clearTimeout(timer);
       lightbox?.destroy();
@@ -75,70 +70,89 @@ export default function PortfolioPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {portfolio.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group" data-testid={`portfolio-item-${item.id}`}>
-                {item.beforeImageUrl && item.afterImageUrl ? (
-                  <div className="grid grid-cols-2 h-52">
-                    <div className="relative overflow-hidden">
+            {portfolio.map((item) => {
+              const afterPhotos = item.afterImageUrls ?? [];
+              const beforePhotos = item.beforeImageUrls ?? [];
+              const totalPhotos = afterPhotos.length + beforePhotos.length;
+              const galleryId = `portfolio-${item.id}`;
+              const thumb = afterPhotos[0] ?? FALLBACK;
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group"
+                  data-testid={`portfolio-item-${item.id}`}
+                >
+                  {/* Hidden lightbox links for all photos in this project */}
+                  <div className="hidden">
+                    {afterPhotos.map((url, i) => (
                       <a
-                        href={item.beforeImageUrl || FALLBACK_BEFORE}
-                        className="glightbox block w-full h-full"
-                        data-gallery="portfolio"
-                        data-title={`${item.title} — Before`}
-                      >
-                        <img
-                          src={item.beforeImageUrl}
-                          alt="Before"
-                          className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 hover:brightness-110 hover:scale-105"
-                          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_BEFORE; }}
-                        />
-                        <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded pointer-events-none">Before</div>
-                      </a>
-                    </div>
-                    <div className="relative overflow-hidden">
+                        key={`after-${i}`}
+                        href={url || FALLBACK}
+                        className="glightbox"
+                        data-gallery={galleryId}
+                        data-title={`${item.title} — After${afterPhotos.length > 1 ? ` (${i + 1}/${afterPhotos.length})` : ""}`}
+                      />
+                    ))}
+                    {beforePhotos.map((url, i) => (
                       <a
-                        href={item.afterImageUrl || FALLBACK_AFTER}
-                        className="glightbox block w-full h-full"
-                        data-gallery="portfolio"
-                        data-title={`${item.title} — After`}
-                      >
-                        <img
-                          src={item.afterImageUrl}
-                          alt="After"
-                          className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 hover:brightness-110 hover:scale-105"
-                          onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_AFTER; }}
-                        />
-                        <div className="absolute bottom-2 right-2 bg-[hsl(25,95%,53%)]/80 text-white text-xs px-2 py-0.5 rounded pointer-events-none">After</div>
-                      </a>
-                    </div>
+                        key={`before-${i}`}
+                        href={url || FALLBACK_BEFORE}
+                        className="glightbox"
+                        data-gallery={galleryId}
+                        data-title={`${item.title} — Before${beforePhotos.length > 1 ? ` (${i + 1}/${beforePhotos.length})` : ""}`}
+                      />
+                    ))}
                   </div>
-                ) : (
-                  <div className="h-52 overflow-hidden">
+
+                  {/* Visible card thumbnail — clicking opens the gallery */}
+                  <div className="relative h-52 overflow-hidden">
                     <a
-                      href={item.afterImageUrl || FALLBACK_AFTER}
+                      href={thumb}
                       className="glightbox block w-full h-full"
-                      data-gallery="portfolio"
-                      data-title={item.title}
+                      data-gallery={galleryId}
+                      data-title={`${item.title} — After${afterPhotos.length > 1 ? ` (1/${afterPhotos.length})` : ""}`}
                     >
                       <img
-                        src={item.afterImageUrl}
+                        src={thumb}
                         alt={item.title}
                         className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 group-hover:scale-105 hover:brightness-110"
-                        onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_AFTER; }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
                       />
                     </a>
+
+                    {/* Photo count badge */}
+                    {totalPhotos > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1 pointer-events-none">
+                        <Images size={11} />
+                        {totalPhotos} photos
+                      </div>
+                    )}
+
+                    {/* Before/After badge */}
+                    {beforePhotos.length > 0 && afterPhotos.length > 0 && (
+                      <div className="absolute top-2 left-2 bg-[hsl(214,60%,14%)]/80 text-white text-xs px-2 py-0.5 rounded pointer-events-none">
+                        Before &amp; After
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="p-5">
-                  <span className="text-xs font-semibold text-[hsl(25,95%,53%)] uppercase tracking-wide">{item.category}</span>
-                  <h3 className="font-semibold text-[hsl(214,60%,14%)] mt-1 mb-2">{item.title}</h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
-                  <div className="mt-4 text-xs text-gray-500">
-                    <span>{item.suburb}</span>
+
+                  <div className="p-5">
+                    <span className="text-xs font-semibold text-[hsl(25,95%,53%)] uppercase tracking-wide">{item.category}</span>
+                    <h3 className="font-semibold text-[hsl(214,60%,14%)] mt-1 mb-2">{item.title}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                    <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
+                      <span>{item.suburb}</span>
+                      {totalPhotos > 1 && (
+                        <span className="text-[hsl(25,95%,53%)] font-medium cursor-pointer">
+                          View all {totalPhotos} photos →
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
