@@ -39,6 +39,29 @@ const CATEGORIES = [
   "Commercial",
 ];
 
+function compressImage(file: File, maxPx = 1200, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("canvas context unavailable"));
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function MultiPhotoDropZone({
   label,
   required,
@@ -58,13 +81,9 @@ function MultiPhotoDropZone({
   const handleFiles = useCallback(
     (files: FileList | null) => {
       if (!files) return;
-      Array.from(files).forEach((file) => {
-        if (!file.type.startsWith("image/")) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          onChange([...value, e.target?.result as string]);
-        };
-        reader.readAsDataURL(file);
+      const pending = Array.from(files).filter((f) => f.type.startsWith("image/"));
+      Promise.all(pending.map((f) => compressImage(f))).then((compressed) => {
+        onChange([...value, ...compressed]);
       });
     },
     [value, onChange]
