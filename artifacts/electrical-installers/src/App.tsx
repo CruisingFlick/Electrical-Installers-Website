@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { Phone } from "lucide-react";
 
 import HomePage from "@/pages/Home";
+import AboutPage from "@/pages/About";
 import ServicesPage from "@/pages/Services";
 import UndergroundPowerPage from "@/pages/UndergroundPower";
 import PortfolioPage from "@/pages/Portfolio";
@@ -60,6 +61,7 @@ function Router() {
     <Switch>
       {/* Public routes */}
       <Route path="/" component={() => <PublicLayout><HomePage /></PublicLayout>} />
+      <Route path="/about" component={() => <PublicLayout><AboutPage /></PublicLayout>} />
       <Route path="/services" component={() => <PublicLayout><ServicesPage /></PublicLayout>} />
       <Route path="/underground-power" component={() => <PublicLayout><UndergroundPowerPage /></PublicLayout>} />
       <Route path="/portfolio" component={() => <PublicLayout><PortfolioPage /></PublicLayout>} />
