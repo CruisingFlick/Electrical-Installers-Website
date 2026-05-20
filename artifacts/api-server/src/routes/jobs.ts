@@ -7,6 +7,7 @@ import {
   UpdateJobStatusParams,
   DeleteJobParams,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
@@ -17,31 +18,37 @@ function formatJob(j: typeof jobsTable.$inferSelect) {
   };
 }
 
-router.get("/", async (req, res) => {
-  const rows = await db
-    .select()
-    .from(jobsTable)
-    .orderBy(desc(jobsTable.createdAt));
-
-  res.json(rows.map(formatJob));
+router.get("/", requireAdmin, async (req, res, next) => {
+  try {
+    const rows = await db
+      .select()
+      .from(jobsTable)
+      .orderBy(desc(jobsTable.createdAt));
+    res.json(rows.map(formatJob));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireAdmin, async (req, res, next) => {
   const parsed = CreateJobBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [row] = await db
-    .insert(jobsTable)
-    .values({ ...parsed.data, status: "pending" })
-    .returning();
-
-  res.status(201).json(formatJob(row));
+  try {
+    const [row] = await db
+      .insert(jobsTable)
+      .values({ ...parsed.data, status: "pending" })
+      .returning();
+    res.status(201).json(formatJob(row));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireAdmin, async (req, res, next) => {
   const paramParsed = UpdateJobStatusParams.safeParse({
     id: Number(req.params["id"]),
   });
@@ -56,29 +63,37 @@ router.patch("/:id", async (req, res) => {
     return;
   }
 
-  const [row] = await db
-    .update(jobsTable)
-    .set({ status: bodyParsed.data.status })
-    .where(eq(jobsTable.id, paramParsed.data.id))
-    .returning();
+  try {
+    const [row] = await db
+      .update(jobsTable)
+      .set({ status: bodyParsed.data.status })
+      .where(eq(jobsTable.id, paramParsed.data.id))
+      .returning();
 
-  if (!row) {
-    res.status(404).json({ error: "Not found" });
-    return;
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatJob(row));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(formatJob(row));
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res, next) => {
   const parsed = DeleteJobParams.safeParse({ id: Number(req.params["id"]) });
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid ID" });
     return;
   }
 
-  await db.delete(jobsTable).where(eq(jobsTable.id, parsed.data.id));
-  res.status(204).send();
+  try {
+    await db.delete(jobsTable).where(eq(jobsTable.id, parsed.data.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

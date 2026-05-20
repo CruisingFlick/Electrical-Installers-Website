@@ -8,6 +8,7 @@ import {
   UpdatePortfolioItemBody,
   UpdatePortfolioItemParams,
 } from "@workspace/api-zod";
+import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
@@ -20,20 +21,24 @@ function formatItem(item: typeof portfolioTable.$inferSelect) {
   };
 }
 
-router.get("/", async (req, res) => {
-  const parsed = ListPortfolioItemsQueryParams.safeParse(req.query);
-  const category = parsed.success ? parsed.data.category : undefined;
+router.get("/", async (req, res, next) => {
+  try {
+    const parsed = ListPortfolioItemsQueryParams.safeParse(req.query);
+    const category = parsed.success ? parsed.data.category : undefined;
 
-  const rows = await db
-    .select()
-    .from(portfolioTable)
-    .where(category ? eq(portfolioTable.category, category) : undefined)
-    .orderBy(desc(portfolioTable.createdAt));
+    const rows = await db
+      .select()
+      .from(portfolioTable)
+      .where(category ? eq(portfolioTable.category, category) : undefined)
+      .orderBy(desc(portfolioTable.createdAt));
 
-  res.json(rows.map(formatItem));
+    res.json(rows.map(formatItem));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", requireAdmin, async (req, res, next) => {
   const parsed = CreatePortfolioItemBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -59,11 +64,11 @@ router.post("/", async (req, res) => {
     const drizzleErr = err as { message?: string; cause?: { message?: string; code?: string; detail?: string } };
     const cause = drizzleErr.cause;
     req.log.error({ pgCode: cause?.code, pgDetail: cause?.detail, pgMsg: cause?.message }, "portfolio insert failed");
-    res.status(500).json({ error: "Failed to save portfolio item" });
+    next(err);
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireAdmin, async (req, res, next) => {
   const parsedParams = UpdatePortfolioItemParams.safeParse({
     id: Number(req.params["id"]),
   });
@@ -78,21 +83,25 @@ router.put("/:id", async (req, res) => {
     return;
   }
 
-  const [row] = await db
-    .update(portfolioTable)
-    .set(parsedBody.data)
-    .where(eq(portfolioTable.id, parsedParams.data.id))
-    .returning();
+  try {
+    const [row] = await db
+      .update(portfolioTable)
+      .set(parsedBody.data)
+      .where(eq(portfolioTable.id, parsedParams.data.id))
+      .returning();
 
-  if (!row) {
-    res.status(404).json({ error: "Not found" });
-    return;
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatItem(row));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(formatItem(row));
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res, next) => {
   const parsed = DeletePortfolioItemParams.safeParse({
     id: Number(req.params["id"]),
   });
@@ -101,8 +110,12 @@ router.delete("/:id", async (req, res) => {
     return;
   }
 
-  await db.delete(portfolioTable).where(eq(portfolioTable.id, parsed.data.id));
-  res.status(204).send();
+  try {
+    await db.delete(portfolioTable).where(eq(portfolioTable.id, parsed.data.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

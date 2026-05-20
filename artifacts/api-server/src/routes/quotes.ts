@@ -7,6 +7,7 @@ import {
   UpdateQuoteStatusParams,
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
+import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
@@ -43,7 +44,6 @@ async function sendQuoteEmails(quote: {
     const transporter = createTransporter();
     const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
 
-    // Thank-you email to customer
     await transporter.sendMail({
       from,
       to: quote.customerEmail,
@@ -52,7 +52,6 @@ async function sendQuoteEmails(quote: {
       html: `<p>Hi ${quote.customerName},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will review it and be in touch shortly.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
-    // Notification email to business
     await transporter.sendMail({
       from,
       to: BUSINESS_EMAIL,
@@ -87,33 +86,41 @@ async function sendQuoteEmails(quote: {
   }
 }
 
-router.get("/", async (req, res) => {
-  const rows = await db
-    .select()
-    .from(quotesTable)
-    .orderBy(desc(quotesTable.createdAt));
+router.get("/", requireAdmin, async (req, res, next) => {
+  try {
+    const rows = await db
+      .select()
+      .from(quotesTable)
+      .orderBy(desc(quotesTable.createdAt));
 
-  res.json(rows.map(formatQuote));
+    res.json(rows.map(formatQuote));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   const parsed = CreateQuoteBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [row] = await db
-    .insert(quotesTable)
-    .values({ ...parsed.data, status: "pending" })
-    .returning();
+  try {
+    const [row] = await db
+      .insert(quotesTable)
+      .values({ ...parsed.data, status: "pending" })
+      .returning();
 
-  await sendQuoteEmails(parsed.data);
+    void sendQuoteEmails(parsed.data);
 
-  res.status(201).json(formatQuote(row));
+    res.status(201).json(formatQuote(row));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireAdmin, async (req, res, next) => {
   const paramParsed = UpdateQuoteStatusParams.safeParse({
     id: Number(req.params["id"]),
   });
@@ -128,18 +135,22 @@ router.patch("/:id", async (req, res) => {
     return;
   }
 
-  const [row] = await db
-    .update(quotesTable)
-    .set({ status: bodyParsed.data.status })
-    .where(eq(quotesTable.id, paramParsed.data.id))
-    .returning();
+  try {
+    const [row] = await db
+      .update(quotesTable)
+      .set({ status: bodyParsed.data.status })
+      .where(eq(quotesTable.id, paramParsed.data.id))
+      .returning();
 
-  if (!row) {
-    res.status(404).json({ error: "Not found" });
-    return;
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatQuote(row));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(formatQuote(row));
 });
 
 export default router;

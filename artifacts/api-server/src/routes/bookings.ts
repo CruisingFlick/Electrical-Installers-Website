@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, bookingsTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import {
   CreateBookingBody,
   UpdateBookingStatusBody,
@@ -10,6 +10,7 @@ import {
   ListBookingsQueryParams,
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
+import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
@@ -48,7 +49,6 @@ async function sendBookingEmails(booking: {
     const transporter = createTransporter();
     const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
 
-    // Thank-you email to customer
     await transporter.sendMail({
       from,
       to: booking.customerEmail,
@@ -57,7 +57,6 @@ async function sendBookingEmails(booking: {
       html: `<p>Hi ${booking.customerName},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
-    // Notification email to business
     await transporter.sendMail({
       from,
       to: BUSINESS_EMAIL,
@@ -96,57 +95,69 @@ async function sendBookingEmails(booking: {
   }
 }
 
-router.get("/", async (req, res) => {
-  const parsed = ListBookingsQueryParams.safeParse(req.query);
-  const status = parsed.success ? parsed.data.status : undefined;
+router.get("/", requireAdmin, async (req, res, next) => {
+  try {
+    const parsed = ListBookingsQueryParams.safeParse(req.query);
+    const status = parsed.success ? parsed.data.status : undefined;
 
-  const rows = await db
-    .select()
-    .from(bookingsTable)
-    .where(status ? eq(bookingsTable.status, status) : undefined)
-    .orderBy(desc(bookingsTable.createdAt));
+    const rows = await db
+      .select()
+      .from(bookingsTable)
+      .where(status ? eq(bookingsTable.status, status) : undefined)
+      .orderBy(desc(bookingsTable.createdAt));
 
-  res.json(rows.map(formatBooking));
+    res.json(rows.map(formatBooking));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req, res, next) => {
   const parsed = CreateBookingBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
 
-  const [row] = await db
-    .insert(bookingsTable)
-    .values({ ...parsed.data, status: "pending" })
-    .returning();
+  try {
+    const [row] = await db
+      .insert(bookingsTable)
+      .values({ ...parsed.data, status: "pending" })
+      .returning();
 
-  await sendBookingEmails(parsed.data);
+    void sendBookingEmails(parsed.data);
 
-  res.status(201).json(formatBooking(row));
+    res.status(201).json(formatBooking(row));
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireAdmin, async (req, res, next) => {
   const parsed = GetBookingParams.safeParse({ id: Number(req.params["id"]) });
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid ID" });
     return;
   }
 
-  const [row] = await db
-    .select()
-    .from(bookingsTable)
-    .where(eq(bookingsTable.id, parsed.data.id));
+  try {
+    const [row] = await db
+      .select()
+      .from(bookingsTable)
+      .where(eq(bookingsTable.id, parsed.data.id));
 
-  if (!row) {
-    res.status(404).json({ error: "Not found" });
-    return;
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatBooking(row));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(formatBooking(row));
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", requireAdmin, async (req, res, next) => {
   const paramParsed = UpdateBookingStatusParams.safeParse({
     id: Number(req.params["id"]),
   });
@@ -161,29 +172,37 @@ router.patch("/:id", async (req, res) => {
     return;
   }
 
-  const [row] = await db
-    .update(bookingsTable)
-    .set({ status: bodyParsed.data.status })
-    .where(eq(bookingsTable.id, paramParsed.data.id))
-    .returning();
+  try {
+    const [row] = await db
+      .update(bookingsTable)
+      .set({ status: bodyParsed.data.status })
+      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .returning();
 
-  if (!row) {
-    res.status(404).json({ error: "Not found" });
-    return;
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatBooking(row));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(formatBooking(row));
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireAdmin, async (req, res, next) => {
   const parsed = DeleteBookingParams.safeParse({ id: Number(req.params["id"]) });
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid ID" });
     return;
   }
 
-  await db.delete(bookingsTable).where(eq(bookingsTable.id, parsed.data.id));
-  res.status(204).send();
+  try {
+    await db.delete(bookingsTable).where(eq(bookingsTable.id, parsed.data.id));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

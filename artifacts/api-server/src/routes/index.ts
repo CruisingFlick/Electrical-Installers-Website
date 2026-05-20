@@ -6,10 +6,12 @@ import reviewsRouter from "./reviews";
 import quotesRouter from "./quotes";
 import analyticsRouter from "./analytics";
 import jobsRouter from "./jobs";
+import adminLoginRouter from "./admin-login";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use("/admin", adminLoginRouter);
 router.use("/bookings", bookingsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/reviews", reviewsRouter);

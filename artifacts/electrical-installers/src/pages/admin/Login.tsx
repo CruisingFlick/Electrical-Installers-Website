@@ -1,21 +1,36 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Zap, Lock } from "lucide-react";
-
-const ADMIN_PASSWORD = "admin123";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem("admin_auth", "true");
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!res.ok) {
+        setError("Incorrect password. Please try again.");
+        return;
+      }
+      const { token } = (await res.json()) as { token: string };
+      localStorage.setItem("admin_token", token);
+      setAuthTokenGetter(() => localStorage.getItem("admin_token"));
       setLocation("/admin/dashboard");
-    } else {
-      setError("Incorrect password. Please try again.");
+    } catch {
+      setError("Unable to connect to server. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -41,16 +56,18 @@ export default function AdminLogin() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
               placeholder="Enter admin password"
+              autoComplete="current-password"
               data-testid="input-admin-password"
             />
           </div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-[hsl(214,60%,20%)] text-white font-semibold py-2.5 rounded-lg hover:bg-[hsl(214,60%,14%)] transition-colors"
+            disabled={loading}
+            className="w-full bg-[hsl(214,60%,20%)] text-white font-semibold py-2.5 rounded-lg hover:bg-[hsl(214,60%,14%)] transition-colors disabled:opacity-60"
             data-testid="button-admin-login"
           >
-            Sign In
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
       </div>

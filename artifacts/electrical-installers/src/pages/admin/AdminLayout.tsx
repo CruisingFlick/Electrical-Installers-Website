@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, X } from "lucide-react";
+import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu } from "lucide-react";
 import { useState } from "react";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -15,8 +16,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  function logout() {
-    localStorage.removeItem("admin_auth");
+  async function logout() {
+    const token = localStorage.getItem("admin_token");
+    if (token) {
+      try {
+        await fetch("/api/admin/logout", {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch {
+        // Best-effort logout
+      }
+    }
+    localStorage.removeItem("admin_token");
+    setAuthTokenGetter(null);
     setLocation("/admin");
   }
 

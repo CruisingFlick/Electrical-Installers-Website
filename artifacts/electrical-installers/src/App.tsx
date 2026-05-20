@@ -27,7 +27,7 @@ import AdminJobMap from "@/pages/admin/JobMap";
 const queryClient = new QueryClient();
 
 function isAdminAuth() {
-  return localStorage.getItem("admin_auth") === "true";
+  return Boolean(localStorage.getItem("admin_token"));
 }
 
 function AdminGuard({ component: Component }: { component: React.ComponentType }) {
