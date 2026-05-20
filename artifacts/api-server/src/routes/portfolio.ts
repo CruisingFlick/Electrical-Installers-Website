@@ -40,20 +40,27 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const [row] = await db
-    .insert(portfolioTable)
-    .values({
-      title: parsed.data.title,
-      description: parsed.data.description,
-      category: parsed.data.category,
-      suburb: parsed.data.suburb,
-      completedDate: parsed.data.completedDate,
-      afterImageUrls: parsed.data.afterImageUrls,
-      beforeImageUrls: parsed.data.beforeImageUrls ?? [],
-    })
-    .returning();
+  try {
+    const [row] = await db
+      .insert(portfolioTable)
+      .values({
+        title: parsed.data.title,
+        description: parsed.data.description,
+        category: parsed.data.category,
+        suburb: parsed.data.suburb,
+        completedDate: parsed.data.completedDate,
+        afterImageUrls: parsed.data.afterImageUrls,
+        beforeImageUrls: parsed.data.beforeImageUrls ?? [],
+      })
+      .returning();
 
-  res.status(201).json(formatItem(row));
+    res.status(201).json(formatItem(row));
+  } catch (err: unknown) {
+    const drizzleErr = err as { message?: string; cause?: { message?: string; code?: string; detail?: string } };
+    const cause = drizzleErr.cause;
+    req.log.error({ pgCode: cause?.code, pgDetail: cause?.detail, pgMsg: cause?.message }, "portfolio insert failed");
+    res.status(500).json({ error: "Failed to save portfolio item" });
+  }
 });
 
 router.put("/:id", async (req, res) => {
