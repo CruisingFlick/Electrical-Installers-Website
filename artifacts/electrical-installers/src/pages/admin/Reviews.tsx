@@ -1,13 +1,15 @@
 import { useListReviews, useUpdateReviewStatus, useDeleteReview, getListReviewsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Star, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { Star, CheckCircle, XCircle, Trash2, Search, X } from "lucide-react";
 import AdminLayout from "./AdminLayout";
+import { useState, useMemo } from "react";
 
 export default function AdminReviews() {
   const queryClient = useQueryClient();
   const { data: reviews = [], isLoading } = useListReviews();
   const updateStatus = useUpdateReviewStatus();
   const del = useDeleteReview();
+  const [search, setSearch] = useState("");
 
   function approve(id: number) {
     updateStatus.mutate({ id, data: { status: "approved" } }, {
@@ -27,14 +29,51 @@ export default function AdminReviews() {
     }
   }
 
-  const pending = reviews.filter(r => r.status === "pending");
-  const approved = reviews.filter(r => r.status === "approved");
-  const rejected = reviews.filter(r => r.status === "rejected");
+  const filteredReviews = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return reviews;
+    return reviews.filter((r) =>
+      r.customerName.toLowerCase().includes(q) ||
+      (r.suburb ?? "").toLowerCase().includes(q) ||
+      (r.comment ?? "").toLowerCase().includes(q) ||
+      (r.serviceType ?? "").toLowerCase().includes(q)
+    );
+  }, [reviews, search]);
+
+  const pending = filteredReviews.filter(r => r.status === "pending");
+  const approved = filteredReviews.filter(r => r.status === "approved");
+  const rejected = filteredReviews.filter(r => r.status === "rejected");
 
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Review Moderation</h1>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Review Moderation</h1>
+          <div className="relative flex-1 max-w-sm">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, suburb, comment…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+              data-testid="reviews-search"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          {search && (
+            <p className="text-xs text-gray-500 shrink-0">
+              {filteredReviews.length} of {reviews.length} reviews
+            </p>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-gray-100 h-20 rounded-xl animate-pulse" />)}</div>
@@ -118,8 +157,10 @@ export default function AdminReviews() {
               </section>
             )}
 
-            {reviews.length === 0 && (
-              <div className="text-center py-16 text-gray-500">No reviews yet.</div>
+            {filteredReviews.length === 0 && (
+              <div className="text-center py-16 text-gray-500">
+                {reviews.length === 0 ? "No reviews yet." : "No reviews match your search."}
+              </div>
             )}
           </>
         )}

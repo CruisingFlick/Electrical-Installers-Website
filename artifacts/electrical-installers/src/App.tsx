@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ShareButton from "@/components/ShareButton";
 import { Phone } from "lucide-react";
 
 import HomePage from "@/pages/Home";
@@ -52,6 +53,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
         <Phone size={22} />
         Call Now — 0419 868 703
       </a>
+      <ShareButton />
     </div>
   );
 }
