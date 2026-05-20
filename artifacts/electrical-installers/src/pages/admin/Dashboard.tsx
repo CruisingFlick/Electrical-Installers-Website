@@ -1,6 +1,7 @@
 import { useGetAnalyticsSummary, useGetBookingsByService, useGetBookingsByRegion, useListBookings } from "@workspace/api-client-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Calendar, Star, FileText, Image, TrendingUp, MapPin } from "lucide-react";
+import { Calendar, Star, FileText, Image, TrendingUp, MapPin, ChevronRight } from "lucide-react";
+import { Link } from "wouter";
 import AdminLayout from "./AdminLayout";
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number | string; color: string }) {
@@ -95,18 +96,22 @@ export default function AdminDashboard() {
         {/* Recent pending bookings */}
         {bookings.length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold text-[hsl(214,60%,14%)]">Pending Bookings</h3>
+              <Link href="/admin/bookings" className="text-xs text-[hsl(25,95%,53%)] hover:underline font-medium">View all</Link>
             </div>
             <div className="divide-y divide-gray-50">
               {bookings.slice(0, 5).map((b) => (
-                <div key={b.id} className="px-5 py-3 flex items-center justify-between" data-testid={`pending-booking-${b.id}`}>
+                <Link key={b.id} href="/admin/bookings" className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer" data-testid={`pending-booking-${b.id}`}>
                   <div>
                     <p className="font-medium text-sm text-[hsl(214,60%,14%)]">{b.customerName}</p>
                     <p className="text-xs text-gray-500">{b.suburb} &bull; {b.jobType} &bull; {b.preferredDate}</p>
                   </div>
-                  <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Pending</span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Pending</span>
+                    <ChevronRight size={14} className="text-gray-400" />
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
