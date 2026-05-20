@@ -82,10 +82,10 @@ export interface PortfolioItem {
   title: string;
   description: string;
   category: string;
-  beforeImageUrls?: string[] | null;
+  beforeImageUrls?: string[];
   afterImageUrls: string[];
   suburb: string;
-  completedDate?: string | null;
+  completedDate: string;
   createdAt: string;
 }
 
@@ -96,7 +96,7 @@ export interface CreatePortfolioItemBody {
   beforeImageUrls?: string[];
   afterImageUrls: string[];
   suburb: string;
-  completedDate?: string;
+  completedDate: string;
 }
 
 export interface UpdatePortfolioItemBody {
@@ -270,6 +270,32 @@ export const UpdateJobStatusBodyStatus = {
 
 export interface UpdateJobStatusBody {
   status: UpdateJobStatusBodyStatus;
+}
+
+export interface OpenaiConversation {
+  id: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface OpenaiMessage {
+  id: number;
+  conversationId: number;
+  role: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface OpenaiConversationInput {
+  title: string;
+}
+
+export interface OpenaiMessageInput {
+  content: string;
+}
+
+export interface OpenaiError {
+  error: string;
 }
 
 export type ListBookingsParams = {

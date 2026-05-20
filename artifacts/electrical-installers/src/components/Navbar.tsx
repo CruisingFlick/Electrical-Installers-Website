@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Phone } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -42,6 +42,16 @@ export default function Navbar() {
               </Link>
             ))}
           </nav>
+
+          {/* Desktop click-to-call */}
+          <a
+            href="tel:0419868703"
+            className="hidden md:flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
+            data-testid="nav-call-button"
+          >
+            <Phone size={15} />
+            0419 868 703
+          </a>
 
           <button
             className="md:hidden p-2 rounded"

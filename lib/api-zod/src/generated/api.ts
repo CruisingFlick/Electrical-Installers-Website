@@ -8,6 +8,42 @@
 import * as zod from "zod";
 
 /**
+ * @summary Create a new conversation
+ */
+export const CreateOpenaiConversationBody = zod.object({
+  title: zod.string(),
+});
+
+/**
+ * @summary List messages in a conversation
+ */
+export const ListOpenaiMessagesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListOpenaiMessagesResponseItem = zod.object({
+  id: zod.number(),
+  conversationId: zod.number(),
+  role: zod.string(),
+  content: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListOpenaiMessagesResponse = zod.array(
+  ListOpenaiMessagesResponseItem,
+);
+
+/**
+ * @summary Send a text message and receive a streaming text response
+ */
+export const SendOpenaiMessageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SendOpenaiMessageBody = zod.object({
+  content: zod.string(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -121,10 +157,10 @@ export const ListPortfolioItemsResponseItem = zod.object({
   title: zod.string(),
   description: zod.string(),
   category: zod.string(),
-  beforeImageUrls: zod.array(zod.string()).nullable(),
+  beforeImageUrls: zod.array(zod.string()).optional(),
   afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
-  completedDate: zod.string().nullable(),
+  completedDate: zod.string(),
   createdAt: zod.string(),
 });
 export const ListPortfolioItemsResponse = zod.array(
@@ -139,14 +175,18 @@ export const CreatePortfolioItemBody = zod.object({
   description: zod.string(),
   category: zod.string(),
   beforeImageUrls: zod.array(zod.string()).optional(),
-  afterImageUrls: zod.array(zod.string()).min(1),
+  afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
-  completedDate: zod.string().optional(),
+  completedDate: zod.string(),
 });
 
 /**
  * @summary Update a portfolio item
  */
+export const UpdatePortfolioItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
 export const UpdatePortfolioItemBody = zod.object({
   title: zod.string().optional(),
   description: zod.string().optional(),
@@ -157,8 +197,16 @@ export const UpdatePortfolioItemBody = zod.object({
   completedDate: zod.string().optional(),
 });
 
-export const UpdatePortfolioItemParams = zod.object({
-  id: zod.coerce.number(),
+export const UpdatePortfolioItemResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  category: zod.string(),
+  beforeImageUrls: zod.array(zod.string()).optional(),
+  afterImageUrls: zod.array(zod.string()),
+  suburb: zod.string(),
+  completedDate: zod.string(),
+  createdAt: zod.string(),
 });
 
 /**

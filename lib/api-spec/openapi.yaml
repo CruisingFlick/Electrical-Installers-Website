@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: openai
+    description: OpenAI AI chat operations
   - name: bookings
     description: Customer booking requests
   - name: portfolio
@@ -24,6 +26,66 @@ tags:
     description: Job tracking with map pins
 
 paths:
+  /openai/conversations:
+    post:
+      operationId: createOpenaiConversation
+      tags: [openai]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenaiConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenaiConversation"
+  /openai/conversations/{id}/messages:
+    get:
+      operationId: listOpenaiMessages
+      tags: [openai]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OpenaiMessage"
+    post:
+      operationId: sendOpenaiMessage
+      tags: [openai]
+      summary: Send a text message and receive a streaming text response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenaiMessageInput"
+      responses:
+        "200":
+          description: SSE stream of assistant text chunks
+          content:
+            text/event-stream: {}
+
   /healthz:
     get:
       operationId: healthCheck
@@ -168,6 +230,31 @@ paths:
                 $ref: "#/components/schemas/PortfolioItem"
 
   /portfolio/{id}:
+    put:
+      operationId: updatePortfolioItem
+      tags: [portfolio]
+      summary: Update a portfolio item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePortfolioItemBody"
+      responses:
+        "200":
+          description: Updated portfolio item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioItem"
+        "404":
+          description: Not found
     delete:
       operationId: deletePortfolioItem
       tags: [portfolio]
@@ -528,10 +615,14 @@ components:
           type: string
         category:
           type: string
-        beforeImageUrl:
-          type: string
-        afterImageUrl:
-          type: string
+        beforeImageUrls:
+          type: array
+          items:
+            type: string
+        afterImageUrls:
+          type: array
+          items:
+            type: string
         suburb:
           type: string
         completedDate:
@@ -543,7 +634,7 @@ components:
         - title
         - description
         - category
-        - afterImageUrl
+        - afterImageUrls
         - suburb
         - completedDate
         - createdAt
@@ -557,10 +648,14 @@ components:
           type: string
         category:
           type: string
-        beforeImageUrl:
-          type: string
-        afterImageUrl:
-          type: string
+        beforeImageUrls:
+          type: array
+          items:
+            type: string
+        afterImageUrls:
+          type: array
+          items:
+            type: string
         suburb:
           type: string
         completedDate:
@@ -569,9 +664,31 @@ components:
         - title
         - description
         - category
-        - afterImageUrl
+        - afterImageUrls
         - suburb
         - completedDate
+
+    UpdatePortfolioItemBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        beforeImageUrls:
+          type: array
+          items:
+            type: string
+        afterImageUrls:
+          type: array
+          items:
+            type: string
+        suburb:
+          type: string
+        completedDate:
+          type: string
 
     Review:
       type: object
@@ -833,3 +950,59 @@ components:
           enum: [pending, accepted, in_progress, completed]
       required:
         - status
+
+    OpenaiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    OpenaiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    OpenaiConversationInput:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    OpenaiMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    OpenaiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

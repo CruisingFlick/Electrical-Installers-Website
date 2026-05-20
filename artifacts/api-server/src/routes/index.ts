@@ -7,6 +7,7 @@ import quotesRouter from "./quotes";
 import analyticsRouter from "./analytics";
 import jobsRouter from "./jobs";
 import adminLoginRouter from "./admin-login";
+import openaiRouter from "./openai";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/reviews", reviewsRouter);
 router.use("/quotes", quotesRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/jobs", jobsRouter);
+router.use("/openai", openaiRouter);
 
 export default router;

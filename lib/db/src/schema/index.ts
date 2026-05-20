@@ -3,3 +3,5 @@ export * from "./portfolio";
 export * from "./reviews";
 export * from "./quotes";
 export * from "./jobs";
+export * from "./conversations";
+export * from "./messages";

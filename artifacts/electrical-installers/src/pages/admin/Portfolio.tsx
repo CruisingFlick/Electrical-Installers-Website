@@ -369,7 +369,7 @@ export default function AdminPortfolio() {
           description: addForm.description,
           category: addForm.category,
           suburb: addForm.suburb,
-          completedDate: addForm.completedDate || undefined,
+          completedDate: addForm.completedDate || "",
           afterImageUrls: addForm.afterImageUrls,
           beforeImageUrls:
             addForm.beforeImageUrls.length > 0

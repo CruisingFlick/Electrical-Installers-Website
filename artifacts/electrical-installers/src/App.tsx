@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ShareButton from "@/components/ShareButton";
+import ChatWidget from "@/components/ChatWidget";
 import { Phone } from "lucide-react";
 
 import HomePage from "@/pages/Home";
@@ -54,6 +55,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
         Call Now — 0419 868 703
       </a>
       <ShareButton />
+      <ChatWidget />
     </div>
   );
 }
