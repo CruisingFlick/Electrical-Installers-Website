@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu } from "lucide-react";
+import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot } from "lucide-react";
 import { useState } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/reviews", icon: Star, label: "Reviews" },
   { href: "/admin/quotes", icon: FileText, label: "Quotes" },
   { href: "/admin/jobs", icon: Map, label: "Job Map" },
+  { href: "/admin/ai-settings", icon: Bot, label: "AI Chat" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

@@ -298,6 +298,14 @@ export interface OpenaiError {
   error: string;
 }
 
+export interface AiSettings {
+  systemPrompt: string;
+}
+
+export interface UpdateAiSettingsBody {
+  systemPrompt: string;
+}
+
 export type ListBookingsParams = {
   status?: ListBookingsStatus;
 };

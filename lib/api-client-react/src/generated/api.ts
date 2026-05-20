@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AiSettings,
   AnalyticsSummary,
   Booking,
   CreateBookingBody,
@@ -38,6 +39,7 @@ import type {
   RegionCount,
   Review,
   ServiceCount,
+  UpdateAiSettingsBody,
   UpdateBookingStatusBody,
   UpdateJobStatusBody,
   UpdatePortfolioItemBody,
@@ -53,6 +55,167 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary Get AI chat settings (system prompt)
+ */
+export const getGetAiSettingsUrl = () => {
+  return `/api/admin/ai-settings`;
+};
+
+export const getAiSettings = async (
+  options?: RequestInit,
+): Promise<AiSettings> => {
+  return customFetch<AiSettings>(getGetAiSettingsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAiSettingsQueryKey = () => {
+  return [`/api/admin/ai-settings`] as const;
+};
+
+export const getGetAiSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAiSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAiSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetAiSettingsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getAiSettings>>> = ({
+    signal,
+  }) => getAiSettings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAiSettings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAiSettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAiSettings>>
+>;
+export type GetAiSettingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get AI chat settings (system prompt)
+ */
+
+export function useGetAiSettings<
+  TData = Awaited<ReturnType<typeof getAiSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getAiSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAiSettingsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update AI chat settings (system prompt)
+ */
+export const getUpdateAiSettingsUrl = () => {
+  return `/api/admin/ai-settings`;
+};
+
+export const updateAiSettings = async (
+  updateAiSettingsBody: UpdateAiSettingsBody,
+  options?: RequestInit,
+): Promise<AiSettings> => {
+  return customFetch<AiSettings>(getUpdateAiSettingsUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateAiSettingsBody),
+  });
+};
+
+export const getUpdateAiSettingsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateAiSettings>>,
+    TError,
+    { data: BodyType<UpdateAiSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateAiSettings>>,
+  TError,
+  { data: BodyType<UpdateAiSettingsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateAiSettings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateAiSettings>>,
+    { data: BodyType<UpdateAiSettingsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateAiSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateAiSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateAiSettings>>
+>;
+export type UpdateAiSettingsMutationBody = BodyType<UpdateAiSettingsBody>;
+export type UpdateAiSettingsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update AI chat settings (system prompt)
+ */
+export const useUpdateAiSettings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateAiSettings>>,
+    TError,
+    { data: BodyType<UpdateAiSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateAiSettings>>,
+  TError,
+  { data: BodyType<UpdateAiSettingsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateAiSettingsMutationOptions(options));
+};
 
 /**
  * @summary Create a new conversation

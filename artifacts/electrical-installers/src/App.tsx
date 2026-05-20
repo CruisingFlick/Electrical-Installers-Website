@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ShareButton from "@/components/ShareButton";
+import QrButton from "@/components/QrButton";
 import ChatWidget from "@/components/ChatWidget";
 import { Phone } from "lucide-react";
 
@@ -25,6 +26,7 @@ import AdminPortfolio from "@/pages/admin/Portfolio";
 import AdminReviews from "@/pages/admin/Reviews";
 import AdminQuotes from "@/pages/admin/Quotes";
 import AdminJobMap from "@/pages/admin/JobMap";
+import AdminAiSettings from "@/pages/admin/AiSettings";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
         <Phone size={22} />
         Call Now — 0419 868 703
       </a>
+      <QrButton />
       <ShareButton />
       <ChatWidget />
     </div>
@@ -81,6 +84,7 @@ function Router() {
       <Route path="/admin/reviews" component={() => <AdminGuard component={AdminReviews} />} />
       <Route path="/admin/quotes" component={() => <AdminGuard component={AdminQuotes} />} />
       <Route path="/admin/jobs" component={() => <AdminGuard component={AdminJobMap} />} />
+      <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
 
       <Route component={NotFound} />
     </Switch>

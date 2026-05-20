@@ -8,6 +8,24 @@
 import * as zod from "zod";
 
 /**
+ * @summary Get AI chat settings (system prompt)
+ */
+export const GetAiSettingsResponse = zod.object({
+  systemPrompt: zod.string(),
+});
+
+/**
+ * @summary Update AI chat settings (system prompt)
+ */
+export const UpdateAiSettingsBody = zod.object({
+  systemPrompt: zod.string(),
+});
+
+export const UpdateAiSettingsResponse = zod.object({
+  systemPrompt: zod.string(),
+});
+
+/**
  * @summary Create a new conversation
  */
 export const CreateOpenaiConversationBody = zod.object({

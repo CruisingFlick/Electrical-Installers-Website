@@ -8,11 +8,13 @@ import analyticsRouter from "./analytics";
 import jobsRouter from "./jobs";
 import adminLoginRouter from "./admin-login";
 import openaiRouter from "./openai";
+import aiSettingsRouter from "./ai-settings";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use("/admin", adminLoginRouter);
+router.use("/admin", aiSettingsRouter);
 router.use("/bookings", bookingsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/reviews", reviewsRouter);
