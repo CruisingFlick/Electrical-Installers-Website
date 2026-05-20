@@ -22,7 +22,7 @@ function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -42,8 +42,12 @@ function PhotoUploadZone({ label, hint, value, onChange, testId }: PhotoUploadZo
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
-    const dataUrl = await fileToBase64(file);
-    onChange(dataUrl);
+    try {
+      const dataUrl = await fileToBase64(file);
+      onChange(dataUrl);
+    } catch {
+      // silently skip files that fail to read
+    }
   }, [onChange]);
 
   function handleDrop(e: React.DragEvent) {

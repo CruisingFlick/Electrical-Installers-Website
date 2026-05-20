@@ -54,10 +54,10 @@ function compressImage(file: File, maxPx = 1200, quality = 0.75): Promise<string
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve(canvas.toDataURL("image/jpeg", quality));
       };
-      img.onerror = reject;
+      img.onerror = () => reject(new Error("Failed to load image"));
       img.src = e.target?.result as string;
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error("Failed to read file"));
     reader.readAsDataURL(file);
   });
 }
@@ -82,9 +82,13 @@ function MultiPhotoDropZone({
     (files: FileList | null) => {
       if (!files) return;
       const pending = Array.from(files).filter((f) => f.type.startsWith("image/"));
-      Promise.all(pending.map((f) => compressImage(f))).then((compressed) => {
-        onChange([...value, ...compressed]);
-      });
+      Promise.all(pending.map((f) => compressImage(f)))
+        .then((compressed) => {
+          onChange([...value, ...compressed]);
+        })
+        .catch(() => {
+          // silently skip files that fail to compress
+        });
     },
     [value, onChange]
   );
