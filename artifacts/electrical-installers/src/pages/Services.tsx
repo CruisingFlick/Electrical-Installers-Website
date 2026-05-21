@@ -36,6 +36,7 @@ const services = [
     title: "Underground Power",
     description: "Remove unsightly overhead power lines and improve the safety and aesthetics of your property. We manage the United Energy process from initial inspection through to final connection.",
     features: ["On-site inspection and assessment", "Site plan preparation and lodgement", "Trenching and cable installation", "Truck appointment coordination", "United Energy liaison"],
+    image: "/underground-power.jpg",
     link: "/underground-power",
     linkLabel: "Learn about the United Energy process",
   },
