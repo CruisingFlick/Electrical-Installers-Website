@@ -20,7 +20,7 @@ export default function HomePage() {
               Victorian Licensed Electricians
             </div>
             <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-4">
-              Mornington Peninsula&apos;s Trusted Electrical Specialists
+              Mornington Peninsula&apos;s Electrical Specialists
             </h1>
             <p className="text-[hsl(25,95%,63%)] font-semibold text-lg mb-4 tracking-wide">
               35 Years of Design Expertise. Precision Installation.
