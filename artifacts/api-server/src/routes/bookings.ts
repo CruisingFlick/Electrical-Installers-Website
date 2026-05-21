@@ -8,6 +8,8 @@ import {
   UpdateBookingStatusParams,
   DeleteBookingParams,
   ListBookingsQueryParams,
+  ConfirmBookingBody,
+  ConfirmBookingParams,
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../middleware/admin-auth";
@@ -128,6 +130,85 @@ router.post("/", async (req, res, next) => {
     void sendBookingEmails(parsed.data);
 
     res.status(201).json(formatBooking(row));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
+  const paramParsed = ConfirmBookingParams.safeParse({
+    id: Number(req.params["id"]),
+  });
+  if (!paramParsed.success) {
+    res.status(400).json({ error: "Invalid ID" });
+    return;
+  }
+
+  const bodyParsed = ConfirmBookingBody.safeParse(req.body);
+  if (!bodyParsed.success) {
+    res.status(400).json({ error: bodyParsed.error.message });
+    return;
+  }
+
+  try {
+    const [row] = await db
+      .update(bookingsTable)
+      .set({ status: "confirmed" })
+      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .returning();
+
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const { confirmedDate, adminNote } = bodyParsed.data;
+
+    try {
+      const transporter = createTransporter();
+      const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
+      const noteSection = adminNote
+        ? `\n\nMessage from us:\n${adminNote}`
+        : "";
+
+      await transporter.sendMail({
+        from,
+        to: row.customerEmail,
+        subject: "Your booking is confirmed — Electrical Installers",
+        text: [
+          `Hi ${row.customerName},`,
+          "",
+          `Great news! Your booking has been confirmed for:`,
+          ``,
+          `  Date/Time: ${confirmedDate}`,
+          `  Job:       ${row.jobType}`,
+          `  Suburb:    ${row.suburb}`,
+          noteSection,
+          "",
+          "If you need to make any changes, please call us on 0419 868 703.",
+          "",
+          "Kind regards,",
+          "Electrical Installers",
+          "Mornington Peninsula & Surrounding Areas",
+        ].join("\n"),
+        html: `
+          <p>Hi ${row.customerName},</p>
+          <p>Great news! Your booking has been confirmed for:</p>
+          <table style="border-collapse:collapse;width:100%;max-width:480px;font-family:sans-serif;font-size:14px;margin:12px 0;">
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:120px;">Date / Time</td><td style="padding:6px 12px;">${confirmedDate}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job</td><td style="padding:6px 12px;">${row.jobType}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${row.suburb}</td></tr>
+          </table>
+          ${adminNote ? `<p style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;border-radius:4px;margin:12px 0;">${adminNote.replace(/\n/g, "<br>")}</p>` : ""}
+          <p>If you need to make any changes, please call us on <strong>0419 868 703</strong>.</p>
+          <p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>
+        `,
+      });
+    } catch {
+      // Email sending is best-effort
+    }
+
+    res.json(formatBooking(row));
   } catch (err) {
     next(err);
   }

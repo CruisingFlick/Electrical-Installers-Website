@@ -109,6 +109,36 @@ export const CreateBookingBody = zod.object({
 });
 
 /**
+ * @summary Confirm a booking and notify the customer by email
+ */
+export const ConfirmBookingParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ConfirmBookingBody = zod.object({
+  confirmedDate: zod.string().describe("The scheduled date\/time for the job"),
+  adminNote: zod
+    .string()
+    .optional()
+    .describe("Optional message to include in the confirmation email"),
+});
+
+export const ConfirmBookingResponse = zod.object({
+  id: zod.number(),
+  customerName: zod.string(),
+  customerEmail: zod.string(),
+  customerPhone: zod.string().optional(),
+  serviceType: zod.enum(["consulting", "quoting", "work"]),
+  jobType: zod.string(),
+  suburb: zod.string(),
+  preferredDate: zod.string(),
+  message: zod.string().optional(),
+  photoUrl: zod.string().optional(),
+  status: zod.enum(["pending", "confirmed", "completed", "cancelled"]),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary Get a booking by ID
  */
 export const GetBookingParams = zod.object({

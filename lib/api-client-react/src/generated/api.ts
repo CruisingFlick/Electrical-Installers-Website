@@ -20,6 +20,7 @@ import type {
   AiSettings,
   AnalyticsSummary,
   Booking,
+  ConfirmBookingBody,
   CreateBookingBody,
   CreateJobBody,
   CreatePortfolioItemBody,
@@ -732,6 +733,93 @@ export const useCreateBooking = <
   TContext
 > => {
   return useMutation(getCreateBookingMutationOptions(options));
+};
+
+/**
+ * @summary Confirm a booking and notify the customer by email
+ */
+export const getConfirmBookingUrl = (id: number) => {
+  return `/api/bookings/${id}/confirm`;
+};
+
+export const confirmBooking = async (
+  id: number,
+  confirmBookingBody: ConfirmBookingBody,
+  options?: RequestInit,
+): Promise<Booking> => {
+  return customFetch<Booking>(getConfirmBookingUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(confirmBookingBody),
+  });
+};
+
+export const getConfirmBookingMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmBooking>>,
+    TError,
+    { id: number; data: BodyType<ConfirmBookingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof confirmBooking>>,
+  TError,
+  { id: number; data: BodyType<ConfirmBookingBody> },
+  TContext
+> => {
+  const mutationKey = ["confirmBooking"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof confirmBooking>>,
+    { id: number; data: BodyType<ConfirmBookingBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return confirmBooking(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConfirmBookingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof confirmBooking>>
+>;
+export type ConfirmBookingMutationBody = BodyType<ConfirmBookingBody>;
+export type ConfirmBookingMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Confirm a booking and notify the customer by email
+ */
+export const useConfirmBooking = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmBooking>>,
+    TError,
+    { id: number; data: BodyType<ConfirmBookingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof confirmBooking>>,
+  TError,
+  { id: number; data: BodyType<ConfirmBookingBody> },
+  TContext
+> => {
+  return useMutation(getConfirmBookingMutationOptions(options));
 };
 
 /**

@@ -1,8 +1,9 @@
-import { useListBookings, useUpdateBookingStatus, useDeleteBooking, getListBookingsQueryKey } from "@workspace/api-client-react";
+import { useListBookings, useDeleteBooking, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2, ImageIcon, Search, X } from "lucide-react";
+import { Trash2, ImageIcon, Search, X, ChevronRight } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useState, useMemo } from "react";
+import BookingDetailDrawer from "./BookingDetailDrawer";
 
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
@@ -13,32 +14,45 @@ const statusColors: Record<string, string> = {
 
 const STATUS_OPTIONS = ["all", "pending", "confirmed", "completed", "cancelled"] as const;
 
+type Booking = {
+  id: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  serviceType: string;
+  jobType: string;
+  suburb: string;
+  preferredDate: string;
+  message?: string | null;
+  photoUrl?: string | null;
+  status: string;
+  createdAt: string;
+};
+
 export default function AdminBookings() {
   const queryClient = useQueryClient();
   const { data: bookings = [], isLoading } = useListBookings();
-  const updateStatus = useUpdateBookingStatus();
   const deleteBooking = useDeleteBooking();
+
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("all");
-
-  function handleStatusChange(id: number, status: string) {
-    updateStatus.mutate({ id, data: { status: status as "pending" | "confirmed" | "completed" | "cancelled" } }, {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }),
-    });
-  }
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   function handleDelete(id: number) {
     if (confirm("Delete this booking?")) {
       deleteBooking.mutate({ id }, {
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+          if (selectedBooking?.id === id) setSelectedBooking(null);
+        },
       });
     }
   }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return bookings.filter((b) => {
+    return (bookings as Booking[]).filter((b) => {
       const matchesStatus = statusFilter === "all" || b.status === statusFilter;
       if (!matchesStatus) return false;
       if (!q) return true;
@@ -101,12 +115,12 @@ export default function AdminBookings() {
           <div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="bg-gray-100 h-12 rounded-lg animate-pulse" />)}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            {bookings.length === 0 ? "No bookings yet." : "No bookings match your search."}
+            {(bookings as Booking[]).length === 0 ? "No bookings yet." : "No bookings match your search."}
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs text-gray-500">
-              Showing {filtered.length} of {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+              Showing {filtered.length} of {(bookings as Booking[]).length} booking{(bookings as Booking[]).length !== 1 ? "s" : ""} — click a row to view details &amp; schedule
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -114,9 +128,8 @@ export default function AdminBookings() {
                   <tr>
                     <th className="px-4 py-3 text-left">Customer</th>
                     <th className="px-4 py-3 text-left">Service</th>
-                    <th className="px-4 py-3 text-left">Job Type</th>
                     <th className="px-4 py-3 text-left">Suburb</th>
-                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-left">Preferred Date</th>
                     <th className="px-4 py-3 text-left">Photo</th>
                     <th className="px-4 py-3 text-left">Status</th>
                     <th className="px-4 py-3 text-left">Actions</th>
@@ -124,55 +137,63 @@ export default function AdminBookings() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map((b) => (
-                    <tr key={b.id} className="hover:bg-gray-50" data-testid={`booking-row-${b.id}`}>
+                    <tr
+                      key={b.id}
+                      className={`hover:bg-blue-50/40 cursor-pointer transition-colors ${selectedBooking?.id === b.id ? "bg-blue-50/60" : ""}`}
+                      onClick={() => setSelectedBooking(b)}
+                      data-testid={`booking-row-${b.id}`}
+                    >
                       <td className="px-4 py-3">
                         <p className="font-medium text-[hsl(214,60%,14%)]">{b.customerName}</p>
                         <p className="text-xs text-gray-500">{b.customerEmail}</p>
                         {b.customerPhone && <p className="text-xs text-gray-500">{b.customerPhone}</p>}
                       </td>
-                      <td className="px-4 py-3 capitalize">{b.serviceType}</td>
-                      <td className="px-4 py-3">{b.jobType}</td>
+                      <td className="px-4 py-3">
+                        <p className="capitalize">{b.serviceType}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[140px]">{b.jobType}</p>
+                      </td>
                       <td className="px-4 py-3">{b.suburb}</td>
                       <td className="px-4 py-3">{b.preferredDate}</td>
                       <td className="px-4 py-3">
                         {b.photoUrl ? (
                           <button
                             type="button"
-                            onClick={() => setLightboxUrl(b.photoUrl!)}
+                            onClick={(e) => { e.stopPropagation(); setLightboxUrl(b.photoUrl!); }}
                             className="block"
                             data-testid={`booking-photo-${b.id}`}
                           >
                             <img
                               src={b.photoUrl}
                               alt="Job photo"
-                              className="w-12 h-12 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                              className="w-10 h-10 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
                             />
                           </button>
                         ) : (
-                          <span className="text-gray-300"><ImageIcon size={20} /></span>
+                          <span className="text-gray-300"><ImageIcon size={18} /></span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <select
-                          value={b.status}
-                          onChange={(e) => handleStatusChange(b.id, e.target.value)}
-                          className={`text-xs font-semibold px-2 py-1 rounded-full border-0 cursor-pointer ${statusColors[b.status] ?? "bg-gray-100 text-gray-800"}`}
-                          data-testid={`booking-status-${b.id}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize ${statusColors[b.status] ?? "bg-gray-100 text-gray-800"}`}>
+                          {b.status}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleDelete(b.id)}
-                          className="text-red-500 hover:text-red-700 p-1 rounded"
-                          data-testid={`button-delete-booking-${b.id}`}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setSelectedBooking(b); }}
+                            className="text-[hsl(214,60%,14%)] hover:text-[hsl(25,95%,53%)] p-1 rounded transition-colors"
+                            title="View details"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(b.id); }}
+                            className="text-red-500 hover:text-red-700 p-1 rounded"
+                            data-testid={`button-delete-booking-${b.id}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -196,6 +217,13 @@ export default function AdminBookings() {
             />
           </div>
         )}
+
+        {/* Booking detail drawer */}
+        <BookingDetailDrawer
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          onLightbox={(url) => setLightboxUrl(url)}
+        />
       </div>
     </AdminLayout>
   );

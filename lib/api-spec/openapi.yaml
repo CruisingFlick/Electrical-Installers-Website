@@ -171,6 +171,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Booking"
 
+  /bookings/{id}/confirm:
+    post:
+      operationId: confirmBooking
+      tags: [bookings]
+      summary: Confirm a booking and notify the customer by email
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmBookingBody"
+      responses:
+        "200":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
   /bookings/{id}:
     get:
       operationId: getBooking
@@ -654,6 +679,18 @@ components:
           enum: [pending, confirmed, completed, cancelled]
       required:
         - status
+
+    ConfirmBookingBody:
+      type: object
+      properties:
+        confirmedDate:
+          type: string
+          description: The scheduled date/time for the job
+        adminNote:
+          type: string
+          description: Optional message to include in the confirmation email
+      required:
+        - confirmedDate
 
     PortfolioItem:
       type: object

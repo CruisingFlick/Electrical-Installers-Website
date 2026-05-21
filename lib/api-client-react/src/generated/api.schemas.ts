@@ -77,6 +77,13 @@ export interface UpdateBookingStatusBody {
   status: UpdateBookingStatusBodyStatus;
 }
 
+export interface ConfirmBookingBody {
+  /** The scheduled date/time for the job */
+  confirmedDate: string;
+  /** Optional message to include in the confirmation email */
+  adminNote?: string;
+}
+
 export interface PortfolioItem {
   id: number;
   title: string;
