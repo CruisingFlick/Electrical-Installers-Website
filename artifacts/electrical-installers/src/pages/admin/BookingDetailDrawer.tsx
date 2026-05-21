@@ -36,11 +36,21 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
   const confirmBooking = useConfirmBooking();
   const updateStatus = useUpdateBookingStatus();
 
-  const [confirmedDate, setConfirmedDate] = useState("");
+  const [pickedDate, setPickedDate] = useState("");
+  const [pickedTime, setPickedTime] = useState("09:00");
   const [adminNote, setAdminNote] = useState("");
   const [sent, setSent] = useState(false);
 
   if (!booking) return null;
+
+  function formatConfirmedDate() {
+    if (!pickedDate) return "";
+    const d = new Date(`${pickedDate}T${pickedTime || "00:00"}`);
+    const datePart = d.toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+    if (!pickedTime) return datePart;
+    const timePart = d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true });
+    return `${datePart} at ${timePart}`;
+  }
 
   function handleStatusChange(status: string) {
     if (!booking) return;
@@ -51,7 +61,8 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
   }
 
   function handleConfirm() {
-    if (!booking || !confirmedDate) return;
+    if (!booking || !pickedDate) return;
+    const confirmedDate = formatConfirmedDate();
     confirmBooking.mutate(
       { id: booking.id, data: { confirmedDate, adminNote: adminNote || undefined } },
       {
@@ -190,16 +201,35 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
                       Confirmed Date &amp; Time <span className="text-red-400">*</span>
                     </label>
-                    <input
-                      type="text"
-                      placeholder={`e.g. ${booking.preferredDate}, 9:00 AM`}
-                      value={confirmedDate}
-                      onChange={(e) => setConfirmedDate(e.target.value)}
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
-                    />
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <input
+                          type="date"
+                          value={pickedDate}
+                          onChange={(e) => setPickedDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="w-full pl-8 pr-2 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)] cursor-pointer"
+                        />
+                      </div>
+                      <div className="relative w-36">
+                        <Clock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <input
+                          type="time"
+                          value={pickedTime}
+                          onChange={(e) => setPickedTime(e.target.value)}
+                          className="w-full pl-8 pr-2 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)] cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                    {pickedDate && (
+                      <p className="text-xs text-[hsl(214,60%,14%)] font-medium mt-1.5 bg-blue-50 px-2.5 py-1 rounded-lg inline-block">
+                        Will send: <strong>{formatConfirmedDate()}</strong>
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400 mt-1">
                       <Clock size={11} className="inline mr-1" />
                       Customer requested: <strong>{booking.preferredDate}</strong>
@@ -219,7 +249,7 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
                   </div>
                   <button
                     onClick={handleConfirm}
-                    disabled={!confirmedDate || confirmBooking.isPending}
+                    disabled={!pickedDate || confirmBooking.isPending}
                     className="w-full bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,46%)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
                     <CheckCircle size={16} />
