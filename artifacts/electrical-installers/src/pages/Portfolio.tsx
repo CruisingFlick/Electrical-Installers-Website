@@ -1,36 +1,116 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useListPortfolioItems, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
-import { Filter, Images } from "lucide-react";
-
-declare const GLightbox: (options: Record<string, unknown>) => { destroy: () => void };
+import { Filter, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 
 const categories = ["All", "New Homes", "3-Phase Upgrade", "Underground Power", "Commercial", "Renovations"];
 
 const FALLBACK = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800";
 const FALLBACK_BEFORE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800";
 
+interface LightboxPhoto {
+  url: string;
+  title: string;
+}
+
+interface LightboxState {
+  photos: LightboxPhoto[];
+  index: number;
+}
+
 export default function PortfolioPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+
   const { data: portfolio = [], isLoading } = useListPortfolioItems(
     selectedCategory ? { category: selectedCategory } : undefined,
     { query: { queryKey: getListPortfolioItemsQueryKey(selectedCategory ? { category: selectedCategory } : undefined) } }
   );
 
+  const openLightbox = (photos: LightboxPhoto[], index: number) => {
+    setLightbox({ photos, index });
+  };
+
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+
+  const goPrev = useCallback(() => {
+    setLightbox((lb) => lb ? { ...lb, index: (lb.index - 1 + lb.photos.length) % lb.photos.length } : null);
+  }, []);
+
+  const goNext = useCallback(() => {
+    setLightbox((lb) => lb ? { ...lb, index: (lb.index + 1) % lb.photos.length } : null);
+  }, []);
+
   useEffect(() => {
-    if (isLoading || portfolio.length === 0) return;
-    let lightbox: { destroy: () => void } | null = null;
-    const timer = setTimeout(() => {
-      if (typeof GLightbox === "undefined") return;
-      lightbox = GLightbox({ touchNavigation: true, loop: true });
-    }, 100);
-    return () => {
-      clearTimeout(timer);
-      lightbox?.destroy();
+    if (!lightbox) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowLeft") goPrev();
+      else if (e.key === "ArrowRight") goNext();
     };
-  }, [portfolio, isLoading]);
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightbox, closeLightbox, goPrev, goNext]);
 
   return (
     <div>
+      {/* Lightbox overlay */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+            onClick={closeLightbox}
+            aria-label="Close"
+          >
+            <X size={32} />
+          </button>
+
+          {/* Prev button */}
+          {lightbox.photos.length > 1 && (
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black/40 rounded-full p-2"
+              onClick={(e) => { e.stopPropagation(); goPrev(); }}
+              aria-label="Previous photo"
+            >
+              <ChevronLeft size={32} />
+            </button>
+          )}
+
+          {/* Image */}
+          <div
+            className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightbox.photos[lightbox.index].url}
+              alt={lightbox.photos[lightbox.index].title}
+              className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
+              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
+            />
+            <div className="text-white text-sm text-center">
+              {lightbox.photos[lightbox.index].title}
+              {lightbox.photos.length > 1 && (
+                <span className="text-gray-400 ml-2">({lightbox.index + 1} / {lightbox.photos.length})</span>
+              )}
+            </div>
+          </div>
+
+          {/* Next button */}
+          {lightbox.photos.length > 1 && (
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 transition-colors z-10 bg-black/40 rounded-full p-2"
+              onClick={(e) => { e.stopPropagation(); goNext(); }}
+              aria-label="Next photo"
+            >
+              <ChevronRight size={32} />
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="bg-[hsl(214,60%,14%)] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Our Portfolio</h1>
@@ -74,8 +154,18 @@ export default function PortfolioPage() {
               const afterPhotos = item.afterImageUrls ?? [];
               const beforePhotos = item.beforeImageUrls ?? [];
               const totalPhotos = afterPhotos.length + beforePhotos.length;
-              const galleryId = `portfolio-${item.id}`;
               const thumb = afterPhotos[0] ?? FALLBACK;
+
+              const allPhotos: LightboxPhoto[] = [
+                ...afterPhotos.map((url, i) => ({
+                  url: url || FALLBACK,
+                  title: `${item.title} — After${afterPhotos.length > 1 ? ` (${i + 1}/${afterPhotos.length})` : ""}`,
+                })),
+                ...beforePhotos.map((url, i) => ({
+                  url: url || FALLBACK_BEFORE,
+                  title: `${item.title} — Before${beforePhotos.length > 1 ? ` (${i + 1}/${beforePhotos.length})` : ""}`,
+                })),
+              ];
 
               return (
                 <div
@@ -83,35 +173,12 @@ export default function PortfolioPage() {
                   className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group"
                   data-testid={`portfolio-item-${item.id}`}
                 >
-                  {/* Hidden lightbox links for all photos in this project */}
-                  <div className="hidden">
-                    {afterPhotos.map((url, i) => (
-                      <a
-                        key={`after-${i}`}
-                        href={url || FALLBACK}
-                        className="glightbox"
-                        data-gallery={galleryId}
-                        data-title={`${item.title} — After${afterPhotos.length > 1 ? ` (${i + 1}/${afterPhotos.length})` : ""}`}
-                      />
-                    ))}
-                    {beforePhotos.map((url, i) => (
-                      <a
-                        key={`before-${i}`}
-                        href={url || FALLBACK_BEFORE}
-                        className="glightbox"
-                        data-gallery={galleryId}
-                        data-title={`${item.title} — Before${beforePhotos.length > 1 ? ` (${i + 1}/${beforePhotos.length})` : ""}`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Visible card thumbnail — clicking opens the gallery */}
+                  {/* Thumbnail */}
                   <div className="relative h-52 overflow-hidden">
-                    <a
-                      href={thumb}
-                      className="glightbox block w-full h-full"
-                      data-gallery={galleryId}
-                      data-title={`${item.title} — After${afterPhotos.length > 1 ? ` (1/${afterPhotos.length})` : ""}`}
+                    <button
+                      className="block w-full h-full text-left"
+                      onClick={() => openLightbox(allPhotos, 0)}
+                      aria-label={`Open photos for ${item.title}`}
                     >
                       <img
                         src={thumb}
@@ -119,7 +186,7 @@ export default function PortfolioPage() {
                         className="w-full h-full object-cover cursor-pointer transition-[filter,transform] duration-300 group-hover:scale-105 hover:brightness-110"
                         onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
                       />
-                    </a>
+                    </button>
 
                     {/* Photo count badge */}
                     {totalPhotos > 1 && (
@@ -144,9 +211,12 @@ export default function PortfolioPage() {
                     <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
                       <span>{item.suburb}</span>
                       {totalPhotos > 1 && (
-                        <span className="text-[hsl(25,95%,53%)] font-medium cursor-pointer">
+                        <button
+                          className="text-[hsl(25,95%,53%)] font-medium cursor-pointer hover:underline"
+                          onClick={() => openLightbox(allPhotos, 0)}
+                        >
                           View all {totalPhotos} photos →
-                        </span>
+                        </button>
                       )}
                     </div>
                   </div>
