@@ -4,11 +4,12 @@ import {
   useCreatePortfolioItem,
   useDeletePortfolioItem,
   useUpdatePortfolioItem,
+  useReorderPortfolioItems,
   getListPortfolioItemsQueryKey,
 } from "@workspace/api-client-react";
 import type { PortfolioItem } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X, ImagePlus, Pencil, Images, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, X, ImagePlus, Pencil, Images, ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 interface PortfolioForm {
@@ -385,6 +386,7 @@ export default function AdminPortfolio() {
   const create = useCreatePortfolioItem();
   const update = useUpdatePortfolioItem();
   const del = useDeletePortfolioItem();
+  const reorder = useReorderPortfolioItems();
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<PortfolioForm>(EMPTY_FORM);
@@ -392,6 +394,41 @@ export default function AdminPortfolio() {
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [editForm, setEditForm] = useState<PortfolioForm>(EMPTY_FORM);
   const [initialEditForm, setInitialEditForm] = useState<PortfolioForm>(EMPTY_FORM);
+
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+
+  function handleDragStart(id: number) {
+    setDraggedId(id);
+  }
+
+  function handleDragOver(e: React.DragEvent, id: number) {
+    e.preventDefault();
+    if (id !== draggedId) setDragOverId(id);
+  }
+
+  function handleDrop(targetId: number) {
+    if (draggedId === null || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+    const ids = items.map((i) => i.id);
+    const fromIdx = ids.indexOf(draggedId);
+    const toIdx = ids.indexOf(targetId);
+    const reordered = [...ids];
+    reordered.splice(fromIdx, 1);
+    reordered.splice(toIdx, 0, draggedId);
+    setDraggedId(null);
+    setDragOverId(null);
+    reorder.mutate(
+      { data: { ids: reordered } },
+      {
+        onSuccess: () =>
+          queryClient.invalidateQueries({ queryKey: getListPortfolioItemsQueryKey() }),
+      }
+    );
+  }
 
   function handleAddChange(
     e: React.ChangeEvent<
@@ -560,74 +597,89 @@ export default function AdminPortfolio() {
             No portfolio items yet. Add your first one.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => {
-              const totalPhotos =
-                (item.afterImageUrls?.length ?? 0) +
-                (item.beforeImageUrls?.length ?? 0);
-              const thumb =
-                item.afterImageUrls?.[0] ??
-                "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400";
-              return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-                  data-testid={`portfolio-admin-item-${item.id}`}
-                >
-                  <div className="h-40 bg-gray-100 overflow-hidden relative">
-                    <img
-                      src={thumb}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400";
-                      }}
-                    />
-                    {totalPhotos > 1 && (
-                      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
-                        <Images size={11} />
-                        {totalPhotos} photos
+          <>
+            <p className="text-xs text-gray-400 mb-3">Drag cards to reorder how they appear on the site.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((item) => {
+                const totalPhotos =
+                  (item.afterImageUrls?.length ?? 0) +
+                  (item.beforeImageUrls?.length ?? 0);
+                const thumb =
+                  item.afterImageUrls?.[0] ??
+                  "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400";
+                const isDragging = draggedId === item.id;
+                const isOver = dragOverId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    draggable
+                    onDragStart={() => handleDragStart(item.id)}
+                    onDragOver={(e) => handleDragOver(e, item.id)}
+                    onDrop={() => handleDrop(item.id)}
+                    onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+                    className={`bg-white rounded-xl border shadow-sm overflow-hidden cursor-grab active:cursor-grabbing transition-all ${
+                      isDragging ? "opacity-40 scale-95" : "opacity-100"
+                    } ${isOver ? "border-[hsl(25,95%,53%)] ring-2 ring-[hsl(25,95%,53%)]/30" : "border-gray-100"}`}
+                    data-testid={`portfolio-admin-item-${item.id}`}
+                  >
+                    <div className="h-40 bg-gray-100 overflow-hidden relative">
+                      <img
+                        src={thumb}
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400";
+                        }}
+                      />
+                      {totalPhotos > 1 && (
+                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded flex items-center gap-1">
+                          <Images size={11} />
+                          {totalPhotos} photos
+                        </div>
+                      )}
+                      <div className="absolute top-2 left-2 bg-black/40 text-white rounded p-0.5">
+                        <GripVertical size={14} />
                       </div>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs text-[hsl(25,95%,53%)] font-semibold">
-                          {item.category}
-                        </span>
-                        <h3 className="font-semibold text-sm text-[hsl(214,60%,14%)] mt-0.5 truncate">
-                          {item.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {item.suburb}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 ml-2 shrink-0">
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="text-blue-400 hover:text-blue-600 p-1"
-                          data-testid={`button-edit-portfolio-${item.id}`}
-                          title="Edit"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-400 hover:text-red-600 p-1"
-                          data-testid={`button-delete-portfolio-${item.id}`}
-                          title="Delete"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs text-[hsl(25,95%,53%)] font-semibold">
+                            {item.category}
+                          </span>
+                          <h3 className="font-semibold text-sm text-[hsl(214,60%,14%)] mt-0.5 truncate">
+                            {item.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {item.suburb}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 shrink-0">
+                          <button
+                            onClick={() => openEdit(item)}
+                            className="text-blue-400 hover:text-blue-600 p-1"
+                            data-testid={`button-edit-portfolio-${item.id}`}
+                            title="Edit"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="text-red-400 hover:text-red-600 p-1"
+                            data-testid={`button-delete-portfolio-${item.id}`}
+                            title="Delete"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </AdminLayout>

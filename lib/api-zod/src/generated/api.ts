@@ -179,6 +179,7 @@ export const ListPortfolioItemsResponseItem = zod.object({
   afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
   completedDate: zod.string(),
+  sortOrder: zod.number(),
   createdAt: zod.string(),
 });
 export const ListPortfolioItemsResponse = zod.array(
@@ -196,6 +197,13 @@ export const CreatePortfolioItemBody = zod.object({
   afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
   completedDate: zod.string(),
+});
+
+/**
+ * @summary Reorder portfolio items
+ */
+export const ReorderPortfolioItemsBody = zod.object({
+  ids: zod.array(zod.number()).describe("Ordered array of portfolio item IDs"),
 });
 
 /**
@@ -224,6 +232,7 @@ export const UpdatePortfolioItemResponse = zod.object({
   afterImageUrls: zod.array(zod.string()),
   suburb: zod.string(),
   completedDate: zod.string(),
+  sortOrder: zod.number(),
   createdAt: zod.string(),
 });
 

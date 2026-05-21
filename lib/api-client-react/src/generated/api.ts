@@ -37,6 +37,7 @@ import type {
   PortfolioItem,
   QuoteRequest,
   RegionCount,
+  ReorderPortfolioItemsBody,
   Review,
   ServiceCount,
   UpdateAiSettingsBody,
@@ -1172,6 +1173,93 @@ export const useCreatePortfolioItem = <
   TContext
 > => {
   return useMutation(getCreatePortfolioItemMutationOptions(options));
+};
+
+/**
+ * @summary Reorder portfolio items
+ */
+export const getReorderPortfolioItemsUrl = () => {
+  return `/api/portfolio/reorder`;
+};
+
+export const reorderPortfolioItems = async (
+  reorderPortfolioItemsBody: ReorderPortfolioItemsBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getReorderPortfolioItemsUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reorderPortfolioItemsBody),
+  });
+};
+
+export const getReorderPortfolioItemsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reorderPortfolioItems>>,
+    TError,
+    { data: BodyType<ReorderPortfolioItemsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reorderPortfolioItems>>,
+  TError,
+  { data: BodyType<ReorderPortfolioItemsBody> },
+  TContext
+> => {
+  const mutationKey = ["reorderPortfolioItems"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reorderPortfolioItems>>,
+    { data: BodyType<ReorderPortfolioItemsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return reorderPortfolioItems(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReorderPortfolioItemsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reorderPortfolioItems>>
+>;
+export type ReorderPortfolioItemsMutationBody =
+  BodyType<ReorderPortfolioItemsBody>;
+export type ReorderPortfolioItemsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reorder portfolio items
+ */
+export const useReorderPortfolioItems = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reorderPortfolioItems>>,
+    TError,
+    { data: BodyType<ReorderPortfolioItemsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof reorderPortfolioItems>>,
+  TError,
+  { data: BodyType<ReorderPortfolioItemsBody> },
+  TContext
+> => {
+  return useMutation(getReorderPortfolioItemsMutationOptions(options));
 };
 
 /**

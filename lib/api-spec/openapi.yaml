@@ -263,6 +263,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/PortfolioItem"
 
+  /portfolio/reorder:
+    put:
+      operationId: reorderPortfolioItems
+      tags: [portfolio]
+      summary: Reorder portfolio items
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReorderPortfolioItemsBody"
+      responses:
+        "204":
+          description: Reordered
+
   /portfolio/{id}:
     put:
       operationId: updatePortfolioItem
@@ -661,6 +678,8 @@ components:
           type: string
         completedDate:
           type: string
+        sortOrder:
+          type: integer
         createdAt:
           type: string
       required:
@@ -671,6 +690,7 @@ components:
         - afterImageUrls
         - suburb
         - completedDate
+        - sortOrder
         - createdAt
 
     CreatePortfolioItemBody:
@@ -723,6 +743,17 @@ components:
           type: string
         completedDate:
           type: string
+
+    ReorderPortfolioItemsBody:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          description: Ordered array of portfolio item IDs
+      required:
+        - ids
 
     Review:
       type: object

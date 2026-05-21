@@ -86,6 +86,7 @@ export interface PortfolioItem {
   afterImageUrls: string[];
   suburb: string;
   completedDate: string;
+  sortOrder: number;
   createdAt: string;
 }
 
@@ -107,6 +108,11 @@ export interface UpdatePortfolioItemBody {
   afterImageUrls?: string[];
   suburb?: string;
   completedDate?: string;
+}
+
+export interface ReorderPortfolioItemsBody {
+  /** Ordered array of portfolio item IDs */
+  ids: number[];
 }
 
 export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus];

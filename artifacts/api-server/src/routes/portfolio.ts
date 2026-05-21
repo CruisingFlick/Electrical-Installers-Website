@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db, portfolioTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, asc, inArray, sql } from "drizzle-orm";
 import {
   CreatePortfolioItemBody,
   DeletePortfolioItemParams,
   ListPortfolioItemsQueryParams,
+  ReorderPortfolioItemsBody,
 } from "@workspace/api-zod";
 
 import { requireAdmin } from "../middleware/admin-auth";
@@ -33,9 +34,32 @@ router.get("/", async (req, res, next) => {
       .select()
       .from(portfolioTable)
       .where(category ? eq(portfolioTable.category, category) : undefined)
-      .orderBy(desc(portfolioTable.createdAt));
+      .orderBy(asc(portfolioTable.sortOrder), desc(portfolioTable.createdAt));
 
     res.json(rows.map(formatItem));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.put("/reorder", requireAdmin, async (req, res, next) => {
+  const parsed = ReorderPortfolioItemsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  try {
+    const { ids } = parsed.data;
+    await Promise.all(
+      ids.map((id, index) =>
+        db
+          .update(portfolioTable)
+          .set({ sortOrder: index })
+          .where(eq(portfolioTable.id, id))
+      )
+    );
+    res.status(204).send();
   } catch (err) {
     next(err);
   }
