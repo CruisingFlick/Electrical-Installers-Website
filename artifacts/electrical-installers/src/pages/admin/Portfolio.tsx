@@ -220,6 +220,7 @@ function MultiPhotoDropZone({
 function PortfolioFormModal({
   title,
   form,
+  initialForm,
   onChange,
   onPhotoChange,
   onSubmit,
@@ -229,6 +230,7 @@ function PortfolioFormModal({
 }: {
   title: string;
   form: PortfolioForm;
+  initialForm: PortfolioForm;
   onChange: (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -243,12 +245,19 @@ function PortfolioFormModal({
   isPending: boolean;
   submitLabel: string;
 }) {
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm);
+
+  const handleClose = () => {
+    if (isDirty && !confirm("You have unsaved changes. Discard them and close?")) return;
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="font-semibold text-[hsl(214,60%,14%)]">{title}</h2>
-          <button type="button" onClick={onClose}>
+          <button type="button" onClick={handleClose}>
             <X size={20} />
           </button>
         </div>
@@ -358,7 +367,7 @@ function PortfolioFormModal({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="flex-1 border border-gray-200 text-gray-600 font-medium py-2 rounded-lg text-sm hover:bg-gray-50"
             >
               Cancel
@@ -382,6 +391,7 @@ export default function AdminPortfolio() {
 
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [editForm, setEditForm] = useState<PortfolioForm>(EMPTY_FORM);
+  const [initialEditForm, setInitialEditForm] = useState<PortfolioForm>(EMPTY_FORM);
 
   function handleAddChange(
     e: React.ChangeEvent<
@@ -401,7 +411,7 @@ export default function AdminPortfolio() {
 
   function openEdit(item: PortfolioItem) {
     setEditingItem(item);
-    setEditForm({
+    const initial: PortfolioForm = {
       title: item.title,
       description: item.description,
       category: item.category,
@@ -409,7 +419,9 @@ export default function AdminPortfolio() {
       afterImageUrls: item.afterImageUrls ?? [],
       suburb: item.suburb,
       completedDate: item.completedDate ?? "",
-    });
+    };
+    setEditForm(initial);
+    setInitialEditForm(initial);
   }
 
   function handleAddSubmit(e: React.FormEvent) {
@@ -503,6 +515,7 @@ export default function AdminPortfolio() {
           <PortfolioFormModal
             title="Add Portfolio Item"
             form={addForm}
+            initialForm={EMPTY_FORM}
             onChange={handleAddChange}
             onPhotoChange={(field, urls) =>
               setAddForm((f) => ({ ...f, [field]: urls }))
@@ -521,6 +534,7 @@ export default function AdminPortfolio() {
           <PortfolioFormModal
             title="Edit Portfolio Item"
             form={editForm}
+            initialForm={initialEditForm}
             onChange={handleEditChange}
             onPhotoChange={(field, urls) =>
               setEditForm((f) => ({ ...f, [field]: urls }))
