@@ -1,19 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
 
-const validTokens = new Set<string>();
-
-export function addToken(token: string): void {
-  validTokens.add(token);
-}
-
-export function removeToken(token: string): void {
-  validTokens.delete(token);
-}
-
-export function isValidToken(token: string): boolean {
-  return validTokens.has(token);
-}
-
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   const auth = req.headers["authorization"];
   if (!auth || !auth.startsWith("Bearer ")) {
@@ -21,7 +7,8 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
     return;
   }
   const token = auth.slice(7);
-  if (!isValidToken(token)) {
+  const adminPassword = process.env["ADMIN_PASSWORD"];
+  if (!adminPassword || token !== adminPassword) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }

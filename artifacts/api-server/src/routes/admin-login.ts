@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { randomUUID } from "crypto";
-import { addToken, removeToken, requireAdmin } from "../middleware/admin-auth";
+import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
@@ -18,15 +17,10 @@ router.post("/login", (req, res) => {
     return;
   }
 
-  const token = randomUUID();
-  addToken(token);
-  res.json({ token });
+  res.json({ token: adminPassword });
 });
 
-router.delete("/logout", requireAdmin, (req, res) => {
-  const auth = req.headers["authorization"]!;
-  const token = auth.slice(7);
-  removeToken(token);
+router.delete("/logout", requireAdmin, (_req, res) => {
   res.status(204).send();
 });
 
