@@ -7,7 +7,7 @@ const services = [
     title: "New Homes & Renovations",
     description: "Whether you're building new or renovating, we handle everything from the switchboard to the last power point. We work with your builder to ensure a smooth fit-out and pass inspections first time.",
     features: ["Full wiring design and installation", "Solar-ready switchboard installation", "Safety switch (RCD) protection", "Smoke alarm compliance", "Data and communication cabling"],
-    image: "https://images.unsplash.com/photo-1609779604657-fc06af861f37?w=800",
+    image: "/new-homes.jpg",
   },
   {
     icon: Factory,
