@@ -21,7 +21,8 @@ const services = [
     title: "3-Phase Power Upgrades",
     description: "Running a workshop, small business, or heavy equipment at home? 3-phase power gives you the capacity you need. We manage the upgrade from quote to energisation.",
     features: ["3-phase switchboard design", "Load assessment and planning", "Meter reconfiguration", "Equipment connection", "Full compliance certification"],
-    image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800",
+    imageBefore: "/3phase-before.jpg",
+    imageAfter: "/3phase-after.jpg",
   },
   {
     icon: Warehouse,
@@ -79,11 +80,24 @@ export default function ServicesPage() {
                 </Link>
               )}
             </div>
-            <div className={`rounded-xl overflow-hidden shadow-md h-72 lg:h-96 bg-gray-100 ${idx % 2 === 1 ? "lg:order-1" : ""}`}>
-              {service.image ? (
-                <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
+            <div className={`${idx % 2 === 1 ? "lg:order-1" : ""}`}>
+              {service.imageBefore && service.imageAfter ? (
+                <div className="grid grid-cols-2 gap-3 h-72 lg:h-96">
+                  <div className="relative rounded-xl overflow-hidden shadow-md bg-gray-100">
+                    <img src={service.imageBefore} alt={`${service.title} — before`} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded">Before</span>
+                  </div>
+                  <div className="relative rounded-xl overflow-hidden shadow-md bg-gray-100">
+                    <img src={service.imageAfter} alt={`${service.title} — after`} className="w-full h-full object-cover" />
+                    <span className="absolute bottom-2 left-2 bg-[hsl(25,95%,53%)] text-white text-xs font-semibold px-2 py-1 rounded">After</span>
+                  </div>
+                </div>
+              ) : service.image ? (
+                <div className="rounded-xl overflow-hidden shadow-md h-72 lg:h-96 bg-gray-100">
+                  <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
+                </div>
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
+                <div className="rounded-xl overflow-hidden shadow-md h-72 lg:h-96 bg-gray-100 flex items-center justify-center">
                   <service.icon size={64} className="text-gray-300" />
                 </div>
               )}
