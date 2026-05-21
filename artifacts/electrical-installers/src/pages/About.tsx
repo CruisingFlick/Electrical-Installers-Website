@@ -79,7 +79,7 @@ const whyUs = [
   {
     icon: MapPin,
     title: "Local Knowledge",
-    desc: "We know the Mornington Peninsula, St Kilda, and Warragul areas well — from older weatherboard cottages through to new coastal builds.",
+    desc: "We know the Mornington Peninsula and South-East Melbourne areas well — from older weatherboard cottages through to new coastal builds.",
   },
 ];
 
@@ -91,7 +91,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">What We Offer</h1>
           <p className="text-gray-300 text-lg max-w-2xl">
-            Licensed electrical work across the Mornington Peninsula, St Kilda, and Warragul.
+            Licensed electrical work across the Mornington Peninsula and South-East Melbourne.
             Quality work, done on time, every time.
           </p>
         </div>
