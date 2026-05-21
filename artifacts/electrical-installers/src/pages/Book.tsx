@@ -3,7 +3,34 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star, ImagePlus, X } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
+
+function getTimeSlotsForDate(dateStr: string): string[] {
+  if (!dateStr) return [];
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay();
+  if (day === 0) return [];
+
+  const [startH, startM] = day === 6 ? [8, 0] : [7, 30];
+  const [endH, endM] = day === 6 ? [12, 0] : [17, 0];
+
+  const slots: string[] = [];
+  let h = startH, m = startM;
+  while (h < endH || (h === endH && m <= endM)) {
+    const ampm = h < 12 ? "AM" : "PM";
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    slots.push(`${hour12}:${m === 0 ? "00" : m} ${ampm}`);
+    m += 30;
+    if (m >= 60) { m -= 60; h++; }
+  }
+  return slots;
+}
+
+function formatDateDisplay(dateStr: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
 
 const bookingSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
@@ -37,6 +64,11 @@ export default function BookPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedDateRaw, setSelectedDateRaw] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const timeSlots = useMemo(() => getTimeSlotsForDate(selectedDateRaw), [selectedDateRaw]);
+  const isSunday = selectedDateRaw !== "" && new Date(selectedDateRaw + "T00:00:00").getDay() === 0;
+  const todayStr = new Date().toISOString().split("T")[0] ?? "";
 
   const form = useForm<BookingForm>({
     resolver: zodResolver(bookingSchema),
@@ -76,6 +108,18 @@ export default function BookPage() {
     form.setValue("photoUrl", "");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  function handleDateChange(dateStr: string) {
+    setSelectedDateRaw(dateStr);
+    setSelectedTime("");
+    form.setValue("preferredDate", "", { shouldValidate: false });
+  }
+
+  function handleTimeSelect(slot: string) {
+    setSelectedTime(slot);
+    const combined = `${formatDateDisplay(selectedDateRaw)} at ${slot}`;
+    form.setValue("preferredDate", combined, { shouldValidate: true });
+  }
 
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -207,45 +251,89 @@ export default function BookPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Job Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      {...form.register("jobType")}
-                      className={inputClass}
-                      data-testid="select-booking-job-type"
-                    >
-                      <option value="">Select job type...</option>
-                      <option value="New Home Wiring">New Home Wiring</option>
-                      <option value="Renovation">Renovation</option>
-                      <option value="3-Phase Upgrade">3-Phase Upgrade</option>
-                      <option value="Underground Power">Underground Power</option>
-                      <option value="Switchboard Upgrade">Switchboard Upgrade</option>
-                      <option value="Commercial Wiring">Commercial Wiring</option>
-                      <option value="Fault Finding">Fault Finding</option>
-                      <option value="Other">Other</option>
-                    </select>
-                    {form.formState.errors.jobType && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.jobType.message}</p>
-                    )}
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Job Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    {...form.register("jobType")}
+                    className={inputClass}
+                    data-testid="select-booking-job-type"
+                  >
+                    <option value="">Select job type...</option>
+                    <option value="New Home Wiring">New Home Wiring</option>
+                    <option value="Renovation">Renovation</option>
+                    <option value="3-Phase Upgrade">3-Phase Upgrade</option>
+                    <option value="Underground Power">Underground Power</option>
+                    <option value="Switchboard Upgrade">Switchboard Upgrade</option>
+                    <option value="Commercial Wiring">Commercial Wiring</option>
+                    <option value="Fault Finding">Fault Finding</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  {form.formState.errors.jobType && (
+                    <p className="text-red-500 text-xs mt-1">{form.formState.errors.jobType.message}</p>
+                  )}
+                </div>
+
+                {/* Date + time slot picker */}
+                <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       <Calendar size={14} className="inline mr-1" />
                       Preferred Date <span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...form.register("preferredDate")}
                       type="date"
+                      value={selectedDateRaw}
+                      min={todayStr}
+                      onChange={(e) => handleDateChange(e.target.value)}
                       className={inputClass}
                       data-testid="input-booking-date"
                     />
-                    {form.formState.errors.preferredDate && (
-                      <p className="text-red-500 text-xs mt-1">{form.formState.errors.preferredDate.message}</p>
+                    <input type="hidden" {...form.register("preferredDate")} />
+                    {isSunday && (
+                      <p className="text-amber-600 text-xs mt-1.5 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                        We're closed Sundays. Please pick a weekday or Saturday.
+                      </p>
+                    )}
+                    {!isSunday && selectedDateRaw && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(selectedDateRaw + "T00:00:00").getDay() === 6
+                          ? "Saturday — slots available 8:00 AM to 12:00 PM"
+                          : "Mon–Fri — slots available 7:30 AM to 5:00 PM"}
+                      </p>
                     )}
                   </div>
+
+                  {!isSunday && timeSlots.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <Clock size={14} className="inline mr-1" />
+                        Preferred Time <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5" data-testid="time-slot-grid">
+                        {timeSlots.map((slot) => (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => handleTimeSelect(slot)}
+                            className={`text-xs font-medium py-1.5 px-1 rounded-lg border transition-all ${
+                              selectedTime === slot
+                                ? "bg-[hsl(25,95%,53%)] text-white border-[hsl(25,95%,53%)]"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-[hsl(25,95%,53%)] hover:text-[hsl(25,95%,53%)]"
+                            }`}
+                            data-testid={`time-slot-${slot.replace(/[: ]/g, "-")}`}
+                          >
+                            {slot}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {form.formState.errors.preferredDate && (
+                    <p className="text-red-500 text-xs">{form.formState.errors.preferredDate.message}</p>
+                  )}
                 </div>
 
                 <div>
