@@ -14,7 +14,7 @@ const services = [
     title: "Commercial & Industrial",
     description: "We understand that downtime costs money. Our commercial team works around your schedule to minimise disruption to your operations. From factory fit-outs to machinery wiring, we get it done right.",
     features: ["Factory and warehouse wiring", "Machinery installation and commissioning", "Switchboard design and installation", "Emergency lighting systems", "Compliance and safety audits"],
-    image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=800",
+    image: "/commercial-industrial.jpg",
   },
   {
     icon: Zap,
