@@ -28,7 +28,16 @@ import AdminQuotes from "@/pages/admin/Quotes";
 import AdminJobMap from "@/pages/admin/JobMap";
 import AdminAiSettings from "@/pages/admin/AiSettings";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        if ((error as Error)?.name === "AbortError") return false;
+        return failureCount < 3;
+      },
+    },
+  },
+});
 
 function isAdminAuth() {
   return Boolean(localStorage.getItem("admin_token"));
