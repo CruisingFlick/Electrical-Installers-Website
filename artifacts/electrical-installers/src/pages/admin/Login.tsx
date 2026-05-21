@@ -45,6 +45,7 @@ export default function AdminLogin() {
           <p className="text-gray-500 text-sm mt-1">Electrical Installers Management</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="text" name="username" value="admin" readOnly className="hidden" autoComplete="username" />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               <Lock size={14} className="inline mr-1" />

@@ -77,10 +77,16 @@ export default function BookPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   async function onSubmit(data: BookingForm) {
-    await createBooking.mutateAsync({ data }, {
-      onSuccess: () => setSubmitted(true),
-    });
+    setSubmitError(null);
+    try {
+      await createBooking.mutateAsync({ data });
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Something went wrong submitting your booking. Please try again or call us on 0419 868 703.");
+    }
   }
 
   const inputClass =
@@ -304,6 +310,12 @@ export default function BookPage() {
                     </div>
                   )}
                 </div>
+
+                {submitError && (
+                  <p className="text-red-500 text-sm text-center bg-red-50 border border-red-100 rounded-lg px-4 py-2">
+                    {submitError}
+                  </p>
+                )}
 
                 <button
                   type="submit"

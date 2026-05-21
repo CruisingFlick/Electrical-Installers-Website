@@ -155,6 +155,7 @@ export default function QuotePage() {
   const createQuote = useCreateQuote();
   const [submitted, setSubmitted] = useState(false);
   const [photos, setPhotos] = useState({ switchboard: "", fasci: "", street: "" });
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<QuoteForm>({
     resolver: zodResolver(quoteSchema),
@@ -166,16 +167,20 @@ export default function QuotePage() {
   });
 
   async function onSubmit(data: QuoteForm) {
-    await createQuote.mutateAsync({
-      data: {
-        ...data,
-        switchboardImageUrl: photos.switchboard || undefined,
-        fasciImageUrl: photos.fasci || undefined,
-        streetImageUrl: photos.street || undefined,
-      }
-    }, {
-      onSuccess: () => setSubmitted(true),
-    });
+    setSubmitError(null);
+    try {
+      await createQuote.mutateAsync({
+        data: {
+          ...data,
+          switchboardImageUrl: photos.switchboard || undefined,
+          fasciImageUrl: photos.fasci || undefined,
+          streetImageUrl: photos.street || undefined,
+        }
+      });
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Something went wrong submitting your quote. Please try again or call us on 0419 868 703.");
+    }
   }
 
   return (
@@ -311,6 +316,12 @@ export default function QuotePage() {
                 testId="upload-zone-street"
               />
             </div>
+
+            {submitError && (
+              <p className="text-red-500 text-sm text-center bg-red-50 border border-red-100 rounded-lg px-4 py-2">
+                {submitError}
+              </p>
+            )}
 
             <button
               type="submit"

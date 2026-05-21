@@ -99,8 +99,21 @@ export default function ChatWidget() {
 
     let convId = conversationId;
     if (!convId) {
-      convId = await createConversation();
-      setConversationId(convId);
+      try {
+        convId = await createConversation();
+        setConversationId(convId);
+      } catch {
+        setMessages((prev) => {
+          const copy = [...prev];
+          copy[copy.length - 1] = {
+            role: "assistant",
+            content: "Sorry, couldn't start a conversation. Please call us on 0419 868 703.",
+          };
+          return copy;
+        });
+        setStreaming(false);
+        return;
+      }
     }
 
     // Add an empty assistant message that we'll stream into
