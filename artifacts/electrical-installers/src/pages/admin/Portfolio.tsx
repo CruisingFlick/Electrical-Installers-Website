@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import type { PortfolioItem } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, X, ImagePlus, Pencil, Images } from "lucide-react";
+import { Plus, Trash2, X, ImagePlus, Pencil, Images, ChevronLeft, ChevronRight } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 interface PortfolioForm {
@@ -67,12 +67,14 @@ function MultiPhotoDropZone({
   required,
   value,
   onChange,
+  showThumbnailBadge,
   testId,
 }: {
   label: string;
   required?: boolean;
   value: string[];
   onChange: (urls: string[]) => void;
+  showThumbnailBadge?: boolean;
   testId?: string;
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -97,6 +99,20 @@ function MultiPhotoDropZone({
     onChange(value.filter((_, i) => i !== index));
   };
 
+  const moveLeft = (index: number) => {
+    if (index === 0) return;
+    const next = [...value];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    onChange(next);
+  };
+
+  const moveRight = (index: number) => {
+    if (index === value.length - 1) return;
+    const next = [...value];
+    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    onChange(next);
+  };
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -107,23 +123,58 @@ function MultiPhotoDropZone({
           </span>
         )}
       </label>
+      {value.length > 1 && (
+        <p className="text-xs text-gray-400 mb-2">Use the arrows to reorder — the first photo is the thumbnail.</p>
+      )}
 
       {value.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mb-2">
           {value.map((url, i) => (
-            <div key={i} className="relative group">
-              <img
-                src={url}
-                alt={`Photo ${i + 1}`}
-                className="w-full h-20 object-cover rounded-lg border border-gray-200"
-              />
-              <button
-                type="button"
-                onClick={() => removeAt(i)}
-                className="absolute top-1 right-1 bg-white/90 rounded-full p-0.5 shadow border border-gray-200 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={11} />
-              </button>
+            <div key={i} className="relative group flex flex-col gap-1">
+              <div className="relative">
+                <img
+                  src={url}
+                  alt={`Photo ${i + 1}`}
+                  className={`w-full h-20 object-cover rounded-lg border-2 ${i === 0 && showThumbnailBadge ? "border-[hsl(25,95%,53%)]" : "border-gray-200"}`}
+                />
+                {/* Thumbnail badge */}
+                {i === 0 && showThumbnailBadge && (
+                  <span className="absolute top-1 left-1 bg-[hsl(25,95%,53%)] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded leading-none">
+                    Thumbnail
+                  </span>
+                )}
+                {/* Remove button */}
+                <button
+                  type="button"
+                  onClick={() => removeAt(i)}
+                  className="absolute top-1 right-1 bg-white/90 rounded-full p-0.5 shadow border border-gray-200 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={11} />
+                </button>
+              </div>
+              {/* Reorder arrows — only show when there are multiple photos */}
+              {value.length > 1 && (
+                <div className="flex gap-1 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => moveLeft(i)}
+                    disabled={i === 0}
+                    className="flex-1 flex items-center justify-center py-0.5 rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                    title="Move left"
+                  >
+                    <ChevronLeft size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveRight(i)}
+                    disabled={i === value.length - 1}
+                    className="flex-1 flex items-center justify-center py-0.5 rounded border border-gray-200 text-gray-500 hover:bg-gray-100 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                    title="Move right"
+                  >
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -286,6 +337,7 @@ function PortfolioFormModal({
             required
             value={form.afterImageUrls}
             onChange={(urls) => onPhotoChange("afterImageUrls", urls)}
+            showThumbnailBadge
             testId="input-portfolio-after-image"
           />
           <MultiPhotoDropZone
