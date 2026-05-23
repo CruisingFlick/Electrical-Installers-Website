@@ -16,6 +16,15 @@ import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
+function esc(value: string | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 function formatBooking(b: typeof bookingsTable.$inferSelect) {
   return {
     ...b,
@@ -56,7 +65,7 @@ async function sendBookingEmails(booking: {
       to: booking.customerEmail,
       subject: "Thank you for contacting Electrical Installers",
       text: `Hi ${booking.customerName},\n\nThank you for contacting Electrical Installers. We've received your booking request and will be in touch within one business day to confirm your appointment.\n\nIf you have any urgent questions, please call us on 0419 868 703.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
-      html: `<p>Hi ${booking.customerName},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
+      html: `<p>Hi ${esc(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
     await transporter.sendMail({
@@ -80,14 +89,14 @@ async function sendBookingEmails(booking: {
       html: `
         <h2 style="color:#1a3a5c;">New Booking Request</h2>
         <table style="border-collapse:collapse;width:100%;max-width:560px;font-family:sans-serif;font-size:14px;">
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${booking.customerName}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${booking.customerEmail}">${booking.customerEmail}</a></td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${booking.customerPhone ? `<a href="tel:${booking.customerPhone}">${booking.customerPhone}</a>` : "Not provided"}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Service Type</td><td style="padding:6px 12px;">${booking.serviceType}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${booking.jobType}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${booking.suburb}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Preferred Date</td><td style="padding:6px 12px;">${booking.preferredDate}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Message</td><td style="padding:6px 12px;">${booking.message || "<em>None</em>"}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${esc(booking.customerName)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${esc(booking.customerEmail)}">${esc(booking.customerEmail)}</a></td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${booking.customerPhone ? `<a href="tel:${esc(booking.customerPhone)}">${esc(booking.customerPhone)}</a>` : "Not provided"}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Service Type</td><td style="padding:6px 12px;">${esc(booking.serviceType)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${esc(booking.jobType)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${esc(booking.suburb)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Preferred Date</td><td style="padding:6px 12px;">${esc(booking.preferredDate)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Message</td><td style="padding:6px 12px;">${booking.message ? esc(booking.message) : "<em>None</em>"}</td></tr>
         </table>
         <p style="margin-top:16px;"><a href="https://electricalinstallers.com.au/admin/bookings" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
       `,
@@ -192,14 +201,14 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
           "Mornington Peninsula & Surrounding Areas",
         ].join("\n"),
         html: `
-          <p>Hi ${row.customerName},</p>
+          <p>Hi ${esc(row.customerName)},</p>
           <p>Great news! Your booking has been confirmed for:</p>
           <table style="border-collapse:collapse;width:100%;max-width:480px;font-family:sans-serif;font-size:14px;margin:12px 0;">
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:120px;">Date / Time</td><td style="padding:6px 12px;">${confirmedDate}</td></tr>
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job</td><td style="padding:6px 12px;">${row.jobType}</td></tr>
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${row.suburb}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:120px;">Date / Time</td><td style="padding:6px 12px;">${esc(confirmedDate)}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job</td><td style="padding:6px 12px;">${esc(row.jobType)}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${esc(row.suburb)}</td></tr>
           </table>
-          ${adminNote ? `<p style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;border-radius:4px;margin:12px 0;">${adminNote.replace(/\n/g, "<br>")}</p>` : ""}
+          ${adminNote ? `<p style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;border-radius:4px;margin:12px 0;">${esc(adminNote).replace(/\n/g, "<br>")}</p>` : ""}
           <p>If you need to make any changes, please call us on <strong>0419 868 703</strong>.</p>
           <p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>
         `,
