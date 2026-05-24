@@ -29,6 +29,7 @@ import AdminQuotes from "@/pages/admin/Quotes";
 import AdminJobMap from "@/pages/admin/JobMap";
 import AdminAiSettings from "@/pages/admin/AiSettings";
 import AdminCalendarView from "@/pages/admin/CalendarView";
+import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
 import ServiceAreaPage from "@/pages/ServiceArea";
 
 const queryClient = new QueryClient({
@@ -108,6 +109,7 @@ function Router() {
       <Route path="/admin/jobs" component={() => <AdminGuard component={AdminJobMap} />} />
       <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
       <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
+      <Route path="/admin/media" component={() => <AdminGuard component={AdminMediaLibrary} />} />
 
       <Route component={NotFound} />
     </Switch>

@@ -24,8 +24,97 @@ tags:
     description: Site analytics and dashboard stats
   - name: jobs
     description: Job tracking with map pins
+  - name: media
+    description: Media library for photo management
 
 paths:
+  /admin/media:
+    get:
+      operationId: listMediaItems
+      tags: [media]
+      summary: List all media library items
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of media items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MediaItem"
+    post:
+      operationId: createMediaItem
+      tags: [media]
+      summary: Upload a new photo to the media library
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMediaItemBody"
+      responses:
+        "201":
+          description: Created media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+
+  /admin/media/{id}:
+    patch:
+      operationId: updateMediaItem
+      tags: [media]
+      summary: Update media item title/category/tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                category:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: Updated media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+    delete:
+      operationId: deleteMediaItem
+      tags: [media]
+      summary: Delete a media item
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
   /admin/ai-settings:
     get:
       operationId: getAiSettings
@@ -1161,3 +1250,60 @@ components:
           type: string
       required:
         - systemPrompt
+
+    MediaItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        filename:
+          type: string
+        category:
+          type: string
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        imageData:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - filename
+        - tags
+        - imageData
+        - createdAt
+
+    CreateMediaItemBody:
+      type: object
+      properties:
+        title:
+          type: string
+        filename:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        imageData:
+          type: string
+      required:
+        - title
+        - filename
+        - imageData
+
+    DeleteMediaItemParams:
+      type: object
+      properties:
+        id:
+          type: integer
+      required:
+        - id

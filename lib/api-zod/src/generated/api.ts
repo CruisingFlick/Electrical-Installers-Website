@@ -9,6 +9,65 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary List all media library items
+ */
+export const ListMediaItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "category": zod.string().nullish(),
+  "tags": zod.array(zod.string()),
+  "imageData": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+export const ListMediaItemsResponse = zod.array(ListMediaItemsResponseItem)
+
+
+/**
+ * @summary Upload a new photo to the media library
+ */
+export const CreateMediaItemBody = zod.object({
+  "title": zod.string(),
+  "filename": zod.string(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional(),
+  "imageData": zod.string()
+})
+
+
+/**
+ * @summary Update media item title/category/tags
+ */
+export const UpdateMediaItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateMediaItemBody = zod.object({
+  "title": zod.string().optional(),
+  "category": zod.string().optional(),
+  "tags": zod.array(zod.string()).optional()
+})
+
+export const UpdateMediaItemResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "filename": zod.string(),
+  "category": zod.string().nullish(),
+  "tags": zod.array(zod.string()),
+  "imageData": zod.string(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a media item
+ */
+export const DeleteMediaItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary Get AI chat settings (system prompt)
  */
 export const GetAiSettingsResponse = zod.object({

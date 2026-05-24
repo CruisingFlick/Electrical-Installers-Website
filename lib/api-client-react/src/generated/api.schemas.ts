@@ -359,6 +359,34 @@ export interface UpdateAiSettingsBody {
   systemPrompt: string;
 }
 
+export interface MediaItem {
+  id: number;
+  title: string;
+  filename: string;
+  category?: string | null;
+  tags: string[];
+  imageData: string;
+  createdAt: string;
+}
+
+export interface CreateMediaItemBody {
+  title: string;
+  filename: string;
+  category?: string;
+  tags?: string[];
+  imageData: string;
+}
+
+export interface DeleteMediaItemParams {
+  id: number;
+}
+
+export type UpdateMediaItemBody = {
+  title?: string;
+  category?: string;
+  tags?: string[];
+};
+
 export type ListBookingsParams = {
 status?: ListBookingsStatus;
 };

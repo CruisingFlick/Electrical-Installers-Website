@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot, CalendarDays, Library } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { href: "/admin/bookings", icon: Calendar, label: "Bookings" },
   { href: "/admin/calendar", icon: CalendarDays, label: "Calendar" },
   { href: "/admin/portfolio", icon: Image, label: "Portfolio" },
+  { href: "/admin/media", icon: Library, label: "Media Library" },
   { href: "/admin/reviews", icon: Star, label: "Reviews" },
   { href: "/admin/quotes", icon: FileText, label: "Quotes" },
   { href: "/admin/jobs", icon: Map, label: "Job Map" },
