@@ -879,6 +879,10 @@ components:
           type: string
         streetImageUrl:
           type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
         status:
           type: string
           enum: [pending, reviewed, quoted, accepted, declined]
@@ -914,6 +918,10 @@ components:
         fasciImageUrl:
           type: string
         streetImageUrl:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
           type: string
       required:
         - customerName

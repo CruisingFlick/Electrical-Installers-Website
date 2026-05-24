@@ -188,6 +188,8 @@ export interface QuoteRequest {
   switchboardImageUrl?: string;
   fasciImageUrl?: string;
   streetImageUrl?: string;
+  preferredDate?: string;
+  preferredTime?: string;
   status: QuoteRequestStatus;
   createdAt: string;
 }
@@ -202,6 +204,8 @@ export interface CreateQuoteBody {
   switchboardImageUrl?: string;
   fasciImageUrl?: string;
   streetImageUrl?: string;
+  preferredDate?: string;
+  preferredTime?: string;
 }
 
 export type UpdateQuoteStatusBodyStatus = typeof UpdateQuoteStatusBodyStatus[keyof typeof UpdateQuoteStatusBodyStatus];

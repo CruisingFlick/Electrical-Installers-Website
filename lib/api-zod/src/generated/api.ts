@@ -365,6 +365,8 @@ export const ListQuotesResponseItem = zod.object({
   "switchboardImageUrl": zod.string().optional(),
   "fasciImageUrl": zod.string().optional(),
   "streetImageUrl": zod.string().optional(),
+  "preferredDate": zod.string().optional(),
+  "preferredTime": zod.string().optional(),
   "status": zod.enum(['pending', 'reviewed', 'quoted', 'accepted', 'declined']),
   "createdAt": zod.string()
 })
@@ -383,7 +385,9 @@ export const CreateQuoteBody = zod.object({
   "description": zod.string(),
   "switchboardImageUrl": zod.string().optional(),
   "fasciImageUrl": zod.string().optional(),
-  "streetImageUrl": zod.string().optional()
+  "streetImageUrl": zod.string().optional(),
+  "preferredDate": zod.string().optional(),
+  "preferredTime": zod.string().optional()
 })
 
 
@@ -409,6 +413,8 @@ export const UpdateQuoteStatusResponse = zod.object({
   "switchboardImageUrl": zod.string().optional(),
   "fasciImageUrl": zod.string().optional(),
   "streetImageUrl": zod.string().optional(),
+  "preferredDate": zod.string().optional(),
+  "preferredTime": zod.string().optional(),
   "status": zod.enum(['pending', 'reviewed', 'quoted', 'accepted', 'declined']),
   "createdAt": zod.string()
 })

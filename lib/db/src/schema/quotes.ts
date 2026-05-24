@@ -13,6 +13,8 @@ export const quotesTable = pgTable("quotes", {
   switchboardImageUrl: text("switchboard_image_url"),
   fasciImageUrl: text("fasci_image_url"),
   streetImageUrl: text("street_image_url"),
+  preferredDate: text("preferred_date"),
+  preferredTime: text("preferred_time"),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

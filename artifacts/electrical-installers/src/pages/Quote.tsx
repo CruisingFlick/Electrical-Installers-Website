@@ -2,8 +2,170 @@ import { useCreateQuote } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle, Camera, ImagePlus, X } from "lucide-react";
+import { CheckCircle, Camera, ImagePlus, X, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
+
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+const TIME_SLOTS = [
+  { label: "8:00 AM", value: "08:00" },
+  { label: "9:00 AM", value: "09:00" },
+  { label: "10:00 AM", value: "10:00" },
+  { label: "11:00 AM", value: "11:00" },
+  { label: "1:00 PM", value: "13:00" },
+  { label: "2:00 PM", value: "14:00" },
+  { label: "3:00 PM", value: "15:00" },
+  { label: "4:00 PM", value: "16:00" },
+];
+
+interface CalendarPickerProps {
+  selectedDate: string;
+  selectedTime: string;
+  onDateChange: (date: string) => void;
+  onTimeChange: (time: string) => void;
+}
+
+function CalendarPicker({ selectedDate, selectedTime, onDateChange, onTimeChange }: CalendarPickerProps) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1); }
+    else setViewMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1); }
+    else setViewMonth(m => m + 1);
+  }
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  function formatDate(y: number, m: number, d: number) {
+    return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
+  function isPast(day: number) {
+    const d = new Date(viewYear, viewMonth, day);
+    return d < today;
+  }
+
+  function isWeekend(day: number) {
+    const dow = new Date(viewYear, viewMonth, day).getDay();
+    return dow === 0 || dow === 6;
+  }
+
+  function isSelected(day: number) {
+    return selectedDate === formatDate(viewYear, viewMonth, day);
+  }
+
+  function isToday(day: number) {
+    return formatDate(viewYear, viewMonth, day) === formatDate(today.getFullYear(), today.getMonth(), today.getDate());
+  }
+
+  const canGoPrev = !(viewYear === today.getFullYear() && viewMonth === today.getMonth());
+
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 overflow-hidden">
+        {/* Month navigation */}
+        <div className="flex items-center justify-between px-4 py-3 bg-[hsl(214,60%,14%)] text-white">
+          <button
+            type="button"
+            onClick={prevMonth}
+            disabled={!canGoPrev}
+            className="p-1 rounded hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="font-semibold text-sm">{MONTHS[viewMonth]} {viewYear}</span>
+          <button
+            type="button"
+            onClick={nextMonth}
+            className="p-1 rounded hover:bg-white/10 transition-colors"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-100">
+          {DAYS.map(d => (
+            <div key={d} className="text-center text-xs font-medium text-gray-400 py-2">{d}</div>
+          ))}
+        </div>
+
+        {/* Day grid */}
+        <div className="grid grid-cols-7 p-2 gap-1">
+          {cells.map((day, i) => {
+            if (!day) return <div key={i} />;
+            const disabled = isPast(day) || isWeekend(day);
+            const selected = isSelected(day);
+            const todayFlag = isToday(day);
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                onClick={() => onDateChange(formatDate(viewYear, viewMonth, day))}
+                className={`
+                  aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-all
+                  ${disabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-[hsl(25,95%,53%)]/10 cursor-pointer"}
+                  ${selected ? "bg-[hsl(25,95%,53%)] text-white hover:bg-[hsl(25,95%,45%)]" : ""}
+                  ${todayFlag && !selected ? "ring-2 ring-[hsl(214,60%,14%)] text-[hsl(214,60%,14%)]" : ""}
+                  ${!disabled && !selected ? "text-gray-700" : ""}
+                `}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Time slots */}
+      {selectedDate && (
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Preferred time</p>
+          <div className="grid grid-cols-4 gap-2">
+            {TIME_SLOTS.map(slot => (
+              <button
+                key={slot.value}
+                type="button"
+                onClick={() => onTimeChange(selectedTime === slot.value ? "" : slot.value)}
+                className={`
+                  py-2 px-1 rounded-lg text-xs font-medium border transition-all
+                  ${selectedTime === slot.value
+                    ? "bg-[hsl(25,95%,53%)] text-white border-[hsl(25,95%,53%)]"
+                    : "border-gray-200 text-gray-600 hover:border-[hsl(25,95%,53%)] hover:text-[hsl(25,95%,53%)]"
+                  }
+                `}
+              >
+                {slot.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {selectedDate && (
+        <p className="text-xs text-gray-400">
+          Monday – Friday only. We'll confirm availability when we follow up.
+        </p>
+      )}
+    </div>
+  );
+}
 
 const quoteSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
@@ -75,11 +237,7 @@ function PhotoUploadZone({ label, hint, value, onChange, testId }: PhotoUploadZo
 
       {value ? (
         <div className="relative rounded-xl overflow-hidden border border-gray-200 group">
-          <img
-            src={value}
-            alt={label}
-            className="w-full h-40 object-cover"
-          />
+          <img src={value} alt={label} className="w-full h-40 object-cover" />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button
               type="button"
@@ -131,22 +289,8 @@ function PhotoUploadZone({ label, hint, value, onChange, testId }: PhotoUploadZo
         </div>
       )}
 
-      {/* Hidden file inputs */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileInput}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFileInput}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
+      <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileInput} />
     </div>
   );
 }
@@ -155,6 +299,8 @@ export default function QuotePage() {
   const createQuote = useCreateQuote();
   const [submitted, setSubmitted] = useState(false);
   const [photos, setPhotos] = useState({ switchboard: "", fasci: "", street: "" });
+  const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<QuoteForm>({
@@ -166,6 +312,14 @@ export default function QuotePage() {
     },
   });
 
+  function resetAll() {
+    setSubmitted(false);
+    form.reset();
+    setPhotos({ switchboard: "", fasci: "", street: "" });
+    setPreferredDate("");
+    setPreferredTime("");
+  }
+
   async function onSubmit(data: QuoteForm) {
     setSubmitError(null);
     try {
@@ -175,12 +329,27 @@ export default function QuotePage() {
           switchboardImageUrl: photos.switchboard || undefined,
           fasciImageUrl: photos.fasci || undefined,
           streetImageUrl: photos.street || undefined,
+          preferredDate: preferredDate || undefined,
+          preferredTime: preferredTime || undefined,
         }
       });
       setSubmitted(true);
     } catch {
       setSubmitError("Something went wrong submitting your quote. Please try again or call us on 0419 868 703.");
     }
+  }
+
+  function formatSelectedDate(dateStr: string) {
+    if (!dateStr) return "";
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  }
+
+  function formatSelectedTime(timeStr: string) {
+    if (!timeStr) return "";
+    const slot = TIME_SLOTS.find(s => s.value === timeStr);
+    return slot ? slot.label : timeStr;
   }
 
   return (
@@ -198,8 +367,13 @@ export default function QuotePage() {
             <CheckCircle size={56} className="text-green-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Quote Request Received!</h2>
             <p className="text-gray-600 mt-2">Thank you for contacting us! We'll review your details and be in touch shortly.</p>
+            {preferredDate && (
+              <p className="text-gray-500 text-sm mt-2">
+                Preferred appointment: <strong>{formatSelectedDate(preferredDate)}{preferredTime ? ` at ${formatSelectedTime(preferredTime)}` : ""}</strong>
+              </p>
+            )}
             <button
-              onClick={() => { setSubmitted(false); form.reset(); setPhotos({ switchboard: "", fasci: "", street: "" }); }}
+              onClick={resetAll}
               className="mt-6 text-[hsl(25,95%,53%)] underline text-sm"
               data-testid="button-quote-again"
             >
@@ -283,6 +457,39 @@ export default function QuotePage() {
                 data-testid="input-quote-description"
               />
               {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
+            </div>
+
+            {/* Preferred appointment */}
+            <div className="border-t border-gray-100 pt-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays size={18} className="text-[hsl(25,95%,53%)]" />
+                <div>
+                  <h3 className="font-semibold text-gray-800 text-sm">Preferred Appointment <span className="font-normal text-gray-400">(optional)</span></h3>
+                  <p className="text-xs text-gray-500">Pick a date and time that suits you — we'll confirm when we follow up.</p>
+                </div>
+              </div>
+
+              {preferredDate && (
+                <div className="flex items-center justify-between bg-[hsl(25,95%,53%)]/8 border border-[hsl(25,95%,53%)]/20 rounded-lg px-3 py-2">
+                  <p className="text-sm text-[hsl(214,60%,14%)] font-medium">
+                    {formatSelectedDate(preferredDate)}{preferredTime ? ` · ${formatSelectedTime(preferredTime)}` : ""}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setPreferredDate(""); setPreferredTime(""); }}
+                    className="text-gray-400 hover:text-gray-600 ml-2"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              <CalendarPicker
+                selectedDate={preferredDate}
+                selectedTime={preferredTime}
+                onDateChange={(d) => { setPreferredDate(d); setPreferredTime(""); }}
+                onTimeChange={setPreferredTime}
+              />
             </div>
 
             {/* Photo uploads */}
