@@ -50,6 +50,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-[hsl(214,40%,20%)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-gray-500">
+          
           <div className="space-y-1">
             <p>REC Number: <span className="text-gray-400">REC 25510</span></p>
             <p>ABN: <span className="text-gray-400">35 608 171 802</span></p>
@@ -58,6 +59,7 @@ export default function Footer() {
             <p>Compliant with AS/NZS 3000:2018 (Wiring Rules)</p>
             <p>ESV Licensed Electrical Contractor</p>
             <p className="mt-2">&copy; {new Date().getFullYear()} Electrical Installers Pty Ltd</p>
+            <Link href="/privacy-policy" className="mt-1 inline-block hover:text-gray-300 transition-colors underline underline-offset-2">Privacy Policy</Link>
           </div>
         </div>
         <p className="mt-4 text-xs text-gray-600 leading-relaxed">

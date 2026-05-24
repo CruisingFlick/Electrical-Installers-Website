@@ -31,6 +31,7 @@ import AdminAiSettings from "@/pages/admin/AiSettings";
 import AdminCalendarView from "@/pages/admin/CalendarView";
 import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
 import ServiceAreaPage from "@/pages/ServiceArea";
+import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -98,6 +99,7 @@ function Router() {
       <Route path="/book" component={() => <PublicLayout><BookPage /></PublicLayout>} />
       <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
       <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
+      <Route path="/privacy-policy" component={() => <PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
 
       {/* Admin routes */}
       <Route path="/admin" component={AdminLogin} />
