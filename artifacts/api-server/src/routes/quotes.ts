@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../middleware/admin-auth";
+import { sendSms } from "../lib/sms";
 
 const router = Router();
 
@@ -122,6 +123,12 @@ router.post("/", async (req, res, next) => {
       .returning();
 
     void sendQuoteEmails(parsed.data);
+
+    // SMS confirmation to customer
+    void sendSms(
+      parsed.data.customerPhone,
+      `Hi ${parsed.data.customerName}, your quote request with Electrical Installers has been received. We'll review it and be in touch shortly. Call us: 0419 868 703`
+    );
 
     res.status(201).json(formatQuote(row));
   } catch (err) {

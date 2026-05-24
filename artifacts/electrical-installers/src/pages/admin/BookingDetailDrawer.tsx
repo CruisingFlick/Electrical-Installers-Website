@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock } from "lucide-react";
+import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock, StickyNote, Save } from "lucide-react";
 import { useConfirmBooking, useUpdateBookingStatus, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -14,6 +14,7 @@ type Booking = {
   preferredDate: string;
   message?: string | null;
   photoUrl?: string | null;
+  adminNotes?: string | null;
   status: string;
   createdAt: string;
 };
@@ -29,9 +30,10 @@ interface Props {
   booking: Booking | null;
   onClose: () => void;
   onLightbox: (url: string) => void;
+  onUpdate?: (updated: Booking) => void;
 }
 
-export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Props) {
+export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUpdate }: Props) {
   const queryClient = useQueryClient();
   const confirmBooking = useConfirmBooking();
   const updateStatus = useUpdateBookingStatus();
@@ -40,6 +42,9 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
   const [pickedTime, setPickedTime] = useState("09:00");
   const [adminNote, setAdminNote] = useState("");
   const [sent, setSent] = useState(false);
+  const [notesValue, setNotesValue] = useState(booking?.adminNotes ?? "");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
 
   if (!booking) return null;
 
@@ -72,6 +77,31 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
         },
       }
     );
+  }
+
+  async function saveNotes() {
+    if (!booking) return;
+    setNotesSaving(true);
+    try {
+      const token = localStorage.getItem("admin_token");
+      const resp = await fetch(`/api/bookings/${booking.id}/notes`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ adminNotes: notesValue }),
+      });
+      if (resp.ok) {
+        const updated = await resp.json();
+        queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+        onUpdate?.({ ...booking, adminNotes: updated.adminNotes });
+        setNotesSaved(true);
+        setTimeout(() => setNotesSaved(false), 2500);
+      }
+    } finally {
+      setNotesSaving(false);
+    }
   }
 
   const isConfirmable = booking.status === "pending" || booking.status === "confirmed";
@@ -185,6 +215,32 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
             </div>
           </div>
 
+          {/* Admin notes */}
+          <div className="px-6 py-5 border-b border-gray-50">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3 flex items-center gap-1.5">
+              <StickyNote size={13} />
+              Internal Notes
+            </h3>
+            <textarea
+              rows={3}
+              placeholder="Add internal notes — only visible to admin…"
+              value={notesValue}
+              onChange={(e) => { setNotesValue(e.target.value); setNotesSaved(false); }}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+            />
+            <button
+              onClick={saveNotes}
+              disabled={notesSaving}
+              className={`mt-2 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                notesSaved
+                  ? "bg-green-100 text-green-700"
+                  : "bg-[hsl(214,60%,14%)] text-white hover:bg-[hsl(214,60%,20%)]"
+              } disabled:opacity-50`}
+            >
+              {notesSaved ? <><CheckCircle size={13} /> Saved</> : <><Save size={13} /> {notesSaving ? "Saving…" : "Save Notes"}</>}
+            </button>
+          </div>
+
           {/* Schedule & confirm */}
           {isConfirmable && (
             <div className="px-6 py-5">
@@ -195,7 +251,7 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
                   <CheckCircle size={18} className="text-green-600 shrink-0" />
                   <div>
                     <p className="font-semibold">Confirmation sent!</p>
-                    <p className="text-xs text-green-600 mt-0.5">The customer has been emailed with the scheduled date.</p>
+                    <p className="text-xs text-green-600 mt-0.5">The customer has been notified by email and SMS.</p>
                   </div>
                 </div>
               ) : (
@@ -253,7 +309,7 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox }: Pr
                     className="w-full bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,46%)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
                   >
                     <CheckCircle size={16} />
-                    {confirmBooking.isPending ? "Sending…" : "Confirm & Send Email to Customer"}
+                    {confirmBooking.isPending ? "Sending…" : "Confirm & Notify Customer (Email + SMS)"}
                   </button>
                   {confirmBooking.isError && (
                     <p className="text-xs text-red-600">Something went wrong. Please try again.</p>

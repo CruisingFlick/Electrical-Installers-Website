@@ -628,6 +628,8 @@ components:
         status:
           type: string
           enum: [pending, confirmed, completed, cancelled]
+        adminNotes:
+          type: string
         createdAt:
           type: string
       required:

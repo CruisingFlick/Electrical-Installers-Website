@@ -1,6 +1,6 @@
 import { useListBookings, useDeleteBooking, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2, ImageIcon, Search, X, ChevronRight } from "lucide-react";
+import { Trash2, ImageIcon, Search, X, ChevronRight, Download } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useState, useMemo } from "react";
 import BookingDetailDrawer from "./BookingDetailDrawer";
@@ -25,9 +25,38 @@ type Booking = {
   preferredDate: string;
   message?: string | null;
   photoUrl?: string | null;
+  adminNotes?: string | null;
   status: string;
   createdAt: string;
 };
+
+function exportCsv(bookings: Booking[]) {
+  const headers = ["ID", "Name", "Email", "Phone", "Service", "Job Type", "Suburb", "Preferred Date", "Status", "Message", "Admin Notes", "Created At"];
+  const rows = bookings.map((b) => [
+    b.id,
+    b.customerName,
+    b.customerEmail,
+    b.customerPhone ?? "",
+    b.serviceType,
+    b.jobType,
+    b.suburb,
+    b.preferredDate,
+    b.status,
+    (b.message ?? "").replace(/"/g, '""'),
+    (b.adminNotes ?? "").replace(/"/g, '""'),
+    new Date(b.createdAt).toLocaleDateString("en-AU"),
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((v) => `"${v}"`).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `bookings-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function AdminBookings() {
   const queryClient = useQueryClient();
@@ -70,7 +99,17 @@ export default function AdminBookings() {
   return (
     <AdminLayout>
       <div>
-        <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-6">Bookings</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Bookings</h1>
+          <button
+            onClick={() => exportCsv(filtered as Booking[])}
+            className="flex items-center gap-2 text-sm border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+            title="Export to CSV"
+          >
+            <Download size={15} />
+            Export CSV
+          </button>
+        </div>
 
         {/* Search & Filter bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -223,6 +262,7 @@ export default function AdminBookings() {
           booking={selectedBooking}
           onClose={() => setSelectedBooking(null)}
           onLightbox={(url) => setLightboxUrl(url)}
+          onUpdate={(updated) => setSelectedBooking(updated)}
         />
       </div>
     </AdminLayout>

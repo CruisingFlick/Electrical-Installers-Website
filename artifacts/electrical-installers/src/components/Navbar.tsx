@@ -7,6 +7,7 @@ const navLinks = [
   { href: "/about", label: "About" },
   { href: "/services", label: "Services" },
   { href: "/underground-power", label: "Underground Power" },
+  { href: "/service-area", label: "Service Area" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/reviews", label: "Reviews" },
   { href: "/book", label: "Book Now" },

@@ -27,6 +27,8 @@ import AdminReviews from "@/pages/admin/Reviews";
 import AdminQuotes from "@/pages/admin/Quotes";
 import AdminJobMap from "@/pages/admin/JobMap";
 import AdminAiSettings from "@/pages/admin/AiSettings";
+import AdminCalendarView from "@/pages/admin/CalendarView";
+import ServiceAreaPage from "@/pages/ServiceArea";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,7 @@ function Router() {
       <Route path="/reviews" component={() => <PublicLayout><ReviewsPage /></PublicLayout>} />
       <Route path="/book" component={() => <PublicLayout><BookPage /></PublicLayout>} />
       <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
+      <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
 
       {/* Admin routes */}
       <Route path="/admin" component={AdminLogin} />
@@ -94,6 +97,7 @@ function Router() {
       <Route path="/admin/quotes" component={() => <AdminGuard component={AdminQuotes} />} />
       <Route path="/admin/jobs" component={() => <AdminGuard component={AdminJobMap} />} />
       <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
+      <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
 
       <Route component={NotFound} />
     </Switch>

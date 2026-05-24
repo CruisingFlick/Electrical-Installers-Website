@@ -13,6 +13,7 @@ import {
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../middleware/admin-auth";
+import { sendSms } from "../lib/sms";
 
 const router = Router();
 
@@ -138,6 +139,12 @@ router.post("/", async (req, res, next) => {
 
     void sendBookingEmails(parsed.data);
 
+    // SMS confirmation to customer
+    void sendSms(
+      parsed.data.customerPhone,
+      `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. We'll be in touch within one business day to confirm. Call us: 0419 868 703`
+    );
+
     res.status(201).json(formatBooking(row));
   } catch (err) {
     next(err);
@@ -217,6 +224,12 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
       // Email sending is best-effort
     }
 
+    // SMS confirmation to customer
+    void sendSms(
+      row.customerPhone,
+      `Hi ${row.customerName}, your booking with Electrical Installers is confirmed for ${confirmedDate}. Job: ${row.jobType}, ${row.suburb}. Questions? Call 0419 868 703`
+    );
+
     res.json(formatBooking(row));
   } catch (err) {
     next(err);
@@ -266,6 +279,35 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     const [row] = await db
       .update(bookingsTable)
       .set({ status: bodyParsed.data.status })
+      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .returning();
+
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    res.json(formatBooking(row));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch("/:id/notes", requireAdmin, async (req, res, next) => {
+  const paramParsed = UpdateBookingStatusParams.safeParse({
+    id: Number(req.params["id"]),
+  });
+  if (!paramParsed.success) {
+    res.status(400).json({ error: "Invalid ID" });
+    return;
+  }
+
+  const { adminNotes } = req.body as { adminNotes?: string };
+
+  try {
+    const [row] = await db
+      .update(bookingsTable)
+      .set({ adminNotes: adminNotes ?? null })
       .where(eq(bookingsTable.id, paramParsed.data.id))
       .returning();
 

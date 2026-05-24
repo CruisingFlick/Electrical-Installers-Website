@@ -185,6 +185,49 @@ export default function HomePage() {
           </div>
         </section>
       )}
+      {/* Certifications & Trust */}
+      <section className="py-14 bg-[hsl(214,60%,14%)] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold">Licensed, Insured &amp; Trusted</h2>
+            <p className="text-gray-400 mt-1 text-sm">Your protection is our priority — every job is completed to Australian standards</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                badge: "VIC",
+                title: "Victorian Electrical Licence",
+                desc: "Fully licensed under the Electrical Safety Act (Vic). Licence no. available on request.",
+              },
+              {
+                badge: "35+",
+                title: "Years of Experience",
+                desc: "Over 35 years designing and installing electrical systems across Victoria.",
+              },
+              {
+                badge: "✓",
+                title: "Public Liability Insurance",
+                desc: "Fully insured for public liability and professional indemnity on every job.",
+              },
+              {
+                badge: "AU",
+                title: "Australian Standards Compliant",
+                desc: "All work meets AS/NZS 3000 wiring rules and relevant Victorian regulations.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="flex gap-4 items-start bg-[hsl(214,60%,20%)] rounded-2xl p-5 border border-[hsl(214,50%,28%)]">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[hsl(25,95%,53%)] flex items-center justify-center font-bold text-sm text-white">
+                  {item.badge}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* CTA */}
       <section className="bg-[hsl(25,95%,53%)] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">

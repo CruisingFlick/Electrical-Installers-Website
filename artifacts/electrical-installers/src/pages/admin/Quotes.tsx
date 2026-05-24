@@ -1,7 +1,7 @@
 import { useListQuotes, useUpdateQuoteStatus, getListQuotesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { X, Search } from "lucide-react";
+import { X, Search, Download } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 function PhotoThumbnail({ src, label }: { src: string; label: string }) {
@@ -51,6 +51,46 @@ const statusColors: Record<string, string> = {
 
 const STATUS_OPTIONS = ["all", "pending", "reviewed", "quoted", "accepted", "declined"] as const;
 
+type Quote = {
+  id: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  suburb: string;
+  jobType: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  switchboardImageUrl?: string | null;
+  fasciImageUrl?: string | null;
+  streetImageUrl?: string | null;
+};
+
+function exportCsv(quotes: Quote[]) {
+  const headers = ["ID", "Name", "Email", "Phone", "Suburb", "Job Type", "Description", "Status", "Created At"];
+  const rows = quotes.map((q) => [
+    q.id,
+    q.customerName,
+    q.customerEmail,
+    q.customerPhone ?? "",
+    q.suburb,
+    q.jobType,
+    (q.description ?? "").replace(/"/g, '""'),
+    q.status,
+    new Date(q.createdAt).toLocaleDateString("en-AU"),
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) => row.map((v) => `"${v}"`).join(","))
+    .join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `quotes-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminQuotes() {
   const queryClient = useQueryClient();
   const { data: quotes = [], isLoading } = useListQuotes();
@@ -84,7 +124,17 @@ export default function AdminQuotes() {
   return (
     <AdminLayout>
       <div>
-        <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-6">Quote Requests</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Quote Requests</h1>
+          <button
+            onClick={() => exportCsv(filtered as Quote[])}
+            className="flex items-center gap-2 text-sm border border-gray-200 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors text-gray-600"
+            title="Export to CSV"
+          >
+            <Download size={15} />
+            Export CSV
+          </button>
+        </div>
 
         {/* Search & Filter bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">

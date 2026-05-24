@@ -1,11 +1,12 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot } from "lucide-react";
+import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot, CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/bookings", icon: Calendar, label: "Bookings" },
+  { href: "/admin/calendar", icon: CalendarDays, label: "Calendar" },
   { href: "/admin/portfolio", icon: Image, label: "Portfolio" },
   { href: "/admin/reviews", icon: Star, label: "Reviews" },
   { href: "/admin/quotes", icon: FileText, label: "Quotes" },
