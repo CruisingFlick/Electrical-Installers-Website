@@ -17,11 +17,22 @@ router.post("/login", (req, res) => {
     return;
   }
 
-  res.json({ token: adminPassword });
+  req.session.isAdmin = true;
+  res.json({ ok: true });
 });
 
-router.delete("/logout", requireAdmin, (_req, res) => {
-  res.status(204).send();
+router.get("/me", (req, res) => {
+  if (!req.session?.isAdmin) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  res.json({ isAdmin: true });
+});
+
+router.delete("/logout", requireAdmin, (req, res) => {
+  req.session.destroy(() => {
+    res.status(204).send();
+  });
 });
 
 export default router;

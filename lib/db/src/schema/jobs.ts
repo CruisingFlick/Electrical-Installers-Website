@@ -1,4 +1,4 @@
-import { pgTable, serial, text, doublePrecision, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, doublePrecision, timestamp, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -11,6 +11,12 @@ export const jobsTable = pgTable("jobs", {
   latitude: doublePrecision("latitude").notNull(),
   longitude: doublePrecision("longitude").notNull(),
   status: text("status").notNull().default("pending"),
+  priority: text("priority").notNull().default("normal"),
+  estimatedDuration: text("estimated_duration"),
+  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }),
+  clientName: text("client_name"),
+  clientPhone: text("client_phone"),
+  clientEmail: text("client_email"),
   scheduledDate: text("scheduled_date"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

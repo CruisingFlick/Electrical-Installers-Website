@@ -461,6 +461,12 @@ export const ListJobsResponseItem = zod.object({
   "latitude": zod.number(),
   "longitude": zod.number(),
   "status": zod.enum(['pending', 'accepted', 'in_progress', 'completed']),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "estimatedDuration": zod.string().optional(),
+  "totalAmount": zod.number().optional(),
+  "clientName": zod.string().optional(),
+  "clientPhone": zod.string().optional(),
+  "clientEmail": zod.string().optional(),
   "scheduledDate": zod.string().optional(),
   "notes": zod.string().optional(),
   "createdAt": zod.string()
@@ -478,6 +484,12 @@ export const CreateJobBody = zod.object({
   "jobType": zod.string(),
   "latitude": zod.number(),
   "longitude": zod.number(),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']).optional(),
+  "estimatedDuration": zod.string().optional(),
+  "totalAmount": zod.number().optional(),
+  "clientName": zod.string().optional(),
+  "clientPhone": zod.string().optional(),
+  "clientEmail": zod.string().optional(),
   "scheduledDate": zod.string().optional(),
   "notes": zod.string().optional()
 })
@@ -503,6 +515,12 @@ export const UpdateJobStatusResponse = zod.object({
   "latitude": zod.number(),
   "longitude": zod.number(),
   "status": zod.enum(['pending', 'accepted', 'in_progress', 'completed']),
+  "priority": zod.enum(['low', 'normal', 'high', 'urgent']),
+  "estimatedDuration": zod.string().optional(),
+  "totalAmount": zod.number().optional(),
+  "clientName": zod.string().optional(),
+  "clientPhone": zod.string().optional(),
+  "clientEmail": zod.string().optional(),
   "scheduledDate": zod.string().optional(),
   "notes": zod.string().optional(),
   "createdAt": zod.string()

@@ -8,6 +8,7 @@ import ShareButton from "@/components/ShareButton";
 import QrButton from "@/components/QrButton";
 import ChatWidget from "@/components/ChatWidget";
 import { Phone } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import HomePage from "@/pages/Home";
 import AboutPage from "@/pages/About";
@@ -41,14 +42,23 @@ const queryClient = new QueryClient({
   },
 });
 
-function isAdminAuth() {
-  return Boolean(localStorage.getItem("admin_token"));
-}
-
 function AdminGuard({ component: Component }: { component: React.ComponentType }) {
-  if (!isAdminAuth()) {
-    return <Redirect to="/admin" />;
+  const [status, setStatus] = useState<"loading" | "ok" | "denied">("loading");
+
+  useEffect(() => {
+    fetch("/api/admin/me", { credentials: "same-origin" })
+      .then((res) => setStatus(res.ok ? "ok" : "denied"))
+      .catch(() => setStatus("denied"));
+  }, []);
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[hsl(210,20%,96%)]">
+        <div className="text-gray-500 text-sm">Loading…</div>
+      </div>
+    );
   }
+  if (status === "denied") return <Redirect to="/admin" />;
   return <Component />;
 }
 

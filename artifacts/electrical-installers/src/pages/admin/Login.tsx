@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Zap, Lock } from "lucide-react";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 export default function AdminLogin() {
   const [password, setPassword] = useState("");
@@ -17,15 +16,13 @@ export default function AdminLogin() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ password }),
       });
       if (!res.ok) {
         setError("Incorrect password. Please try again.");
         return;
       }
-      const { token } = (await res.json()) as { token: string };
-      localStorage.setItem("admin_token", token);
-      setAuthTokenGetter(() => localStorage.getItem("admin_token"));
       setLocation("/admin/dashboard");
     } catch {
       setError("Unable to connect to server. Please try again.");

@@ -250,6 +250,16 @@ export const JobStatus = {
   completed: 'completed',
 } as const;
 
+export type JobPriority = typeof JobPriority[keyof typeof JobPriority];
+
+
+export const JobPriority = {
+  low: 'low',
+  normal: 'normal',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
+
 export interface Job {
   id: number;
   customerName: string;
@@ -259,10 +269,26 @@ export interface Job {
   latitude: number;
   longitude: number;
   status: JobStatus;
+  priority: JobPriority;
+  estimatedDuration?: string;
+  totalAmount?: number;
+  clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
   scheduledDate?: string;
   notes?: string;
   createdAt: string;
 }
+
+export type CreateJobBodyPriority = typeof CreateJobBodyPriority[keyof typeof CreateJobBodyPriority];
+
+
+export const CreateJobBodyPriority = {
+  low: 'low',
+  normal: 'normal',
+  high: 'high',
+  urgent: 'urgent',
+} as const;
 
 export interface CreateJobBody {
   customerName: string;
@@ -271,6 +297,12 @@ export interface CreateJobBody {
   jobType: string;
   latitude: number;
   longitude: number;
+  priority?: CreateJobBodyPriority;
+  estimatedDuration?: string;
+  totalAmount?: number;
+  clientName?: string;
+  clientPhone?: string;
+  clientEmail?: string;
   scheduledDate?: string;
   notes?: string;
 }

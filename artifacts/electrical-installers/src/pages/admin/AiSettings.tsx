@@ -13,9 +13,8 @@ export default function AiSettings() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("admin_token");
     fetch("/api/admin/ai-settings", {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: "same-origin",
     })
       .then((r) => r.json())
       .then((data: { systemPrompt: string }) => {
@@ -29,13 +28,12 @@ export default function AiSettings() {
   async function handleSave() {
     setSaving(true);
     setError(null);
-    const token = localStorage.getItem("admin_token");
     try {
       const res = await fetch("/api/admin/ai-settings", {
         method: "PUT",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ systemPrompt: prompt }),
       });

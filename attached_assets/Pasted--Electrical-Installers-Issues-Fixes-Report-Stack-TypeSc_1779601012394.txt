@@ -1,0 +1,271 @@
+# Electrical Installers — Issues & Fixes Report
+
+**Stack:** TypeScript · React · Express  
+**Live URL:** https://87e4abbb-ecdd-4390-b36b-f6d5a46c246a-00-36hr0v60gqwta.kirk.replit.dev/  
+**Date:** 2026-05-24  
+**Region:** Mornington Peninsula · St Kilda · Warragul (Australia)
+
+---
+
+## Priority Summary
+
+| # | Area | Issue | Severity |
+|---|------|-------|----------|
+| 1 | Admin auth | `localStorage` flag is trivially bypassable — anyone can fake admin | **Critical** |
+| 2 | API auth | Confirm all protected routes check server-side session, not client flag | **High** |
+| 3 | Jobs data model | Missing fields: priority, estimated_duration, total_amount, client details | **Medium** |
+| 4 | Phone formatting | Numbers should format as Australian `04XX XXX XXX`, not US format | **Low** |
+| 5 | Health endpoint | No `/api/health` route — add one for monitoring and uptime checks | **Low** |
+
+---
+
+## Issue 1 — Admin Auth Stored in `localStorage` (CRITICAL)
+
+### The Problem
+
+Admin access is currently granted by setting a flag in the browser:
+
+```js
+localStorage.setItem('admin_auth', 'true')
+```
+
+Any visitor can open browser DevTools (F12 → Application → Local Storage), type that line, and instantly have admin access — no password needed. This is the most urgent fix.
+
+### The Fix
+
+**Remove `localStorage` from the auth flow entirely.** Admin identity must be validated on the server on every request, not trusted from the browser.
+
+#### Server side (Express) — add a session-based admin check
+
+Install express-session if not already present:
+```
+npm install express-session
+npm install --save-dev @types/express-session
+```
+
+Create a middleware that checks the session:
+
+```ts
+// middleware/requireAdmin.ts
+import { Request, Response, NextFunction } from 'express';
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.session?.user?.isAdmin) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+}
+```
+
+Apply it to every admin route:
+```ts
+import { requireAdmin } from './middleware/requireAdmin';
+
+router.get('/admin/jobs', requireAdmin, (req, res) => { ... });
+router.delete('/admin/jobs/:id', requireAdmin, (req, res) => { ... });
+// apply to every /admin/* route
+```
+
+#### Login route — set session on successful login
+
+```ts
+router.post('/api/login', async (req, res) => {
+  const user = await verifyCredentials(req.body.email, req.body.password);
+  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+  req.session.user = {
+    id: user.id,
+    email: user.email,
+    isAdmin: user.isAdmin,  // comes from the database, not the client
+  };
+
+  res.json({ ok: true, isAdmin: user.isAdmin });
+});
+```
+
+#### React frontend — read admin status from the API response, not localStorage
+
+```ts
+// After login
+const { data } = await api.post('/api/login', credentials);
+setIsAdmin(data.isAdmin);  // set in React state, not localStorage
+
+// On app load, restore from session
+const { data } = await api.get('/api/me');  // server returns current user
+setIsAdmin(data.isAdmin);
+```
+
+**Remove all `localStorage.getItem('admin_auth')` checks from the frontend.**  
+The frontend can store `isAdmin` in React state (memory) — it disappears on refresh and gets re-fetched from the server. That is safe. localStorage is not.
+
+#### Database — add `is_admin` column to users table
+
+```sql
+ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+Or in your ORM/schema:
+```ts
+isAdmin: boolean('is_admin').notNull().default(false)
+```
+
+Grant yourself admin in the Replit Shell:
+```sql
+UPDATE users SET is_admin = TRUE WHERE email = 'your@email.com';
+```
+
+---
+
+## Issue 2 — Verify All Protected API Routes Use Server-Side Auth (HIGH)
+
+### The Problem
+
+If any Express route currently checks `req.headers['x-admin']` or trusts anything sent from the browser to identify an admin, it is bypassable.
+
+### The Fix
+
+Audit every route in your Express router. Any route that should be admin-only must use the `requireAdmin` middleware from Issue 1. Any route that requires login (but not admin) should use a similar `requireAuth` middleware:
+
+```ts
+// middleware/requireAuth.ts
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: 'Unauthorised' });
+  }
+  next();
+}
+```
+
+Apply to all `/api/jobs`, `/api/bookings`, etc. routes that should require login.
+
+---
+
+## Issue 3 — Jobs Table Missing Useful Fields (MEDIUM)
+
+### The Problem
+
+The current jobs table may be missing fields that would make the Job Map and job management features more useful.
+
+### Recommended Fields to Add
+
+```sql
+ALTER TABLE jobs ADD COLUMN priority VARCHAR(20) DEFAULT 'normal';
+-- values: 'low', 'normal', 'high', 'urgent'
+
+ALTER TABLE jobs ADD COLUMN estimated_duration VARCHAR(50);
+-- e.g. '2 hours', 'half day', 'full day'
+
+ALTER TABLE jobs ADD COLUMN total_amount DECIMAL(10, 2);
+-- store as numeric, NOT as text/varchar — text can't be summed or sorted
+
+ALTER TABLE jobs ADD COLUMN client_name VARCHAR(100);
+ALTER TABLE jobs ADD COLUMN client_phone VARCHAR(20);
+ALTER TABLE jobs ADD COLUMN client_email VARCHAR(120);
+```
+
+> **Important:** `total_amount` must be `DECIMAL` or `NUMERIC`, not `VARCHAR`. Storing dollar amounts as text means you can't calculate totals, averages, or sort by price.
+
+### TypeScript type update
+
+```ts
+interface Job {
+  id: number;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  priority: 'low' | 'normal' | 'high' | 'urgent';     // add
+  estimatedDuration?: string;                           // add
+  totalAmount?: number;                                 // add — number not string
+  clientName?: string;                                  // add
+  clientPhone?: string;                                 // add
+  clientEmail?: string;                                 // add
+  address?: string;
+  scheduledDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+---
+
+## Issue 4 — Phone Number Formatting (LOW)
+
+### The Problem
+
+Phone numbers are being formatted for North America (`(03) 9123 4567` style or `(XXX) XXX-XXXX`) instead of the Australian standard. Your customers are in Mornington Peninsula, St Kilda, and Warragul.
+
+### The Fix
+
+Replace the phone formatting utility with an Australian-aware version:
+
+```ts
+// utils/formatPhone.ts
+export function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+
+  // Australian mobile: 10 digits starting with 04
+  if (digits.length === 10 && digits.startsWith('04')) {
+    return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7)}`;
+    // → 0412 345 678
+  }
+
+  // Australian landline: 10 digits starting with 03 (Victoria)
+  if (digits.length === 10 && digits.startsWith('03')) {
+    return `(03) ${digits.slice(2, 6)} ${digits.slice(6)}`;
+    // → (03) 9123 4567
+  }
+
+  // International with country code: +61 prefix
+  if (digits.length === 11 && digits.startsWith('61')) {
+    const local = digits.slice(2);
+    return `+61 ${local.slice(0, 1)} ${local.slice(1, 5)} ${local.slice(5)}`;
+    // → +61 4 1234 5678
+  }
+
+  return raw; // return as-is if unrecognised
+}
+```
+
+Use this everywhere a phone number is displayed or saved.
+
+---
+
+## Issue 5 — No Health Endpoint (LOW)
+
+### The Problem
+
+`/api/health` returns 404. A health endpoint is useful for Replit uptime monitoring and debugging — it confirms the server is running and the database is reachable.
+
+### The Fix
+
+Add this route to your Express app:
+
+```ts
+router.get('/api/health', async (req, res) => {
+  try {
+    // optionally ping the database here
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ status: 'error', message: 'Database unreachable' });
+  }
+});
+```
+
+---
+
+## Fix Order Recommendation
+
+1. **Fix Issue 1 first** (admin localStorage) — highest risk, can be exploited right now by any visitor
+2. **Fix Issue 2** (audit all protected routes) — do this immediately after Issue 1
+3. **Fix Issue 3** (jobs table fields) — improves Job Map and reporting
+4. **Fix Issue 4** (phone format) — quick utility change, low risk
+5. **Fix Issue 5** (health endpoint) — small addition, useful for monitoring
+
+---
+
+## Notes for Replit Agent
+
+- Do **not** use `localStorage` for any auth state — use `express-session` server-side
+- The `total_amount` / money fields must be `DECIMAL(10,2)` in the database, and `number` in TypeScript — never `string`
+- All admin middleware should call `next()` only if `req.session.user.isAdmin === true` (strict equality)
+- The frontend React app may read `isAdmin` from state (fine) but must always re-validate from the server on page load via `/api/me` or equivalent

@@ -1002,6 +1002,19 @@ components:
         status:
           type: string
           enum: [pending, accepted, in_progress, completed]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        estimatedDuration:
+          type: string
+        totalAmount:
+          type: number
+        clientName:
+          type: string
+        clientPhone:
+          type: string
+        clientEmail:
+          type: string
         scheduledDate:
           type: string
         notes:
@@ -1017,6 +1030,7 @@ components:
         - latitude
         - longitude
         - status
+        - priority
         - createdAt
 
     CreateJobBody:
@@ -1034,6 +1048,19 @@ components:
           type: number
         longitude:
           type: number
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        estimatedDuration:
+          type: string
+        totalAmount:
+          type: number
+        clientName:
+          type: string
+        clientPhone:
+          type: string
+        clientEmail:
+          type: string
         scheduledDate:
           type: string
         notes:

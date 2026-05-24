@@ -83,12 +83,11 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
     if (!booking) return;
     setNotesSaving(true);
     try {
-      const token = localStorage.getItem("admin_token");
       const resp = await fetch(`/api/bookings/${booking.id}/notes`, {
         method: "PATCH",
+        credentials: "same-origin",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ adminNotes: notesValue }),
       });

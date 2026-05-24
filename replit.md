@@ -32,7 +32,7 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 - **Quote** (`/quote`) — virtual quote form with photo URL fields, thank-you confirmation
 
 ### Admin Dashboard (`/admin`)
-- **Login** — password: `admin123`, stored in localStorage as `admin_auth = "true"`
+- **Login** — password set via `ADMIN_PASSWORD` secret; auth uses server-side session cookie (express-session), no localStorage
 - **Dashboard** — analytics stats + recharts bar charts (bookings by service, by region)
 - **Bookings** — table with status change dropdowns (pending/confirmed/completed/cancelled)
 - **Portfolio** — add/delete portfolio items via modal form
@@ -52,7 +52,7 @@ Tables in `lib/db/src/schema/index.ts`:
 - `portfolio_items` — completed job showcase with before/after images
 - `reviews` — customer reviews (status: pending/approved/rejected)
 - `quotes` — virtual quote requests with photo URLs
-- `jobs` — job map entries with lat/lng coordinates
+- `jobs` — job map entries with lat/lng coordinates, priority, estimatedDuration, totalAmount (numeric), clientName, clientPhone, clientEmail
 
 ## Key Commands
 
