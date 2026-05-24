@@ -1,0 +1,173 @@
+# Job Organizer — Code Review Fixes
+
+This document lists every issue found in the code review, what was fixed locally,
+and what still needs to be applied in Replit.
+
+---
+
+## Already Fixed (apply these files in Replit)
+
+The following three files have been rewritten with all fixes applied.
+Replace the versions in your Replit project with these.
+
+### `app.py`
+| # | Fix |
+|---|-----|
+| 1 | `SESSION_SECRET` now raises a hard `RuntimeError` if unset — no silent fallback to a weak dev key |
+| 2 | `User.query.get()` replaced with `db.session.get(User, int(user_id))` — `query.get()` is deprecated in SQLAlchemy 2.x and will break |
+
+**Action:** In Replit's Secrets panel, add `SESSION_SECRET` with a long random value before running.
+Generate one with: `python -c "import secrets; print(secrets.token_hex(32))"`
+
+---
+
+### `models.py`
+| # | Fix |
+|---|-----|
+| 3 | Removed unused imports: `SQLAlchemy`, `hashlib`, `json` |
+| 4 | `total_amount` changed from `String(20)` → `Numeric(10, 2)` so money can be sorted, summed, and aggregated |
+| 5 | Added `is_admin = db.Column(db.Boolean, default=False)` to `User` — required by the `admin.py` fix below |
+
+**Note on duplicate product fields:** `Job` and `ProductIdentification` both store
+`product_type`, `brand`, `model`, `specifications`. A comment has been added in the model.
+Once you update `routes.py` to read product data from `ProductIdentification`, remove those
+four columns from `Job`. Left as-is for now to avoid breaking routes before they're updated.
+
+---
+
+### `ocr_utils.py`
+| # | Fix |
+|---|-----|
+| 6 | Added file extension whitelist — only `.jpg .jpeg .png .bmp .tiff .tif .webp` are accepted |
+| 7 | `extract_text_from_pdf` now raises `NotImplementedError` instead of silently returning `""` |
+
+---
+
+## Still Needs Fixing in Replit
+
+These files were not fully provided, so the changes must be made manually.
+
+### `admin.py` — Critical security bug
+
+**Find this line (or equivalent):**
+```python
+if current_user.email == 'admin@example.com':
+```
+
+**Replace every admin access check with:**
+```python
+if not current_user.is_admin:
+    abort(403)
+```
+
+After deploying, open a Python shell in Replit and grant yourself admin:
+```python
+from app import app, db
+from models import User
+with app.app_context():
+    u = db.session.get(User, <your_user_id>)
+    u.is_admin = True
+    db.session.commit()
+```
+
+---
+
+### `auth.py` and all POST forms — CSRF protection missing
+
+**Install flask-wtf:**
+```
+pip install flask-wtf
+```
+
+**Add to `app.py` inside `create_app()`:**
+```python
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+```
+
+**Add to every HTML form (inside the `<form>` tag):**
+```html
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+```
+
+Without this, any POST route (`/job/<id>/delete`, login, signup, etc.) is vulnerable
+to cross-site request forgery.
+
+---
+
+### `nlp_parser.py` — Phone format mismatch
+
+The parser formats phone numbers as `(XXX) XXX-XXXX` (North American) but the
+address extractor targets Australian addresses. If your users are Australian,
+update `normalize_phone_number` to format as `04XX XXX XXX`:
+
+```python
+def normalize_phone_number(phone_str: str) -> str:
+    digits = re.sub(r'\D', '', phone_str)
+    if len(digits) == 10 and digits.startswith('0'):
+        return f"{digits[:4]} {digits[4:7]} {digits[7:]}"
+    return phone_str  # return original if unrecognised
+```
+
+---
+
+### `upload` route in `routes.py` — file type validation
+
+The upload route must check the extension **before** saving and passing to OCR.
+`ocr_utils.py` now raises `ValueError` on bad types, but the route should also
+reject early and return a clean error to the user:
+
+```python
+from ocr_utils import ALLOWED_IMAGE_EXTENSIONS
+
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | {'.pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
+
+# In your upload route:
+if not allowed_file(file.filename):
+    flash('File type not allowed.', 'danger')
+    return redirect(request.url)
+```
+
+---
+
+### `ocr_utils.py` — PDF support (optional but recommended)
+
+If you want PDF uploads to actually work, install `pdfplumber` and replace
+`extract_text_from_pdf`:
+
+```
+pip install pdfplumber
+```
+
+```python
+import pdfplumber
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    with pdfplumber.open(pdf_path) as pdf:
+        return '\n'.join(
+            page.extract_text() or '' for page in pdf.pages
+        ).strip()
+```
+
+---
+
+## Summary Checklist
+
+| # | File | Severity | Status |
+|---|------|----------|--------|
+| 1 | `app.py` | High — weak secret key fallback | **Fixed** |
+| 2 | `app.py` | Medium — deprecated `query.get()` | **Fixed** |
+| 3 | `models.py` | Low — unused imports | **Fixed** |
+| 4 | `models.py` | Medium — money stored as string | **Fixed** |
+| 5 | `models.py` | Critical — no `is_admin` field | **Fixed** |
+| 6 | `ocr_utils.py` | High — no file type validation | **Fixed** |
+| 7 | `ocr_utils.py` | Medium — silent PDF no-op | **Fixed** |
+| 8 | `admin.py` | Critical — hardcoded admin email | **Needs manual fix** |
+| 9 | All forms | High — no CSRF protection | **Needs manual fix** |
+| 10 | `nlp_parser.py` | Low — wrong phone format for AU | **Needs manual fix** |
+| 11 | `routes.py` | High — upload type not validated | **Needs manual fix** |
+| 12 | Job/ProductIdentification | Low — duplicate product columns | **Deferred** |

@@ -1,0 +1,177 @@
+from flask_login import UserMixin
+from datetime import datetime
+from app import db
+
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    subscription_tier = db.Column(db.String(20), default="free")
+    monthly_jobs_created = db.Column(db.Integer, default=0)
+    monthly_ai_calls = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    # FIX: explicit is_admin column — replaces the hardcoded email check in admin.py
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+    privacy_policy_accepted_at = db.Column(db.DateTime)
+    cookie_consent = db.Column(db.String(20))
+    gdpr_data_export_requested = db.Column(db.DateTime)
+    gdpr_deletion_requested = db.Column(db.DateTime)
+    ip_address_at_signup = db.Column(db.String(45))
+    data_retention_consent = db.Column(db.Boolean, default=True)
+    marketing_consent = db.Column(db.Boolean, default=False)
+
+    def get_subscription_limits(self):
+        limits = {"jobs": 10, "ai_calls": 50}
+        if self.subscription_tier == "pro":
+            limits["jobs"] = 100
+            limits["ai_calls"] = 500
+        elif self.subscription_tier == "enterprise":
+            limits["jobs"] = 1000
+            limits["ai_calls"] = 5000
+        return limits
+
+
+class Job(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    status = db.Column(db.String(20), default="pending")
+    priority = db.Column(db.String(20), default="normal")
+    client_name = db.Column(db.String(100))
+    client_phone = db.Column(db.String(20))
+    client_email = db.Column(db.String(120))
+    address = db.Column(db.String(300))
+    scheduled_date = db.Column(db.DateTime)
+    estimated_duration = db.Column(db.String(50))
+    # FIX: store money as Numeric, not String — enables sorting/summing
+    total_amount = db.Column(db.Numeric(10, 2), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_archived = db.Column(db.Boolean, default=False)
+    is_completed = db.Column(db.Boolean, default=False)
+    unique_identifier = db.Column(db.String(100), index=True)
+
+    # Product identification fields (canonical location — see NOTE below)
+    product_type = db.Column(db.String(100))
+    brand = db.Column(db.String(100))
+    model = db.Column(db.String(100))
+    specifications = db.Column(db.Text)
+    installation_details = db.Column(db.Text)
+    manual_and_support = db.Column(db.Text)
+    estimated_price_range = db.Column(db.String(50))
+    purchase_suggestions = db.Column(db.Text)
+    local_stores = db.Column(db.Text)
+
+    user = db.relationship("User", backref=db.backref("jobs", lazy=True))
+
+    # NOTE: ProductIdentification also stores product_type/brand/model — these
+    # duplicate fields should be removed from one side once routes are updated.
+
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(20), default="pending")
+    priority = db.Column(db.String(20), default="normal")
+    assigned_to = db.Column(db.String(100))
+    due_date = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    job = db.relationship("Job", backref=db.backref("tasks", lazy=True))
+
+
+class ExtractedEntity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=False)
+    entity_type = db.Column(db.String(50))
+    value = db.Column(db.Text)
+    confidence = db.Column(db.Float)
+    extracted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    job = db.relationship("Job", backref=db.backref("extracted_entities", lazy=True))
+
+
+class ProductIdentification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=False)
+    product_type = db.Column(db.String(100))
+    brand = db.Column(db.String(100))
+    model = db.Column(db.String(100))
+    specifications = db.Column(db.Text)
+    confidence_score = db.Column(db.Float)
+    identified_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    job = db.relationship("Job", backref=db.backref("product_identification", lazy=True))
+
+
+class SmsMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    phone_number = db.Column(db.String(20))
+    message_body = db.Column(db.Text)
+    direction = db.Column(db.String(10))
+    status = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", backref=db.backref("sms_messages", lazy=True))
+
+
+class SharedJob(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=False)
+    shared_by_user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    shared_with_user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    shared_with_email = db.Column(db.String(120))
+    access_level = db.Column(db.String(20))
+    shared_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+
+    job = db.relationship("Job", backref=db.backref("shared_jobs", lazy=True))
+    shared_by = db.relationship("User", foreign_keys=[shared_by_user_id])
+    shared_with = db.relationship("User", foreign_keys=[shared_with_user_id])
+
+
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    action = db.Column(db.String(100), nullable=False)
+    table_name = db.Column(db.String(100))
+    record_id = db.Column(db.Integer)
+    old_values = db.Column(db.Text)
+    new_values = db.Column(db.Text)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User")
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    job_id = db.Column(db.Integer, db.ForeignKey("job.id"), nullable=True)
+    title = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    notification_type = db.Column(db.String(20), default="info")
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    read_at = db.Column(db.DateTime)
+    action_url = db.Column(db.String(200))
+
+    user = db.relationship("User", backref=db.backref("notifications", lazy=True))
+    job = db.relationship("Job", backref=db.backref("notifications", lazy=True))
