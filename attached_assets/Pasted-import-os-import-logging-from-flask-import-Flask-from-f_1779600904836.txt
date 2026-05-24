@@ -1,0 +1,74 @@
+import os
+import logging
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from werkzeug.middleware.proxy_fix import ProxyFix
+from sqlalchemy.orm import DeclarativeBase
+
+# Logging is configured in monitoring.py to avoid conflicts
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+# Initialize extensions
+db = SQLAlchemy(model_class=Base)
+login_manager = LoginManager()
+
+
+def create_app():
+    app = Flask(__name__)
+
+    # FIX: raise hard error if secret key is missing — never silently fall back
+    secret = os.environ.get("SESSION_SECRET")
+    if not secret:
+        raise RuntimeError(
+            "SESSION_SECRET environment variable is not set. "
+            "Set it in your Replit Secrets panel before running."
+        )
+    app.secret_key = secret
+
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+    # Database configuration
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DATABASE_URL", "sqlite:///instance/job_organizer.db"
+    )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+    }
+
+    # File upload configuration
+    app.config["UPLOAD_FOLDER"] = "uploads"
+    app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
+
+    # Initialize extensions with app
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "info"
+
+    # FIX: use db.session.get() — User.query.get() is deprecated in SQLAlchemy 2.x
+    @login_manager.user_loader
+    def load_user(user_id):
+        from models import User
+        return db.session.get(User, int(user_id))
+
+    # Create necessary folders
+    os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs("instance", exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
+
+    with app.app_context():
+        import models  # noqa: F401 — registers models with SQLAlchemy
+        db.create_all()
+        logging.info("Database tables created")
+
+    return app
+
+
+app = create_app()

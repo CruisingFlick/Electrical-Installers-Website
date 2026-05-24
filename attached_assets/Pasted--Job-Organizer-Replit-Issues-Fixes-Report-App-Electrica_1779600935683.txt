@@ -1,0 +1,263 @@
+# Job Organizer — Replit Issues & Fixes Report
+
+**App:** Electrical Installers / Job Organizer  
+**Live URL:** https://87e4abbb-ecdd-4390-b36b-f6d5a46c246a-00-36hr0v60gqwta.kirk.replit.dev/  
+**Date:** 2026-05-24  
+
+---
+
+## Overview
+
+This report covers all confirmed bugs, security vulnerabilities, and missing features found across the backend codebase. Items are grouped by priority. Some files have already been fixed locally — those fixed versions need to replace the current Replit files. The remaining items require manual edits inside Replit.
+
+---
+
+## Priority Summary
+
+| # | File | Issue | Severity | Action |
+|---|------|-------|----------|--------|
+| 1 | `admin.py` | Hardcoded admin email — any user can fake admin access | **Critical** | Manual fix in Replit |
+| 2 | All POST forms | No CSRF protection — forms vulnerable to cross-site attacks | **High** | Manual fix in Replit |
+| 3 | `routes.py` | File upload doesn't validate type before saving to disk | **High** | Manual fix in Replit |
+| 4 | `app.py` | Weak session secret fallback — app runs insecurely if env var missing | **High** | Replace file in Replit |
+| 5 | `app.py` | Deprecated `User.query.get()` breaks on SQLAlchemy 2.x | **Medium** | Replace file in Replit |
+| 6 | `models.py` | `total_amount` stored as String — can't sort, filter, or sum money | **Medium** | Replace file in Replit |
+| 7 | `models.py` | Missing `is_admin` field — admin.py fix depends on this | **Medium** | Replace file in Replit |
+| 8 | `ocr_utils.py` | No file extension whitelist — unsafe file types passed to Tesseract | **Medium** | Replace file in Replit |
+| 9 | `ocr_utils.py` | PDF upload silently returns empty — no error shown to user | **Medium** | Replace file in Replit |
+| 10 | `nlp_parser.py` | Phone numbers formatted for North America, not Australia | **Low** | Manual fix in Replit |
+| 11 | `models.py` | Duplicate product columns in `Job` and `ProductIdentification` | **Low** | Deferred — fix later |
+
+---
+
+## Step 1 — Replace These Files in Replit
+
+The following files have already been corrected locally. Copy them into your Replit project, replacing the existing versions exactly.
+
+### `app.py` (2 fixes)
+
+**Fix 1 — Hard error on missing SESSION_SECRET**  
+Previously, the app silently ran with a weak fallback secret key. Now it raises a `RuntimeError` and refuses to start unless the secret is set.
+
+**Fix 2 — Deprecated query API**  
+`User.query.get(user_id)` is deprecated in SQLAlchemy 2.x and will raise an error in future versions. Replaced with `db.session.get(User, int(user_id))`.
+
+**Action in Replit:**
+1. In the Replit Secrets panel, add a secret named `SESSION_SECRET` with a long random value.  
+   Generate one by running in the Replit Shell:
+   ```
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+2. Replace `app.py` with the fixed version provided separately.
+
+---
+
+### `models.py` (3 fixes)
+
+**Fix 3 — Removed unused imports**  
+`SQLAlchemy`, `hashlib`, and `json` were imported but never used.
+
+**Fix 4 — Money field corrected**  
+`total_amount` was `String(20)`. Changed to `Numeric(10, 2)`. String money fields cannot be sorted, summed, averaged, or compared numerically — this causes silent wrong results in any report or dashboard.
+
+**Fix 5 — Added `is_admin` field to User**  
+The `User` model was missing an `is_admin` boolean column. The admin authorization fix in `admin.py` (Issue #1 below) depends on this column existing.
+
+**Action in Replit:** Replace `models.py` with the fixed version provided separately.
+
+> **Note on `total_amount` migration:** If there is existing data in the database, changing this column type requires a migration. Run this once in the Replit Shell after deploying:
+> ```python
+> from app import app, db
+> with app.app_context():
+>     db.session.execute(db.text(
+>         "ALTER TABLE job ADD COLUMN total_amount_new REAL"
+>     ))
+>     db.session.execute(db.text(
+>         "UPDATE job SET total_amount_new = CAST(total_amount AS REAL)"
+>     ))
+>     db.session.commit()
+> ```
+> Then rename the column (SQLite requires recreating the table — this is a one-time operation).
+
+---
+
+### `ocr_utils.py` (2 fixes)
+
+**Fix 6 — File extension whitelist**  
+No validation was performed before passing a file path to Tesseract. Now only `.jpg .jpeg .png .bmp .tiff .tif .webp` are accepted. All others raise a `ValueError`.
+
+**Fix 7 — PDF extraction no longer silently fails**  
+`extract_text_from_pdf` previously returned an empty string when called, giving no feedback. It now raises `NotImplementedError` with a clear message, so the error is visible.
+
+**Action in Replit:** Replace `ocr_utils.py` with the fixed version provided separately.
+
+---
+
+## Step 2 — Manual Fixes Required in Replit
+
+These files were not provided locally, so you must edit them directly inside Replit.
+
+---
+
+### Issue 1 — `admin.py`: Hardcoded Admin Email (CRITICAL)
+
+**Problem:** Admin access is granted by checking if the logged-in user's email matches a hardcoded string like `'admin@example.com'`. Any user who registers with that email gets full admin access.
+
+**Find this pattern (or equivalent):**
+```python
+if current_user.email == 'admin@example.com':
+```
+
+**Replace every admin access check with:**
+```python
+if not current_user.is_admin:
+    abort(403)
+```
+
+**After deploying, grant yourself admin access via the Replit Shell:**
+```python
+from app import app, db
+from models import User
+with app.app_context():
+    u = db.session.get(User, 1)   # change 1 to your actual user ID
+    u.is_admin = True
+    db.session.commit()
+    print("Done — user is now admin.")
+```
+
+---
+
+### Issue 2 — All POST Forms: No CSRF Protection (HIGH)
+
+**Problem:** Every form that submits data (login, signup, create job, delete job, etc.) has no CSRF token. This allows an attacker to trick a logged-in user into submitting a form from another website — deleting jobs, changing passwords, etc.
+
+**Step 1 — Install flask-wtf:**  
+In the Replit Shell:
+```
+pip install flask-wtf
+```
+
+Add `flask-wtf` to `requirements.txt` as well.
+
+**Step 2 — Enable CSRF in `app.py`:**  
+Inside the `create_app()` function, after the extensions are initialized, add:
+```python
+from flask_wtf.csrf import CSRFProtect
+csrf = CSRFProtect(app)
+```
+
+**Step 3 — Add the CSRF token to every HTML form:**  
+Open every `.html` template that contains a `<form method="POST">` and add this hidden field inside the form tag:
+```html
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+```
+
+Forms that need this (check all templates):
+- Login form
+- Signup/registration form
+- Create job form
+- Edit job form
+- Delete job form/button
+- Any settings or profile update form
+
+---
+
+### Issue 3 — `routes.py`: File Upload Type Not Validated (HIGH)
+
+**Problem:** The upload route saves files to disk before checking the file type. `ocr_utils.py` will reject unsupported types, but the file has already been written. This can waste storage and may allow unexpected file types on the server.
+
+**Add a validation helper and check at the top of your upload route:**
+
+```python
+from ocr_utils import ALLOWED_IMAGE_EXTENSIONS
+import os
+
+ALLOWED_EXTENSIONS = ALLOWED_IMAGE_EXTENSIONS | {'.pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           os.path.splitext(filename)[1].lower() in ALLOWED_EXTENSIONS
+```
+
+**Inside the upload route, before saving:**
+```python
+if not allowed_file(file.filename):
+    flash('File type not allowed. Please upload an image or PDF.', 'danger')
+    return redirect(request.url)
+```
+
+---
+
+### Issue 4 — `nlp_parser.py`: Phone Number Format Mismatch (LOW)
+
+**Problem:** Phone numbers are normalized to North American format `(XXX) XXX-XXXX`, but the address extractor targets Australian addresses. If your users are in Australia, formatted numbers will be wrong.
+
+**Find `normalize_phone_number` and replace the formatting logic:**
+```python
+def normalize_phone_number(phone_str: str) -> str:
+    digits = re.sub(r'\D', '', phone_str)
+    # Australian mobile: 10 digits starting with 0
+    if len(digits) == 10 and digits.startswith('0'):
+        return f"{digits[:4]} {digits[4:7]} {digits[7:]}"
+    # Australian landline with country code: 11 digits starting with 61
+    if len(digits) == 11 and digits.startswith('61'):
+        local = digits[2:]
+        return f"0{local[:1]} {local[1:5]} {local[5:]}"
+    return phone_str  # return original if format unrecognised
+```
+
+---
+
+## Step 3 — Deferred (Fix Later)
+
+### Issue 5 — Duplicate Product Columns (LOW)
+
+Both the `Job` table and the `ProductIdentification` table store:
+- `product_type`
+- `brand`
+- `model`
+- `specifications`
+
+This creates confusion about which is the source of truth and wastes storage. Once `routes.py` is updated to consistently read product data from `ProductIdentification`, remove those four columns from the `Job` table.
+
+**Do not fix this now** — removing columns from `Job` without updating routes will break the app.
+
+---
+
+### Issue 6 — PDF Text Extraction Not Implemented (OPTIONAL)
+
+PDF uploads fail silently (now they raise a clear error after the fix above, but extraction still doesn't work). To fully support PDF uploads:
+
+**Install pdfplumber:**
+```
+pip install pdfplumber
+```
+Add to `requirements.txt`.
+
+**Replace `extract_text_from_pdf` in `ocr_utils.py`:**
+```python
+import pdfplumber
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    with pdfplumber.open(pdf_path) as pdf:
+        return '\n'.join(
+            page.extract_text() or '' for page in pdf.pages
+        ).strip()
+```
+
+---
+
+## Checklist for Replit
+
+- [ ] Set `SESSION_SECRET` in Replit Secrets panel
+- [ ] Replace `app.py` with fixed version
+- [ ] Replace `models.py` with fixed version
+- [ ] Replace `ocr_utils.py` with fixed version
+- [ ] Fix `admin.py` — replace hardcoded email check with `is_admin` check
+- [ ] Grant yourself admin via Python shell after deploy
+- [ ] Install `flask-wtf` and add CSRF protection to `app.py` and all HTML forms
+- [ ] Add `flask-wtf` to `requirements.txt`
+- [ ] Add file type validation to upload route in `routes.py`
+- [ ] (Optional) Fix phone format in `nlp_parser.py` if users are Australian
+- [ ] (Later) Remove duplicate product columns from `Job` table after updating routes
+- [ ] (Optional) Install `pdfplumber` and implement PDF extraction in `ocr_utils.py`
