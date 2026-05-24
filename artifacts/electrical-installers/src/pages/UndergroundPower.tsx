@@ -94,7 +94,6 @@ export default function UndergroundPowerPage() {
               "Access to the property for the site inspection",
               "Approval from your local council if any public land is involved in the trenching route",
               "DIAL Before You Dig clearance (we can assist with this)",
-              "Decision on whether you want to coordinate your own trenching or have us arrange it",
             ].map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm">
                 <CheckCircle size={16} className="text-[hsl(25,95%,53%)] shrink-0 mt-0.5" />
