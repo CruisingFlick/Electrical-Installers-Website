@@ -7,20 +7,13 @@ import {
   UpdateQuoteStatusParams,
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
+import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
 import { logger } from "../lib/logger";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL } from "../lib/constants";
 
 const router = Router();
-
-function esc(value: string | null | undefined): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
 
 function formatQuote(q: typeof quotesTable.$inferSelect) {
   return {
@@ -28,8 +21,6 @@ function formatQuote(q: typeof quotesTable.$inferSelect) {
     createdAt: q.createdAt.toISOString(),
   };
 }
-
-const BUSINESS_EMAIL = "info@electricalinstallers.com.au";
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -59,8 +50,8 @@ async function sendQuoteEmails(quote: {
       from,
       to: quote.customerEmail,
       subject: "Thank you for your quote request — Electrical Installers",
-      text: `Hi ${quote.customerName},\n\nThank you for contacting Electrical Installers. We've received your quote request and will review it and be in touch shortly.\n\nIf you have any urgent questions, please call us on 0419 868 703.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
-      html: `<p>Hi ${esc(quote.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will review it and be in touch shortly.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
+      text: `Hi ${quote.customerName},\n\nThank you for contacting Electrical Installers. We've received your quote request and will review it and be in touch shortly.\n\nIf you have any urgent questions, please call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
+      html: `<p>Hi ${he.escape(quote.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will review it and be in touch shortly.</p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
     await transporter.sendMail({
@@ -77,19 +68,19 @@ async function sendQuoteEmails(quote: {
         `Suburb:      ${quote.suburb}`,
         `Description:\n${quote.description}`,
         "",
-        "View in admin: https://electricalinstallers.com.au/admin/quotes",
+        `View in admin: ${ADMIN_BASE_URL}/quotes`,
       ].join("\n"),
       html: `
         <h2 style="color:#1a3a5c;">New Quote Request</h2>
         <table style="border-collapse:collapse;width:100%;max-width:560px;font-family:sans-serif;font-size:14px;">
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${esc(quote.customerName)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${esc(quote.customerEmail)}">${esc(quote.customerEmail)}</a></td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${quote.customerPhone ? `<a href="tel:${esc(quote.customerPhone)}">${esc(quote.customerPhone)}</a>` : "Not provided"}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${esc(quote.jobType)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${esc(quote.suburb)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Description</td><td style="padding:6px 12px;">${esc(quote.description)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${he.escape(quote.customerName)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${he.escape(quote.customerEmail)}">${he.escape(quote.customerEmail)}</a></td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${quote.customerPhone ? `<a href="tel:${he.escape(quote.customerPhone)}">${he.escape(quote.customerPhone)}</a>` : "Not provided"}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${he.escape(quote.jobType)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${he.escape(quote.suburb)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Description</td><td style="padding:6px 12px;">${he.escape(quote.description)}</td></tr>
         </table>
-        <p style="margin-top:16px;"><a href="https://electricalinstallers.com.au/admin/quotes" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
+        <p style="margin-top:16px;"><a href="${ADMIN_BASE_URL}/quotes" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
       `,
     });
   } catch (err) {
@@ -125,10 +116,9 @@ router.post("/", async (req, res, next) => {
 
     void sendQuoteEmails(parsed.data);
 
-    // SMS confirmation to customer
     void sendSms(
       parsed.data.customerPhone,
-      `Hi ${parsed.data.customerName}, your quote request with Electrical Installers has been received. We'll review it and be in touch shortly. Call us: 0419 868 703`
+      `Hi ${parsed.data.customerName}, your quote request with Electrical Installers has been received. We'll review it and be in touch shortly. Call us: ${BUSINESS_PHONE}`
     );
 
     res.status(201).json(formatQuote(row));

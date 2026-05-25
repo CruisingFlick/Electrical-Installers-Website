@@ -6,6 +6,22 @@ import { requireAdmin } from "../middleware/admin-auth";
 const router = Router();
 
 const PROMPT_KEY = "ai_system_prompt";
+const MODEL_KEY = "ai_model";
+const MAX_TOKENS_KEY = "ai_max_tokens";
+
+const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_MAX_TOKENS = 512;
+
+export async function loadAiConfig(): Promise<{ model: string; maxTokens: number }> {
+  const [modelRow, tokensRow] = await Promise.all([
+    db.query.settings.findFirst({ where: eq(settings.key, MODEL_KEY) }),
+    db.query.settings.findFirst({ where: eq(settings.key, MAX_TOKENS_KEY) }),
+  ]);
+  return {
+    model: modelRow?.value ?? DEFAULT_MODEL,
+    maxTokens: tokensRow?.value ? parseInt(tokensRow.value, 10) : DEFAULT_MAX_TOKENS,
+  };
+}
 
 export const DEFAULT_SYSTEM_PROMPT = `You are a helpful assistant for Electrical Installers, a licensed electrical contracting business serving the Mornington Peninsula, St Kilda, and Warragul areas in Victoria, Australia.
 

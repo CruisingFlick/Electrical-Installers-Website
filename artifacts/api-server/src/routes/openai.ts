@@ -3,7 +3,8 @@ import { db, conversations as conversationsTable, messages as messagesTable } fr
 import { eq, asc } from "drizzle-orm";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { CreateOpenaiConversationBody, SendOpenaiMessageBody, ListOpenaiMessagesParams } from "@workspace/api-zod";
-import { loadSystemPrompt } from "./ai-settings";
+import { loadSystemPrompt, loadAiConfig } from "./ai-settings";
+import { BUSINESS_PHONE } from "../lib/constants";
 
 const router = Router();
 
@@ -98,7 +99,7 @@ router.post("/conversations/:id/messages", async (req, res) => {
     .where(eq(messagesTable.conversationId, id))
     .orderBy(asc(messagesTable.createdAt));
 
-  const systemPrompt = await loadSystemPrompt();
+  const [systemPrompt, aiConfig] = await Promise.all([loadSystemPrompt(), loadAiConfig()]);
   const chatMessages = [
     { role: "system" as const, content: systemPrompt },
     ...history.map((m) => ({
@@ -115,8 +116,8 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_completion_tokens: 512,
+      model: aiConfig.model,
+      max_completion_tokens: aiConfig.maxTokens,
       messages: chatMessages,
       stream: true,
     });
@@ -139,7 +140,7 @@ router.post("/conversations/:id/messages", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   } catch (err) {
     req.log.error({ err }, "OpenAI stream error");
-    res.write(`data: ${JSON.stringify({ error: "Sorry, something went wrong. Please call us on 0419 868 703." })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: `Sorry, something went wrong. Please call us on ${BUSINESS_PHONE}.` })}\n\n`);
   }
 
   res.end();

@@ -12,20 +12,13 @@ import {
   ConfirmBookingParams,
 } from "@workspace/api-zod";
 import nodemailer from "nodemailer";
+import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
 import { logger } from "../lib/logger";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL } from "../lib/constants";
 
 const router = Router();
-
-function esc(value: string | null | undefined): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
 
 function formatBooking(b: typeof bookingsTable.$inferSelect) {
   return {
@@ -34,7 +27,10 @@ function formatBooking(b: typeof bookingsTable.$inferSelect) {
   };
 }
 
-const BUSINESS_EMAIL = "info@electricalinstallers.com.au";
+function csvCell(value: string | number | null | undefined): string {
+  const str = String(value ?? "");
+  return `"${str.replace(/"/g, '""')}"`;
+}
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -66,8 +62,8 @@ async function sendBookingEmails(booking: {
       from,
       to: booking.customerEmail,
       subject: "Thank you for contacting Electrical Installers",
-      text: `Hi ${booking.customerName},\n\nThank you for contacting Electrical Installers. We've received your booking request and will be in touch within one business day to confirm your appointment.\n\nIf you have any urgent questions, please call us on 0419 868 703.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
-      html: `<p>Hi ${esc(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>0419 868 703</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
+      text: `Hi ${booking.customerName},\n\nThank you for contacting Electrical Installers. We've received your booking request and will be in touch within one business day to confirm your appointment.\n\nIf you have any urgent questions, please call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
+      html: `<p>Hi ${he.escape(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
     await transporter.sendMail({
@@ -86,21 +82,21 @@ async function sendBookingEmails(booking: {
         `Preferred Date:${booking.preferredDate}`,
         `Message:\n${booking.message || "None"}`,
         "",
-        "View in admin: https://electricalinstallers.com.au/admin/bookings",
+        `View in admin: ${ADMIN_BASE_URL}/bookings`,
       ].join("\n"),
       html: `
         <h2 style="color:#1a3a5c;">New Booking Request</h2>
         <table style="border-collapse:collapse;width:100%;max-width:560px;font-family:sans-serif;font-size:14px;">
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${esc(booking.customerName)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${esc(booking.customerEmail)}">${esc(booking.customerEmail)}</a></td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${booking.customerPhone ? `<a href="tel:${esc(booking.customerPhone)}">${esc(booking.customerPhone)}</a>` : "Not provided"}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Service Type</td><td style="padding:6px 12px;">${esc(booking.serviceType)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${esc(booking.jobType)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${esc(booking.suburb)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Preferred Date</td><td style="padding:6px 12px;">${esc(booking.preferredDate)}</td></tr>
-          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Message</td><td style="padding:6px 12px;">${booking.message ? esc(booking.message) : "<em>None</em>"}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:140px;">Name</td><td style="padding:6px 12px;">${he.escape(booking.customerName)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Email</td><td style="padding:6px 12px;"><a href="mailto:${he.escape(booking.customerEmail)}">${he.escape(booking.customerEmail)}</a></td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Phone</td><td style="padding:6px 12px;">${booking.customerPhone ? `<a href="tel:${he.escape(booking.customerPhone)}">${he.escape(booking.customerPhone)}</a>` : "Not provided"}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Service Type</td><td style="padding:6px 12px;">${he.escape(booking.serviceType)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job Type</td><td style="padding:6px 12px;">${he.escape(booking.jobType)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${he.escape(booking.suburb)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Preferred Date</td><td style="padding:6px 12px;">${he.escape(booking.preferredDate)}</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Message</td><td style="padding:6px 12px;">${booking.message ? he.escape(booking.message) : "<em>None</em>"}</td></tr>
         </table>
-        <p style="margin-top:16px;"><a href="https://electricalinstallers.com.au/admin/bookings" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
+        <p style="margin-top:16px;"><a href="${ADMIN_BASE_URL}/bookings" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
       `,
     });
   } catch (err) {
@@ -156,6 +152,37 @@ router.get("/", requireAdmin, async (req, res, next) => {
   }
 });
 
+router.get("/export", requireAdmin, async (req, res, next) => {
+  try {
+    const rows = await db
+      .select()
+      .from(bookingsTable)
+      .orderBy(desc(bookingsTable.createdAt));
+
+    const header = "ID,Name,Email,Phone,Service,Job Type,Suburb,Preferred Date,Status,Created\n";
+    const lines = rows.map((r) =>
+      [
+        r.id,
+        csvCell(r.customerName),
+        csvCell(r.customerEmail),
+        csvCell(r.customerPhone),
+        csvCell(r.serviceType),
+        csvCell(r.jobType),
+        csvCell(r.suburb),
+        csvCell(r.preferredDate),
+        r.status,
+        r.createdAt.toISOString(),
+      ].join(",")
+    );
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="bookings.csv"');
+    res.send(header + lines.join("\n"));
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post("/", async (req, res, next) => {
   const parsed = CreateBookingBody.safeParse(req.body);
   if (!parsed.success) {
@@ -171,10 +198,9 @@ router.post("/", async (req, res, next) => {
 
     void sendBookingEmails(parsed.data);
 
-    // SMS confirmation to customer
     void sendSms(
       parsed.data.customerPhone,
-      `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. We'll be in touch within one business day to confirm. Call us: 0419 868 703`
+      `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. We'll be in touch within one business day to confirm. Call us: ${BUSINESS_PHONE}`
     );
 
     res.status(201).json(formatBooking(row));
@@ -233,22 +259,22 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
           `  Suburb:    ${row.suburb}`,
           noteSection,
           "",
-          "If you need to make any changes, please call us on 0419 868 703.",
+          `If you need to make any changes, please call us on ${BUSINESS_PHONE}.`,
           "",
           "Kind regards,",
           "Electrical Installers",
           "Mornington Peninsula & Surrounding Areas",
         ].join("\n"),
         html: `
-          <p>Hi ${esc(row.customerName)},</p>
+          <p>Hi ${he.escape(row.customerName)},</p>
           <p>Great news! Your booking has been confirmed for:</p>
           <table style="border-collapse:collapse;width:100%;max-width:480px;font-family:sans-serif;font-size:14px;margin:12px 0;">
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:120px;">Date / Time</td><td style="padding:6px 12px;">${esc(confirmedDate)}</td></tr>
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job</td><td style="padding:6px 12px;">${esc(row.jobType)}</td></tr>
-            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${esc(row.suburb)}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;width:120px;">Date / Time</td><td style="padding:6px 12px;">${he.escape(confirmedDate)}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Job</td><td style="padding:6px 12px;">${he.escape(row.jobType)}</td></tr>
+            <tr><td style="padding:6px 12px;font-weight:bold;background:#f5f5f5;">Suburb</td><td style="padding:6px 12px;">${he.escape(row.suburb)}</td></tr>
           </table>
-          ${adminNote ? `<p style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;border-radius:4px;margin:12px 0;">${esc(adminNote).replace(/\n/g, "<br>")}</p>` : ""}
-          <p>If you need to make any changes, please call us on <strong>0419 868 703</strong>.</p>
+          ${adminNote ? `<p style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;border-radius:4px;margin:12px 0;">${he.escape(adminNote).replace(/\n/g, "<br>")}</p>` : ""}
+          <p>If you need to make any changes, please call us on <strong>${BUSINESS_PHONE}</strong>.</p>
           <p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>
         `,
       });
@@ -256,10 +282,9 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
       logger.error({ err }, "Failed to send booking confirmation email");
     }
 
-    // SMS confirmation to customer
     void sendSms(
       row.customerPhone,
-      `Hi ${row.customerName}, your booking with Electrical Installers is confirmed for ${confirmedDate}. Job: ${row.jobType}, ${row.suburb}. Questions? Call 0419 868 703`
+      `Hi ${row.customerName}, your booking with Electrical Installers is confirmed for ${confirmedDate}. Job: ${row.jobType}, ${row.suburb}. Questions? Call ${BUSINESS_PHONE}`
     );
 
     res.json(formatBooking(row));
@@ -319,7 +344,6 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
       return;
     }
 
-    // When a job is completed or cancelled, archive the customer
     if (bodyParsed.data.status === "completed" || bodyParsed.data.status === "cancelled") {
       void upsertCustomer(row);
     }
