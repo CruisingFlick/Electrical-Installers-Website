@@ -1,0 +1,167 @@
+I want to wire up voice input to the existing ChatWidget.tsx. The hooks
+useVoiceRecorder and useAudioPlayback are already installed in
+@workspace/integrations-openai-ai-react — do not install anything new.
+
+---
+
+WHAT TO BUILD
+
+Add a microphone button inside ChatWidget.tsx that lets the user:
+1. Press and hold (or tap to toggle) to record their voice
+2. On release, transcribe the audio and drop the text into the chat input
+3. Optionally have the assistant's reply spoken aloud via useAudioPlayback
+
+---
+
+STEP 1 — READ THESE FILES FIRST before writing any code
+
+Read each file completely before touching anything:
+
+- artifacts/electrical-installers/src/components/ChatWidget.tsx
+- The exports of @workspace/integrations-openai-ai-react (check its index file)
+  — find exactly what useVoiceRecorder and useAudioPlayback export
+  — note the exact function signatures, params, and return values
+- artifacts/electrical-installers/src/index.css (for colour variables)
+
+---
+
+STEP 2 — UNDERSTAND THE EXISTING CHAT FLOW
+
+ChatWidget.tsx already:
+- Creates a conversation via POST /api/openai/conversations
+- Sends messages via POST /api/openai/conversations/:id/messages
+- Reads the SSE stream and appends assistant text chunk by chunk
+- Has an input field and a send button
+
+Do not break any of this. Voice is additive only.
+
+---
+
+STEP 3 — IMPLEMENT THE MIC BUTTON
+
+Add a microphone button directly to the left of the existing send button
+inside the chat input row.
+
+Button states and their visual treatment:
+| State        | Icon              | Style                                      |
+|--------------|-------------------|--------------------------------------------|
+| Idle         | Mic outline icon  | Same muted colour as the send button       |
+| Recording    | Mic filled / stop | Pulsing red dot or red ring animation      |
+| Transcribing | Spinner           | Disabled, grey                             |
+| Error        | Mic with X        | Show a small inline error message          |
+
+Use Tailwind classes that match the existing ChatWidget colour scheme.
+Do not add any new CSS files or inline style blocks.
+
+---
+
+STEP 4 — HOOK UP useVoiceRecorder
+
+After reading the hook's actual API, wire it like this (adjust to match
+the real signature you find in the source):
+
+const {
+  startRecording,
+  stopRecording,
+  isRecording,
+  audioBlob,      // the recorded audio once stopped
+  error: recorderError
+} = useVoiceRecorder();
+
+Logic:
+- Mic button onMouseDown (desktop) / onTouchStart (mobile) → startRecording()
+- Mic button onMouseUp / onTouchEnd → stopRecording()
+- Also support a single tap-to-toggle if the hook supports it
+- While isRecording is true: show the recording state (red pulse)
+- When audioBlob is ready: move to transcription step
+
+---
+
+STEP 5 — TRANSCRIPTION
+
+After stopRecording(), send the audioBlob to the Whisper transcription
+endpoint. Check if @workspace/integrations-openai-ai-react already exports
+a transcription helper. If it does, use it.
+
+If there is no built-in helper, POST the audio blob to the existing backend:
+
+Option A — use existing backend (preferred):
+  Add a new route in artifacts/api-server/src/routes/openai.ts:
+
+  POST /api/openai/transcribe
+  - Accepts multipart/form-data with field "audio" (the blob)
+  - Calls OpenAI Whisper via the existing OpenAI client:
+      openai.audio.transcriptions.create({
+        model: "whisper-1",
+        file: audioFile,
+      })
+  - Returns { text: string }
+  - Requires requireAdmin? NO — same auth level as the chat endpoint (public)
+  - Add to the existing router in routes/index.ts
+
+  Frontend fetch:
+      const form = new FormData();
+      form.append('audio', audioBlob, 'recording.webm');
+      const res = await fetch('/api/openai/transcribe', { method: 'POST', body: form });
+      const { text } = await res.json();
+
+Option B — if the workspace integration already handles this, use that instead.
+
+After transcription:
+- Put the transcribed text into the chat input field (setInput(text) or equivalent)
+- Do NOT auto-send — let the user review and edit before hitting send
+- If transcription fails, show a small red error message below the input
+
+---
+
+STEP 6 — OPTIONAL AUDIO PLAYBACK (wire up useAudioPlayback)
+
+After reading the hook's actual API:
+
+const { play, isPlaying } = useAudioPlayback();
+
+When the assistant finishes streaming a reply:
+- If the hook can accept text and call TTS, pass the completed assistant
+  message text to play()
+- Add a small speaker icon button next to each assistant message bubble
+  so the user can tap to hear it read aloud
+- While isPlaying: show a pause icon; tapping again stops playback
+- This is optional — if useAudioPlayback only handles raw audio URLs and
+  there is no TTS endpoint available, skip this step and leave a TODO comment
+
+---
+
+STEP 7 — MOBILE CONSIDERATIONS
+
+- The mic button must be at least 44x44px tap target on mobile
+- Press-and-hold on mobile uses onTouchStart / onTouchEnd (not mouse events)
+- Test that the existing chat scroll behaviour is not broken by the new button
+
+---
+
+STEP 8 — ERROR HANDLING
+
+Handle and display (inline, near the input) these failure cases:
+- Microphone permission denied → "Microphone access denied. Check browser settings."
+- Recording failed to start → "Could not start recording."
+- Transcription failed (network or API error) → "Transcription failed. Please type instead."
+- Do not throw uncaught errors — all failures should degrade gracefully to
+  text input
+
+---
+
+STEP 9 — DO NOT CHANGE
+
+- The existing SSE streaming logic
+- The conversation creation or message sending flow
+- Any admin pages or backend routes other than adding /api/openai/transcribe
+- The overall layout or z-index of the ChatWidget
+
+---
+
+DONE — when finished:
+
+1. Show me the final diff / changed files
+2. Tell me if useAudioPlayback was wired up or skipped and why
+3. Tell me if you used Option A or Option B for transcription
+4. List any TODOs you left in the code
