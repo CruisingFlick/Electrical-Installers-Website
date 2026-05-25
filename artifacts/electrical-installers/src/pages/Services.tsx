@@ -29,7 +29,7 @@ const services = [
     title: "Sheds & Garages",
     description: "A properly wired shed or garage adds real value to your property. Whether it's a workshop, man cave, or home gym, we install the right circuits, lighting, and safety protection to handle your equipment safely.",
     features: ["Single and 3-phase power for workshops", "LED lighting design and installation", "Safety switch (RCD) protection", "Power points and USB outlets", "Sub-board installation"],
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
+    image: "/sheds-garages.jpg",
   },
   {
     icon: Cable,
