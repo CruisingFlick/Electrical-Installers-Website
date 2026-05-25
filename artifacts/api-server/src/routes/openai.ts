@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, conversations as conversationsTable, messages as messagesTable } from "@workspace/db";
 import { eq, asc } from "drizzle-orm";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, speechToText, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server";
 import { CreateOpenaiConversationBody, SendOpenaiMessageBody, ListOpenaiMessagesParams } from "@workspace/api-zod";
 import { loadSystemPrompt, loadAiConfig } from "./ai-settings";
 import { BUSINESS_PHONE } from "../lib/constants";
@@ -144,6 +144,26 @@ router.post("/conversations/:id/messages", async (req, res) => {
   }
 
   res.end();
+});
+
+// POST /openai/transcribe — transcribe voice recording using Whisper
+router.post("/transcribe", async (req, res) => {
+  const { audio, mimeType } = req.body as { audio?: string; mimeType?: string };
+  if (!audio) {
+    res.status(400).json({ error: "Missing audio data" });
+    return;
+  }
+
+  try {
+    const rawBuffer = Buffer.from(audio, "base64");
+    // Detect and convert to a Whisper-compatible format (wav or mp3)
+    const { buffer, format } = await ensureCompatibleFormat(rawBuffer);
+    const text = await speechToText(buffer, format);
+    res.json({ text });
+  } catch (err) {
+    req.log.error({ err }, "Whisper transcription error");
+    res.status(500).json({ error: "Transcription failed" });
+  }
 });
 
 export default router;

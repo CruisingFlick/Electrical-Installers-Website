@@ -1,7 +1,15 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Phone, Loader2, Bot } from "lucide-react";
+import { MessageCircle, X, Send, Phone, Loader2, Bot, Mic, MicOff } from "lucide-react";
+import { useVoiceRecorder } from "@workspace/integrations-openai-ai-react";
+
+// TODO: useAudioPlayback from @workspace/integrations-openai-ai-react is not wired up.
+// It is designed for streaming PCM16 audio via AudioWorklet, not text-to-speech.
+// To add TTS playback of assistant replies, a /api/openai/tts endpoint returning
+// PCM16 audio would be needed, along with copying audio-playback-worklet.js to public/.
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+type VoiceStatus = "idle" | "recording" | "transcribing" | "error";
 
 interface Message {
   role: "user" | "assistant";
@@ -56,6 +64,30 @@ async function* streamMessage(
   }
 }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function transcribeAudio(blob: Blob): Promise<string> {
+  const base64 = await blobToBase64(blob);
+  const res = await fetch(`${BASE}/api/openai/transcribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ audio: base64, mimeType: blob.type }),
+  });
+  if (!res.ok) throw new Error("Transcription failed");
+  const data = await res.json() as { text: string };
+  return data.text;
+}
+
 const QUICK_QUESTIONS = [
   "What areas do you service?",
   "How do I book a quote?",
@@ -69,8 +101,12 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [conversationId, setConversationId] = useState<number | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { startRecording, stopRecording } = useVoiceRecorder();
 
   useEffect(() => {
     if (open && messages.length === 0) {
@@ -116,7 +152,6 @@ export default function ChatWidget() {
       }
     }
 
-    // Add an empty assistant message that we'll stream into
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
     try {
@@ -150,6 +185,45 @@ export default function ChatWidget() {
       sendMessage(input);
     }
   }
+
+  async function handleMicClick() {
+    if (voiceStatus === "recording") {
+      try {
+        const blob = await stopRecording();
+        if (blob.size === 0) {
+          setVoiceStatus("idle");
+          return;
+        }
+        setVoiceStatus("transcribing");
+        const text = await transcribeAudio(blob);
+        setInput(text);
+        setVoiceStatus("idle");
+        setVoiceError(null);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      } catch {
+        setVoiceStatus("error");
+        setVoiceError("Transcription failed. Please type instead.");
+      }
+    } else {
+      setVoiceError(null);
+      try {
+        await startRecording();
+        setVoiceStatus("recording");
+      } catch (err) {
+        const isDenied =
+          err instanceof Error &&
+          (err.name === "NotAllowedError" || err.message.toLowerCase().includes("permission"));
+        setVoiceStatus("error");
+        setVoiceError(
+          isDenied
+            ? "Microphone access denied. Check browser settings."
+            : "Could not start recording."
+        );
+      }
+    }
+  }
+
+  const micDisabled = voiceStatus === "transcribing" || streaming;
 
   return (
     <>
@@ -232,16 +306,47 @@ export default function ChatWidget() {
             </div>
           )}
 
+          {/* Voice error message */}
+          {voiceError && (
+            <p className="px-4 pb-1 text-xs text-red-500">{voiceError}</p>
+          )}
+
           {/* Input */}
           <div className="px-3 py-3 border-t border-gray-100 flex items-center gap-2">
+            {/* Mic button */}
+            <button
+              onClick={handleMicClick}
+              disabled={micDisabled}
+              aria-label={voiceStatus === "recording" ? "Stop recording" : "Start voice input"}
+              className={`flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full transition-colors ${
+                voiceStatus === "recording"
+                  ? "bg-red-500 animate-pulse text-white"
+                  : voiceStatus === "transcribing"
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : voiceStatus === "error"
+                  ? "bg-red-50 text-red-400 hover:bg-red-100"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {voiceStatus === "transcribing" ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : voiceStatus === "recording" ? (
+                <MicOff size={16} />
+              ) : voiceStatus === "error" ? (
+                <MicOff size={16} />
+              ) : (
+                <Mic size={16} />
+              )}
+            </button>
+
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask a question…"
-              disabled={streaming}
+              placeholder={voiceStatus === "recording" ? "Recording… tap mic to stop" : "Ask a question…"}
+              disabled={streaming || voiceStatus === "recording" || voiceStatus === "transcribing"}
               className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)] disabled:bg-gray-50"
               data-testid="chat-input"
             />
