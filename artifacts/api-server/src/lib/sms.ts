@@ -1,4 +1,5 @@
 import twilio from "twilio";
+import { logger } from "./logger";
 
 function getClient() {
   const sid = process.env["TWILIO_ACCOUNT_SID"];
@@ -29,7 +30,7 @@ export async function sendSms(to: string | null | undefined, body: string): Prom
     const toFormatted = formatPhone(to);
     if (!toFormatted) return;
     await client.messages.create({ body, from, to: toFormatted });
-  } catch {
-    // SMS is best-effort
+  } catch (err) {
+    logger.error({ err }, "Failed to send SMS notification");
   }
 }

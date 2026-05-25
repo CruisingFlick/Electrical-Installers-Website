@@ -9,6 +9,7 @@ import {
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -91,8 +92,8 @@ async function sendQuoteEmails(quote: {
         <p style="margin-top:16px;"><a href="https://electricalinstallers.com.au/admin/quotes" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
       `,
     });
-  } catch {
-    // Email sending is best-effort; don't fail the request
+  } catch (err) {
+    logger.error({ err }, "Failed to send quote email notification");
   }
 }
 

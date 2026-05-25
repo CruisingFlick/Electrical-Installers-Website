@@ -138,7 +138,7 @@ router.post("/conversations/:id/messages", async (req, res) => {
 
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
   } catch (err) {
-    req.log.error(err, "OpenAI stream error");
+    req.log.error({ err }, "OpenAI stream error");
     res.write(`data: ${JSON.stringify({ error: "Sorry, something went wrong. Please call us on 0419 868 703." })}\n\n`);
   }
 

@@ -1,8 +1,15 @@
 import { Router } from "express";
 import { db, mediaTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { z } from "zod";
 import { requireAdmin } from "../middleware/admin-auth";
 import { CreateMediaItemBody, DeleteMediaItemParams } from "@workspace/api-zod";
+
+const patchMediaSchema = z.object({
+  title: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
 
 const router = Router();
 
@@ -33,6 +40,17 @@ router.post("/", requireAdmin, async (req, res, next) => {
     return;
   }
 
+  const { imageData } = parsed.data;
+  if (
+    !imageData.startsWith("data:image/jpeg;base64,") &&
+    !imageData.startsWith("data:image/png;base64,") &&
+    !imageData.startsWith("data:image/webp;base64,") &&
+    !imageData.startsWith("data:image/gif;base64,")
+  ) {
+    res.status(400).json({ error: "imageData must be a base64-encoded JPEG, PNG, WebP, or GIF." });
+    return;
+  }
+
   try {
     const [row] = await db
       .insert(mediaTable)
@@ -58,11 +76,13 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     return;
   }
 
-  const { title, category, tags } = req.body as {
-    title?: string;
-    category?: string;
-    tags?: string[];
-  };
+  const bodyParsed = patchMediaSchema.safeParse(req.body);
+  if (!bodyParsed.success) {
+    res.status(400).json({ error: bodyParsed.error.message });
+    return;
+  }
+
+  const { title, category, tags } = bodyParsed.data;
 
   try {
     const [row] = await db

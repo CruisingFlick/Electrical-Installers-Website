@@ -14,6 +14,7 @@ import {
 import nodemailer from "nodemailer";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
+import { logger } from "../lib/logger";
 
 const router = Router();
 
@@ -102,8 +103,8 @@ async function sendBookingEmails(booking: {
         <p style="margin-top:16px;"><a href="https://electricalinstallers.com.au/admin/bookings" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">View in Admin</a></p>
       `,
     });
-  } catch {
-    // Email sending is best-effort; don't fail the request
+  } catch (err) {
+    logger.error({ err }, "Failed to send booking email notification");
   }
 }
 
@@ -133,8 +134,8 @@ async function upsertCustomer(booking: typeof bookingsTable.$inferSelect) {
           updatedAt: new Date(),
         },
       });
-  } catch {
-    // Best-effort — don't fail the booking update if customer upsert fails
+  } catch (err) {
+    logger.error({ err, customerEmail: booking.customerEmail }, "Failed to upsert customer record");
   }
 }
 
@@ -251,8 +252,8 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
           <p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>
         `,
       });
-    } catch {
-      // Email sending is best-effort
+    } catch (err) {
+      logger.error({ err }, "Failed to send booking confirmation email");
     }
 
     // SMS confirmation to customer

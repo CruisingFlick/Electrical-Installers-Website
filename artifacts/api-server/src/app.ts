@@ -1,7 +1,9 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import rateLimit from "express-rate-limit";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -11,6 +13,8 @@ if (!sessionSecret) {
 }
 
 const app: Express = express();
+
+app.use(helmet());
 
 app.use(
   pinoHttp({
@@ -31,7 +35,15 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env["NODE_ENV"] === "production"
+        ? "https://electricalinstallers.com.au"
+        : true,
+    credentials: true,
+  }),
+);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
@@ -43,10 +55,35 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: "lax",
+      secure: process.env["NODE_ENV"] === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
 );
+
+const formLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: { error: "Too many requests, please try again later." },
+});
+
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  message: { error: "Too many AI requests, please try again later." },
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: "Too many login attempts. Try again in 15 minutes." },
+});
+
+app.use("/api/bookings", formLimiter);
+app.use("/api/quotes", formLimiter);
+app.use("/api/reviews", formLimiter);
+app.use("/api/openai", aiLimiter);
+app.use("/api/admin/login", loginLimiter);
 
 app.use("/api", router);
 

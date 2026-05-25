@@ -1,7 +1,13 @@
 import { Router } from "express";
 import { db, customersTable, bookingsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { z } from "zod";
 import { requireAdmin } from "../middleware/admin-auth";
+
+const patchCustomerSchema = z.object({
+  marketingNotes: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
+});
 
 const router = Router();
 
@@ -68,10 +74,13 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     return;
   }
 
-  const { marketingNotes, tags } = req.body as {
-    marketingNotes?: string | null;
-    tags?: string | null;
-  };
+  const bodyParsed = patchCustomerSchema.safeParse(req.body);
+  if (!bodyParsed.success) {
+    res.status(400).json({ error: bodyParsed.error.message });
+    return;
+  }
+
+  const { marketingNotes, tags } = bodyParsed.data;
 
   try {
     const [row] = await db

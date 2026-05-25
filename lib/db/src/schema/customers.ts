@@ -12,7 +12,7 @@ export const customersTable = pgTable("customers", {
   lastJobDate: text("last_job_date"),
   lastServiceType: text("last_service_type"),
   marketingNotes: text("marketing_notes"),
-  tags: text("tags"),
+  tags: text("tags").array(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
