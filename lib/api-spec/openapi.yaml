@@ -26,6 +26,8 @@ tags:
     description: Job tracking with map pins
   - name: media
     description: Media library for photo management
+  - name: customers
+    description: Customer archive and CRM
 
 paths:
   /admin/media:
@@ -339,6 +341,69 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /admin/customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers in the archive
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+
+  /admin/customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer with their full booking history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer with bookings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerWithBookings"
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update customer marketing notes and tags
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerBody"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
 
   /portfolio:
     get:
@@ -1301,6 +1366,87 @@ components:
         - imageData
 
     DeleteMediaItemParams:
+      type: object
+      properties:
+        id:
+          type: integer
+      required:
+        - id
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        suburb:
+          type: string
+          nullable: true
+        jobCount:
+          type: integer
+        lastJobDate:
+          type: string
+          nullable: true
+        lastServiceType:
+          type: string
+          nullable: true
+        marketingNotes:
+          type: string
+          nullable: true
+        tags:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - name
+        - jobCount
+        - createdAt
+        - updatedAt
+
+    CustomerWithBookings:
+      allOf:
+        - $ref: "#/components/schemas/Customer"
+        - type: object
+          properties:
+            bookings:
+              type: array
+              items:
+                $ref: "#/components/schemas/Booking"
+          required:
+            - bookings
+
+    UpdateCustomerBody:
+      type: object
+      properties:
+        marketingNotes:
+          type: string
+          nullable: true
+        tags:
+          type: string
+          nullable: true
+
+    GetCustomerParams:
+      type: object
+      properties:
+        id:
+          type: integer
+      required:
+        - id
+
+    UpdateCustomerParams:
       type: object
       properties:
         id:

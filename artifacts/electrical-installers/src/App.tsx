@@ -30,6 +30,7 @@ import AdminJobMap from "@/pages/admin/JobMap";
 import AdminAiSettings from "@/pages/admin/AiSettings";
 import AdminCalendarView from "@/pages/admin/CalendarView";
 import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
+import AdminCustomers from "@/pages/admin/Customers";
 import ServiceAreaPage from "@/pages/ServiceArea";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
       <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
       <Route path="/admin/media" component={() => <AdminGuard component={AdminMediaLibrary} />} />
+      <Route path="/admin/customers" component={() => <AdminGuard component={AdminCustomers} />} />
 
       <Route component={NotFound} />
     </Switch>

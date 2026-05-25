@@ -38,9 +38,14 @@ router.post("/", requireAdmin, async (req, res, next) => {
   }
 
   try {
+    const { totalAmount, ...rest } = parsed.data;
     const [row] = await db
       .insert(jobsTable)
-      .values({ ...parsed.data, status: "pending" })
+      .values({
+        ...rest,
+        status: "pending",
+        ...(totalAmount !== undefined ? { totalAmount: String(totalAmount) } : {}),
+      })
       .returning();
     res.status(201).json(formatJob(row));
   } catch (err) {

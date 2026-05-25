@@ -381,6 +381,38 @@ export interface DeleteMediaItemParams {
   id: number;
 }
 
+export interface Customer {
+  id: number;
+  email: string;
+  name: string;
+  phone?: string | null;
+  suburb?: string | null;
+  jobCount: number;
+  lastJobDate?: string | null;
+  lastServiceType?: string | null;
+  marketingNotes?: string | null;
+  tags?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CustomerWithBookings = Customer & {
+  bookings: Booking[];
+};
+
+export interface UpdateCustomerBody {
+  marketingNotes?: string | null;
+  tags?: string | null;
+}
+
+export interface GetCustomerParams {
+  id: number;
+}
+
+export interface UpdateCustomerParams {
+  id: number;
+}
+
 export type UpdateMediaItemBody = {
   title?: string;
   category?: string;

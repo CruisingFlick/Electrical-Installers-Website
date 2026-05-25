@@ -263,6 +263,93 @@ export const DeleteBookingParams = zod.object({
 
 
 /**
+ * @summary List all customers in the archive
+ */
+export const ListCustomersResponseItem = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "phone": zod.string().nullish(),
+  "suburb": zod.string().nullish(),
+  "jobCount": zod.number(),
+  "lastJobDate": zod.string().nullish(),
+  "lastServiceType": zod.string().nullish(),
+  "marketingNotes": zod.string().nullish(),
+  "tags": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListCustomersResponse = zod.array(ListCustomersResponseItem)
+
+
+/**
+ * @summary Get a customer with their full booking history
+ */
+export const GetCustomerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetCustomerResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "phone": zod.string().nullish(),
+  "suburb": zod.string().nullish(),
+  "jobCount": zod.number(),
+  "lastJobDate": zod.string().nullish(),
+  "lastServiceType": zod.string().nullish(),
+  "marketingNotes": zod.string().nullish(),
+  "tags": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+}).and(zod.object({
+  "bookings": zod.array(zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "customerEmail": zod.string(),
+  "customerPhone": zod.string().optional(),
+  "serviceType": zod.enum(['consulting', 'quoting', 'work']),
+  "jobType": zod.string(),
+  "suburb": zod.string(),
+  "preferredDate": zod.string(),
+  "message": zod.string().optional(),
+  "photoUrl": zod.string().optional(),
+  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "adminNotes": zod.string().optional(),
+  "createdAt": zod.string()
+}))
+}))
+
+
+/**
+ * @summary Update customer marketing notes and tags
+ */
+export const UpdateCustomerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateCustomerBody = zod.object({
+  "marketingNotes": zod.string().nullish(),
+  "tags": zod.string().nullish()
+})
+
+export const UpdateCustomerResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "phone": zod.string().nullish(),
+  "suburb": zod.string().nullish(),
+  "jobCount": zod.number(),
+  "lastJobDate": zod.string().nullish(),
+  "lastServiceType": zod.string().nullish(),
+  "marketingNotes": zod.string().nullish(),
+  "tags": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List portfolio items
  */
 export const ListPortfolioItemsQueryParams = zod.object({

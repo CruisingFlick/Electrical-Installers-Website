@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, bookingsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { db, bookingsTable, customersTable } from "@workspace/db";
+import { eq, desc, sql } from "drizzle-orm";
 import {
   CreateBookingBody,
   UpdateBookingStatusBody,
@@ -104,6 +104,37 @@ async function sendBookingEmails(booking: {
     });
   } catch {
     // Email sending is best-effort; don't fail the request
+  }
+}
+
+async function upsertCustomer(booking: typeof bookingsTable.$inferSelect) {
+  try {
+    await db
+      .insert(customersTable)
+      .values({
+        email: booking.customerEmail,
+        name: booking.customerName,
+        phone: booking.customerPhone ?? null,
+        suburb: booking.suburb,
+        jobCount: 1,
+        lastJobDate: new Date().toISOString().split("T")[0],
+        lastServiceType: booking.serviceType,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: customersTable.email,
+        set: {
+          name: booking.customerName,
+          phone: booking.customerPhone ?? null,
+          suburb: booking.suburb,
+          jobCount: sql`${customersTable.jobCount} + 1`,
+          lastJobDate: new Date().toISOString().split("T")[0],
+          lastServiceType: booking.serviceType,
+          updatedAt: new Date(),
+        },
+      });
+  } catch {
+    // Best-effort — don't fail the booking update if customer upsert fails
   }
 }
 
@@ -285,6 +316,11 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     if (!row) {
       res.status(404).json({ error: "Not found" });
       return;
+    }
+
+    // When a job is completed or cancelled, archive the customer
+    if (bodyParsed.data.status === "completed" || bodyParsed.data.status === "cancelled") {
+      void upsertCustomer(row);
     }
 
     res.json(formatBooking(row));

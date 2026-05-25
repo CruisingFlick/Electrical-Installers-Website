@@ -30,6 +30,8 @@ import type {
   CreatePortfolioItemBody,
   CreateQuoteBody,
   CreateReviewBody,
+  Customer,
+  CustomerWithBookings,
   HealthStatus,
   Job,
   ListBookingsParams,
@@ -48,6 +50,7 @@ import type {
   ServiceCount,
   UpdateAiSettingsBody,
   UpdateBookingStatusBody,
+  UpdateCustomerBody,
   UpdateJobStatusBody,
   UpdateMediaItemBody,
   UpdatePortfolioItemBody,
@@ -1238,6 +1241,231 @@ export const useDeleteBooking = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteBookingMutationOptions(options));
+    }
+
+export const getListCustomersUrl = () => {
+
+
+
+
+  return `/api/admin/customers`
+}
+
+/**
+ * @summary List all customers in the archive
+ */
+export const listCustomers = async ( options?: RequestInit): Promise<Customer[]> => {
+
+  return customFetch<Customer[]>(getListCustomersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCustomersQueryKey = () => {
+    return [
+    `/api/admin/customers`
+    ] as const;
+    }
+
+
+export const getListCustomersQueryOptions = <TData = Awaited<ReturnType<typeof listCustomers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCustomersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCustomers>>> = ({ signal }) => listCustomers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCustomersQueryResult = NonNullable<Awaited<ReturnType<typeof listCustomers>>>
+export type ListCustomersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all customers in the archive
+ */
+
+export function useListCustomers<TData = Awaited<ReturnType<typeof listCustomers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCustomers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCustomersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetCustomerUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/customers/${id}`
+}
+
+/**
+ * @summary Get a customer with their full booking history
+ */
+export const getCustomer = async (id: number, options?: RequestInit): Promise<CustomerWithBookings> => {
+
+  return customFetch<CustomerWithBookings>(getGetCustomerUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCustomerQueryKey = (id: number,) => {
+    return [
+    `/api/admin/customers/${id}`
+    ] as const;
+    }
+
+
+export const getGetCustomerQueryOptions = <TData = Awaited<ReturnType<typeof getCustomer>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomer>>> = ({ signal }) => getCustomer(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCustomerQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomer>>>
+export type GetCustomerQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a customer with their full booking history
+ */
+
+export function useGetCustomer<TData = Awaited<ReturnType<typeof getCustomer>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCustomer>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCustomerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateCustomerUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/customers/${id}`
+}
+
+/**
+ * @summary Update customer marketing notes and tags
+ */
+export const updateCustomer = async (id: number,
+    updateCustomerBody: UpdateCustomerBody, options?: RequestInit): Promise<Customer> => {
+
+  return customFetch<Customer>(getUpdateCustomerUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateCustomerBody)
+  }
+);}
+
+
+
+
+export const getUpdateCustomerMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{id: number;data: BodyType<UpdateCustomerBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{id: number;data: BodyType<UpdateCustomerBody>}, TContext> => {
+
+const mutationKey = ['updateCustomer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCustomer>>, {id: number;data: BodyType<UpdateCustomerBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateCustomer(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof updateCustomer>>>
+    export type UpdateCustomerMutationBody = BodyType<UpdateCustomerBody>
+    export type UpdateCustomerMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update customer marketing notes and tags
+ */
+export const useUpdateCustomer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCustomer>>, TError,{id: number;data: BodyType<UpdateCustomerBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCustomer>>,
+        TError,
+        {id: number;data: BodyType<UpdateCustomerBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateCustomerMutationOptions(options));
     }
 
 export const getListPortfolioItemsUrl = (params?: ListPortfolioItemsParams,) => {

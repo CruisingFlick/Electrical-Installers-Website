@@ -1,16 +1,23 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Briefcase, Calendar } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useListBookings } from "@workspace/api-client-react";
+import BookingDetailDrawer from "./BookingDetailDrawer";
 
 type Booking = {
   id: number;
   customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  serviceType: string;
   jobType: string;
   suburb: string;
   preferredDate: string;
+  message?: string | null;
+  photoUrl?: string | null;
+  adminNotes?: string | null;
   status: string;
-  serviceType: string;
+  createdAt: string;
 };
 
 const statusColors: Record<string, string> = {
@@ -20,30 +27,81 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-red-100 text-red-800 border-red-300",
 };
 
+const statusDot: Record<string, string> = {
+  pending: "bg-amber-400",
+  confirmed: "bg-blue-400",
+  completed: "bg-green-500",
+  cancelled: "bg-red-400",
+};
+
 function parseBookingDate(preferredDate: string): Date | null {
-  // Try to extract a date from strings like "Monday, 2 June 2025 at 9:00 AM"
   const match = preferredDate.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
   if (match) {
     const parsed = new Date(`${match[2]} ${match[1]}, ${match[3]}`);
     if (!isNaN(parsed.getTime())) return parsed;
   }
-  // Try ISO date
   const direct = new Date(preferredDate);
   if (!isNaN(direct.getTime())) return direct;
   return null;
+}
+
+function BookingTooltip({ booking }: { booking: Booking }) {
+  return (
+    <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-60 bg-[hsl(214,60%,14%)] text-white rounded-xl shadow-2xl p-3 text-left pointer-events-none">
+      <div className="flex items-center gap-2 mb-2">
+        <span className={`w-2 h-2 rounded-full shrink-0 ${statusDot[booking.status] ?? "bg-gray-400"}`} />
+        <p className="font-semibold text-sm truncate">{booking.customerName}</p>
+        <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full capitalize ${
+          booking.status === "pending" ? "bg-amber-500/30 text-amber-300" :
+          booking.status === "confirmed" ? "bg-blue-500/30 text-blue-300" :
+          booking.status === "completed" ? "bg-green-500/30 text-green-300" :
+          "bg-red-500/30 text-red-300"
+        }`}>{booking.status}</span>
+      </div>
+      <div className="space-y-1.5 text-xs text-blue-100">
+        <div className="flex items-center gap-2">
+          <Mail size={11} className="shrink-0 text-orange-400" />
+          <span className="truncate">{booking.customerEmail}</span>
+        </div>
+        {booking.customerPhone && (
+          <div className="flex items-center gap-2">
+            <Phone size={11} className="shrink-0 text-orange-400" />
+            <span>{booking.customerPhone}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <MapPin size={11} className="shrink-0 text-orange-400" />
+          <span>{booking.suburb}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <Briefcase size={11} className="shrink-0 text-orange-400 mt-0.5" />
+          <span className="capitalize">{booking.serviceType} — {booking.jobType}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar size={11} className="shrink-0 text-orange-400" />
+          <span className="truncate">{booking.preferredDate}</span>
+        </div>
+      </div>
+      <p className="text-[10px] text-blue-300 mt-2 text-center">Click to open full details</p>
+      {/* Arrow */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[hsl(214,60%,14%)]" />
+    </div>
+  );
 }
 
 export default function AdminCalendarView() {
   const { data: bookings = [], isLoading } = useListBookings();
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+  const [hoveredBookingId, setHoveredBookingId] = useState<number | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
-  // Start week on Monday (0=Mon)
   const startOffset = (firstDayOfWeek + 6) % 7;
 
   const bookingsByDay = useMemo(() => {
@@ -74,7 +132,6 @@ export default function AdminCalendarView() {
     ...Array(startOffset).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  // Pad to complete the last row
   while (cells.length % 7 !== 0) cells.push(null);
 
   return (
@@ -106,6 +163,7 @@ export default function AdminCalendarView() {
               <span className="capitalize">{status}</span>
             </div>
           ))}
+          <span className="text-xs text-gray-400 self-center ml-2">Hover for details · Click to open</span>
         </div>
 
         {isLoading ? (
@@ -147,18 +205,24 @@ export default function AdminCalendarView() {
                           {dayBookings.slice(0, 3).map((b) => (
                             <div
                               key={b.id}
-                              className={`text-[10px] leading-tight px-1.5 py-0.5 rounded border font-medium truncate ${
+                              className={`relative text-[10px] leading-tight px-1.5 py-0.5 rounded border font-medium truncate cursor-pointer transition-all hover:shadow-md hover:scale-[1.03] hover:z-10 ${
                                 statusColors[b.status] ?? "bg-gray-100 text-gray-700 border-gray-200"
                               }`}
-                              title={`${b.customerName} — ${b.jobType} (${b.suburb})`}
+                              onMouseEnter={() => setHoveredBookingId(b.id)}
+                              onMouseLeave={() => setHoveredBookingId(null)}
+                              onClick={() => setSelectedBooking(b)}
                             >
+                              {hoveredBookingId === b.id && <BookingTooltip booking={b} />}
                               {b.customerName}
                             </div>
                           ))}
                           {dayBookings.length > 3 && (
-                            <div className="text-[10px] text-gray-400 font-medium pl-1">
+                            <button
+                              className="text-[10px] text-[hsl(25,95%,53%)] font-semibold pl-1 hover:underline"
+                              onClick={() => setSelectedBooking(dayBookings[3])}
+                            >
                               +{dayBookings.length - 3} more
-                            </div>
+                            </button>
                           )}
                         </div>
                       </>
@@ -169,6 +233,29 @@ export default function AdminCalendarView() {
             </div>
           </div>
         )}
+
+        {/* Photo lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <img
+              src={lightboxUrl}
+              alt="Job photo"
+              className="max-w-full max-h-[80vh] rounded-xl shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
+
+        {/* Booking detail drawer */}
+        <BookingDetailDrawer
+          booking={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          onLightbox={(url) => setLightboxUrl(url)}
+          onUpdate={(updated) => setSelectedBooking(updated)}
+        />
       </div>
     </AdminLayout>
   );
