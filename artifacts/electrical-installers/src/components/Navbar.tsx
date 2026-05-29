@@ -21,10 +21,10 @@ export default function Navbar() {
   return (
     <header className="bg-[hsl(214,60%,14%)] text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <img src="/logo.png" alt="Electrical Installers logo" className="h-8 sm:h-10 w-auto" />
-            <span className="text-sm sm:text-lg">Electrical Installers</span>
+        <div className="flex items-center justify-between h-20">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            <img src="/logo.png" alt="Electrical Installers logo" className="h-10 sm:h-12 w-auto" />
+            <span className="text-base sm:text-xl">Electrical Installers</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -32,7 +32,7 @@ export default function Navbar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded text-base font-medium transition-colors ${
                   location === l.href
                     ? "bg-[hsl(25,95%,53%)] text-white"
                     : "text-gray-300 hover:text-white hover:bg-[hsl(214,50%,22%)]"
@@ -47,7 +47,7 @@ export default function Navbar() {
           {/* Desktop click-to-call */}
           <a
             href="tel:0419868703"
-            className="hidden md:flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white text-sm font-bold px-4 py-2 rounded-full transition-colors"
+            className="hidden md:flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white text-base font-bold px-5 py-2.5 rounded-full transition-colors"
             data-testid="nav-call-button"
           >
             <Phone size={15} />
