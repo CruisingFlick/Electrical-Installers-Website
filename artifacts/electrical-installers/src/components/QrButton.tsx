@@ -58,7 +58,7 @@ export default function QrButton() {
         data-testid="qr-button"
       >
         <QrCode size={16} />
-        <span className="hidden sm:inline">QR Code</span>
+        <span>Share with your phone</span>
       </button>
 
       {open && (
