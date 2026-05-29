@@ -21,10 +21,10 @@ export default function Navbar() {
   return (
     <header className="bg-[hsl(214,60%,14%)] text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <img src="/logo.png" alt="Electrical Installers logo" className="h-10 sm:h-12 w-auto" />
-            <span className="text-base sm:text-xl">Electrical Installers</span>
+        <div className="flex items-center justify-between h-28">
+          <Link href="/" className="flex items-center gap-3 font-bold">
+            <img src="/logo.png" alt="Electrical Installers logo" className="h-14 sm:h-16 w-auto" />
+            <span className="text-2xl sm:text-3xl leading-tight">Electrical<br />Installers</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
