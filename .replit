@@ -45,6 +45,6 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-SMTP_HOST = "smtp.gmail.com"
+SMTP_HOST = " mail.papamail.net"
 SMTP_PORT = "587"
 SMTP_USER = "info@electricalinstallers.com.au"

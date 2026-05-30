@@ -34,7 +34,7 @@ function csvCell(value: string | number | null | undefined): string {
 
 function createTransporter() {
   return nodemailer.createTransport({
-    host: process.env["SMTP_HOST"] || "smtp.gmail.com",
+    host: (process.env["SMTP_HOST"] || "smtp.gmail.com").trim(),
     port: Number(process.env["SMTP_PORT"] || 587),
     secure: false,
     auth: {
