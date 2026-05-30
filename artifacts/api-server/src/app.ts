@@ -35,12 +35,22 @@ app.use(
     },
   }),
 );
+const allowedOrigins: (string | RegExp)[] =
+  process.env["NODE_ENV"] === "production"
+    ? [
+        /\.replit\.app$/,
+        ...(process.env["REPLIT_DOMAINS"] ?? "")
+          .split(",")
+          .map((d) => d.trim())
+          .filter(Boolean)
+          .map((d) => `https://${d}`),
+        "https://electricalinstallers.com.au",
+      ]
+    : [/.*/];
+
 app.use(
   cors({
-    origin:
-      process.env["NODE_ENV"] === "production"
-        ? "https://electricalinstallers.com.au"
-        : true,
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
