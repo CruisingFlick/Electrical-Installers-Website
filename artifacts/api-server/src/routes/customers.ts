@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, customersTable, bookingsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireAdmin } from "../middleware/admin-auth";
 
@@ -25,6 +25,75 @@ function formatBooking(b: typeof bookingsTable.$inferSelect) {
     createdAt: b.createdAt.toISOString(),
   };
 }
+
+function csvCell(value: string | null | undefined): string {
+  const str = String(value ?? "");
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+router.post("/sync", requireAdmin, async (req, res, next) => {
+  try {
+    const bookings = await db.select().from(bookingsTable).orderBy(bookingsTable.createdAt);
+    let synced = 0;
+    for (const booking of bookings) {
+      if (!booking.customerEmail) continue;
+      await db
+        .insert(customersTable)
+        .values({
+          email: booking.customerEmail,
+          name: booking.customerName,
+          phone: booking.customerPhone ?? null,
+          suburb: booking.suburb,
+          jobCount: 1,
+          lastJobDate: booking.createdAt.toISOString().split("T")[0],
+          lastServiceType: booking.serviceType,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: customersTable.email,
+          set: {
+            name: booking.customerName,
+            phone: booking.customerPhone ?? null,
+            suburb: booking.suburb,
+            jobCount: sql`${customersTable.jobCount} + 1`,
+            lastJobDate: booking.createdAt.toISOString().split("T")[0],
+            lastServiceType: booking.serviceType,
+            updatedAt: new Date(),
+          },
+        });
+      synced++;
+    }
+    res.json({ synced });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/export", requireAdmin, async (req, res, next) => {
+  try {
+    const rows = await db.select().from(customersTable).orderBy(desc(customersTable.updatedAt));
+    const header = "Name,Email,Phone,Suburb,Jobs,Last Service,Last Job Date,Tags,Notes,Added\n";
+    const lines = rows.map((c) =>
+      [
+        csvCell(c.name),
+        csvCell(c.email),
+        csvCell(c.phone),
+        csvCell(c.suburb),
+        c.jobCount,
+        csvCell(c.lastServiceType),
+        csvCell(c.lastJobDate),
+        csvCell(c.tags?.join(", ")),
+        csvCell(c.marketingNotes),
+        c.createdAt.toISOString(),
+      ].join(",")
+    );
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", 'attachment; filename="customers.csv"');
+    res.send(header + lines.join("\n"));
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get("/", requireAdmin, async (req, res, next) => {
   try {

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useListCustomers, useGetCustomer, useUpdateCustomer, getListCustomersQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "./AdminLayout";
-import { Search, Users, Phone, Mail, MapPin, Briefcase, Calendar, Tag, StickyNote, ChevronRight, X, CheckCircle, Save, Repeat2 } from "lucide-react";
+import { Search, Users, Phone, Mail, MapPin, Briefcase, Calendar, Tag, StickyNote, ChevronRight, X, CheckCircle, Save, Repeat2, Download, RefreshCw } from "lucide-react";
 import BookingDetailDrawer from "./BookingDetailDrawer";
 
 type Customer = {
@@ -236,9 +236,35 @@ function CustomerDetailPanel({
 }
 
 export default function AdminCustomers() {
+  const queryClient = useQueryClient();
   const { data: customers = [], isLoading } = useListCustomers();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Customer | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  async function syncFromBookings() {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const res = await fetch("/api/admin/customers/sync", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      const data = await res.json() as { synced: number };
+      await queryClient.invalidateQueries({ queryKey: getListCustomersQueryKey() });
+      setSyncMsg(`Synced ${data.synced} booking${data.synced !== 1 ? "s" : ""}`);
+      setTimeout(() => setSyncMsg(null), 4000);
+    } catch {
+      setSyncMsg("Sync failed — try again");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  function exportCsv() {
+    window.open("/api/admin/customers/export", "_blank");
+  }
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -260,12 +286,34 @@ export default function AdminCustomers() {
   return (
     <AdminLayout>
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Customer Archive</h1>
+            <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Customers</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Built automatically from completed &amp; cancelled jobs · {(customers as Customer[]).length} customers · {returning} returning
+              All enquiries from bookings &amp; quotes · {(customers as Customer[]).length} contacts · {returning} returning
             </p>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {syncMsg && (
+              <span className="text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-lg font-medium">
+                {syncMsg}
+              </span>
+            )}
+            <button
+              onClick={syncFromBookings}
+              disabled={syncing}
+              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={syncing ? "animate-spin" : ""} />
+              {syncing ? "Syncing…" : "Sync from bookings"}
+            </button>
+            <button
+              onClick={exportCsv}
+              className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-[hsl(214,60%,14%)] text-white hover:bg-[hsl(214,60%,20%)] transition-colors"
+            >
+              <Download size={15} />
+              Export CSV
+            </button>
           </div>
         </div>
 
