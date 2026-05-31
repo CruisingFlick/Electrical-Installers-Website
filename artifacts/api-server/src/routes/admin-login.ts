@@ -18,7 +18,13 @@ router.post("/login", (req, res) => {
   }
 
   req.session.isAdmin = true;
-  res.json({ ok: true });
+  req.session.save((err) => {
+    if (err) {
+      res.status(500).json({ error: "Session error" });
+      return;
+    }
+    res.json({ ok: true });
+  });
 });
 
 router.get("/me", (req, res) => {
