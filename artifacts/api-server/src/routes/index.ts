@@ -11,6 +11,8 @@ import openaiRouter from "./openai";
 import aiSettingsRouter from "./ai-settings";
 import mediaRouter from "./media";
 import customersRouter from "./customers";
+import { publicBlogRouter, adminBlogRouter } from "./blog";
+import settingsRouter from "./settings";
 
 const router: IRouter = Router();
 
@@ -19,6 +21,7 @@ router.use("/admin", adminLoginRouter);
 router.use("/admin", aiSettingsRouter);
 router.use("/admin/media", mediaRouter);
 router.use("/admin/customers", customersRouter);
+router.use("/admin/settings", settingsRouter);
 router.use("/bookings", bookingsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/reviews", reviewsRouter);
@@ -26,5 +29,7 @@ router.use("/quotes", quotesRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/jobs", jobsRouter);
 router.use("/openai", openaiRouter);
+router.use("/blog", publicBlogRouter);
+router.use("/admin/blog", adminBlogRouter);
 
 export default router;

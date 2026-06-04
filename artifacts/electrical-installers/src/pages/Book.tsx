@@ -32,6 +32,18 @@ function formatDateDisplay(dateStr: string): string {
   return d.toLocaleDateString("en-AU", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 }
 
+const REFERRAL_SOURCES = [
+  { value: "", label: "How did you find us? (optional)" },
+  { value: "google", label: "Google Search" },
+  { value: "facebook", label: "Facebook / Instagram" },
+  { value: "word_of_mouth", label: "Word of Mouth" },
+  { value: "repeat_customer", label: "Returning Customer" },
+  { value: "signage", label: "Van / Signage" },
+  { value: "real_estate_agent", label: "Real Estate Agent" },
+  { value: "neighbour", label: "Neighbour / Community Group" },
+  { value: "other", label: "Other" },
+];
+
 const bookingSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
   customerEmail: z.string().email("Valid email required"),
@@ -42,6 +54,7 @@ const bookingSchema = z.object({
   preferredDate: z.string().min(1, "Preferred date is required"),
   message: z.string().optional(),
   photoUrl: z.string().optional(),
+  referralSource: z.string().optional(),
 });
 type BookingForm = z.infer<typeof bookingSchema>;
 
@@ -82,6 +95,7 @@ export default function BookPage() {
       preferredDate: "",
       message: "",
       photoUrl: "",
+      referralSource: "",
     },
   });
 
@@ -397,6 +411,19 @@ export default function BookPage() {
                       />
                     </div>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">How did you find us?</label>
+                  <select
+                    {...form.register("referralSource")}
+                    className={inputClass}
+                    data-testid="select-booking-referral"
+                  >
+                    {REFERRAL_SOURCES.map((s) => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {submitError && (

@@ -1,10 +1,10 @@
 import { useListReviews, useCreateReview, getListReviewsQueryKey } from "@workspace/api-client-react";
-import { Star, CheckCircle } from "lucide-react";
+import { Star, CheckCircle, ExternalLink } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const reviewSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
@@ -43,6 +43,14 @@ export default function ReviewsPage() {
   const { data: reviews = [], isLoading } = useListReviews({ status: "approved" }, { query: { queryKey: getListReviewsQueryKey({ status: "approved" }) } });
   const createReview = useCreateReview();
   const [submitted, setSubmitted] = useState(false);
+  const [googleReviewsUrl, setGoogleReviewsUrl] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/admin/settings/public")
+      .then((r) => r.ok ? r.json() as Promise<{ googleReviewsUrl: string }> : Promise.resolve({ googleReviewsUrl: "" }))
+      .then((d) => setGoogleReviewsUrl(d.googleReviewsUrl ?? ""))
+      .catch(() => {});
+  }, []);
 
   const form = useForm<ReviewForm>({
     resolver: zodResolver(reviewSchema),
@@ -104,6 +112,26 @@ export default function ReviewsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Google Reviews CTA */}
+        {googleReviewsUrl && (
+          <div className="bg-[hsl(214,60%,14%)] text-white rounded-2xl p-6 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="font-bold text-lg">Happy with our work?</p>
+              <p className="text-gray-300 text-sm mt-0.5">Leaving a Google review helps other locals find us — it only takes 30 seconds.</p>
+            </div>
+            <a
+              href={googleReviewsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm whitespace-nowrap"
+            >
+              <Star size={15} className="fill-white" />
+              Leave a Google Review
+              <ExternalLink size={13} />
+            </a>
           </div>
         )}
 

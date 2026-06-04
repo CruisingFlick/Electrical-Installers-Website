@@ -9,6 +9,166 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Public booking status lookup by ID and email
+ */
+export const TrackBookingQueryParams = zod.object({
+  "id": zod.coerce.number(),
+  "email": zod.coerce.string()
+})
+
+export const TrackBookingResponse = zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "jobType": zod.string(),
+  "suburb": zod.string(),
+  "serviceType": zod.string(),
+  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "preferredDate": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List published blog posts
+ */
+export const ListBlogPostsQueryParams = zod.object({
+  "category": zod.coerce.string().optional()
+})
+
+export const ListBlogPostsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListBlogPostsResponse = zod.array(ListBlogPostsResponseItem)
+
+
+/**
+ * @summary Get a single published blog post by slug
+ */
+export const GetBlogPostParams = zod.object({
+  "slug": zod.coerce.string()
+})
+
+export const GetBlogPostResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary List all blog posts (admin — includes drafts)
+ */
+export const ListAllBlogPostsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListAllBlogPostsResponse = zod.array(ListAllBlogPostsResponseItem)
+
+
+/**
+ * @summary Create a new blog post
+ */
+export const CreateBlogPostBody = zod.object({
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().optional(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().optional()
+})
+
+
+/**
+ * @summary Update a blog post
+ */
+export const UpdateBlogPostParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateBlogPostBody = zod.object({
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().optional(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().optional()
+})
+
+export const UpdateBlogPostResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "slug": zod.string(),
+  "excerpt": zod.string(),
+  "content": zod.string(),
+  "imageUrl": zod.string().nullish(),
+  "category": zod.string(),
+  "status": zod.enum(['draft', 'published']),
+  "publishedAt": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a blog post
+ */
+export const DeleteBlogPostParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Get site settings
+ */
+export const GetSettingsResponse = zod.object({
+  "googleReviewsUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary Update site settings
+ */
+export const UpdateSettingsBody = zod.object({
+  "googleReviewsUrl": zod.string().optional()
+})
+
+export const UpdateSettingsResponse = zod.object({
+  "googleReviewsUrl": zod.string().optional()
+})
+
+
+/**
  * @summary List all media library items
  */
 export const ListMediaItemsResponseItem = zod.object({
@@ -152,6 +312,7 @@ export const ListBookingsResponseItem = zod.object({
   "photoUrl": zod.string().optional(),
   "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
+  "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListBookingsResponse = zod.array(ListBookingsResponseItem)
@@ -169,7 +330,8 @@ export const CreateBookingBody = zod.object({
   "suburb": zod.string(),
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
-  "photoUrl": zod.string().optional()
+  "photoUrl": zod.string().optional(),
+  "referralSource": zod.string().optional()
 })
 
 
@@ -198,6 +360,7 @@ export const ConfirmBookingResponse = zod.object({
   "photoUrl": zod.string().optional(),
   "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
+  "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -222,6 +385,7 @@ export const GetBookingResponse = zod.object({
   "photoUrl": zod.string().optional(),
   "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
+  "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -250,6 +414,7 @@ export const UpdateBookingStatusResponse = zod.object({
   "photoUrl": zod.string().optional(),
   "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
+  "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -316,6 +481,7 @@ export const GetCustomerResponse = zod.object({
   "photoUrl": zod.string().optional(),
   "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
+  "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 }))
@@ -533,7 +699,8 @@ export const CreateQuoteBody = zod.object({
   "fasciImageUrl": zod.string().optional(),
   "streetImageUrl": zod.string().optional(),
   "preferredDate": zod.string().optional(),
-  "preferredTime": zod.string().optional()
+  "preferredTime": zod.string().optional(),
+  "referralSource": zod.string().optional()
 })
 
 

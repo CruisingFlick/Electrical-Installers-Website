@@ -28,8 +28,193 @@ tags:
     description: Media library for photo management
   - name: customers
     description: Customer archive and CRM
+  - name: blog
+    description: Blog and tips articles
+  - name: settings
+    description: Site-wide configuration settings
 
 paths:
+
+  /bookings/track:
+    get:
+      operationId: trackBooking
+      tags: [bookings]
+      summary: Public booking status lookup by ID and email
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Booking status info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingStatus"
+        "404":
+          description: Not found
+
+  /blog:
+    get:
+      operationId: listBlogPosts
+      tags: [blog]
+      summary: List published blog posts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of published blog posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogPost"
+
+  /blog/{slug}:
+    get:
+      operationId: getBlogPost
+      tags: [blog]
+      summary: Get a single published blog post by slug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+        "404":
+          description: Not found
+
+  /admin/blog:
+    get:
+      operationId: listAllBlogPosts
+      tags: [blog]
+      summary: List all blog posts (admin — includes drafts)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All blog posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BlogPost"
+    post:
+      operationId: createBlogPost
+      tags: [blog]
+      summary: Create a new blog post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlogPostBody"
+      responses:
+        "201":
+          description: Created blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+
+  /admin/blog/{id}:
+    put:
+      operationId: updateBlogPost
+      tags: [blog]
+      summary: Update a blog post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBlogPostBody"
+      responses:
+        "200":
+          description: Updated blog post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+    delete:
+      operationId: deleteBlogPost
+      tags: [blog]
+      summary: Delete a blog post
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /admin/settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get site settings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Settings map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update site settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SiteSettings"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteSettings"
+
+
   /admin/media:
     get:
       operationId: listMediaItems
@@ -784,6 +969,9 @@ components:
           enum: [pending, confirmed, completed, cancelled]
         adminNotes:
           type: string
+        referralSource:
+          type: string
+          nullable: true
         createdAt:
           type: string
       required:
@@ -818,6 +1006,8 @@ components:
         message:
           type: string
         photoUrl:
+          type: string
+        referralSource:
           type: string
       required:
         - customerName
@@ -1076,6 +1266,8 @@ components:
         preferredDate:
           type: string
         preferredTime:
+          type: string
+        referralSource:
           type: string
       required:
         - customerName
@@ -1457,3 +1649,106 @@ components:
           type: integer
       required:
         - id
+
+    BookingStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        jobType:
+          type: string
+        suburb:
+          type: string
+        serviceType:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+        preferredDate:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - jobType
+        - suburb
+        - serviceType
+        - status
+        - preferredDate
+        - createdAt
+
+    BlogPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        category:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        publishedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - title
+        - slug
+        - excerpt
+        - content
+        - category
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateBlogPostBody:
+      type: object
+      properties:
+        title:
+          type: string
+        slug:
+          type: string
+        excerpt:
+          type: string
+        content:
+          type: string
+        imageUrl:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+          enum: [draft, published]
+        publishedAt:
+          type: string
+      required:
+        - title
+        - slug
+        - excerpt
+        - content
+        - category
+        - status
+
+    SiteSettings:
+      type: object
+      properties:
+        googleReviewsUrl:
+          type: string

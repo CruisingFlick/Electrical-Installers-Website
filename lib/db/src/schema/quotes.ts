@@ -16,6 +16,7 @@ export const quotesTable = pgTable("quotes", {
   preferredDate: text("preferred_date"),
   preferredTime: text("preferred_time"),
   status: text("status").notNull().default("pending"),
+  referralSource: text("referral_source"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

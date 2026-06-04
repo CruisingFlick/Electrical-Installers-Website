@@ -167,6 +167,18 @@ function CalendarPicker({ selectedDate, selectedTime, onDateChange, onTimeChange
   );
 }
 
+const REFERRAL_SOURCES = [
+  { value: "", label: "How did you find us? (optional)" },
+  { value: "google", label: "Google Search" },
+  { value: "facebook", label: "Facebook / Instagram" },
+  { value: "word_of_mouth", label: "Word of Mouth" },
+  { value: "repeat_customer", label: "Returning Customer" },
+  { value: "signage", label: "Van / Signage" },
+  { value: "real_estate_agent", label: "Real Estate Agent" },
+  { value: "neighbour", label: "Neighbour / Community Group" },
+  { value: "other", label: "Other" },
+];
+
 const quoteSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
   customerEmail: z.string().email("Valid email required"),
@@ -177,6 +189,7 @@ const quoteSchema = z.object({
   switchboardImageUrl: z.string().optional(),
   fasciImageUrl: z.string().optional(),
   streetImageUrl: z.string().optional(),
+  referralSource: z.string().optional(),
 });
 type QuoteForm = z.infer<typeof quoteSchema>;
 
@@ -309,6 +322,7 @@ export default function QuotePage() {
       customerName: "", customerEmail: "", customerPhone: "",
       suburb: "", jobType: "", description: "",
       switchboardImageUrl: "", fasciImageUrl: "", streetImageUrl: "",
+      referralSource: "",
     },
   });
 
@@ -490,6 +504,19 @@ export default function QuotePage() {
                 onDateChange={(d) => { setPreferredDate(d); setPreferredTime(""); }}
                 onTimeChange={setPreferredTime}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">How did you find us?</label>
+              <select
+                {...form.register("referralSource")}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+                data-testid="select-quote-referral"
+              >
+                {REFERRAL_SOURCES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Photo uploads */}

@@ -31,8 +31,13 @@ import AdminAiSettings from "@/pages/admin/AiSettings";
 import AdminCalendarView from "@/pages/admin/CalendarView";
 import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
 import AdminCustomers from "@/pages/admin/Customers";
+import AdminBlog from "@/pages/admin/Blog";
+import AdminSiteSettings from "@/pages/admin/SiteSettings";
 import ServiceAreaPage from "@/pages/ServiceArea";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
+import TrackBookingPage from "@/pages/TrackBooking";
+import BlogPage from "@/pages/Blog";
+import BlogPostPage from "@/pages/BlogPost";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -101,6 +106,9 @@ function Router() {
       <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
       <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
       <Route path="/privacy-policy" component={() => <PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
+      <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
+      <Route path="/blog" component={() => <PublicLayout><BlogPage /></PublicLayout>} />
+      <Route path="/blog/:slug" component={() => <PublicLayout><BlogPostPage /></PublicLayout>} />
 
       {/* Admin routes */}
       <Route path="/admin" component={AdminLogin} />
@@ -114,6 +122,8 @@ function Router() {
       <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
       <Route path="/admin/media" component={() => <AdminGuard component={AdminMediaLibrary} />} />
       <Route path="/admin/customers" component={() => <AdminGuard component={AdminCustomers} />} />
+      <Route path="/admin/blog" component={() => <AdminGuard component={AdminBlog} />} />
+      <Route path="/admin/site-settings" component={() => <AdminGuard component={AdminSiteSettings} />} />
 
       <Route component={NotFound} />
     </Switch>

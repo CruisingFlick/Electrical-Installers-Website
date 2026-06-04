@@ -18,10 +18,10 @@ export const BookingServiceType = {
   work: 'work',
 } as const;
 
-export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
+export type BookingStatusProperty = typeof BookingStatusProperty[keyof typeof BookingStatusProperty];
 
 
-export const BookingStatus = {
+export const BookingStatusProperty = {
   pending: 'pending',
   confirmed: 'confirmed',
   completed: 'completed',
@@ -39,8 +39,9 @@ export interface Booking {
   preferredDate: string;
   message?: string;
   photoUrl?: string;
-  status: BookingStatus;
+  status: BookingStatusProperty;
   adminNotes?: string;
+  referralSource?: string | null;
   createdAt: string;
 }
 
@@ -63,6 +64,7 @@ export interface CreateBookingBody {
   preferredDate: string;
   message?: string;
   photoUrl?: string;
+  referralSource?: string;
 }
 
 export type UpdateBookingStatusBodyStatus = typeof UpdateBookingStatusBodyStatus[keyof typeof UpdateBookingStatusBodyStatus];
@@ -206,6 +208,7 @@ export interface CreateQuoteBody {
   streetImageUrl?: string;
   preferredDate?: string;
   preferredTime?: string;
+  referralSource?: string;
 }
 
 export type UpdateQuoteStatusBodyStatus = typeof UpdateQuoteStatusBodyStatus[keyof typeof UpdateQuoteStatusBodyStatus];
@@ -412,6 +415,81 @@ export interface GetCustomerParams {
 export interface UpdateCustomerParams {
   id: number;
 }
+
+export type BookingStatusStatus = typeof BookingStatusStatus[keyof typeof BookingStatusStatus];
+
+
+export const BookingStatusStatus = {
+  pending: 'pending',
+  confirmed: 'confirmed',
+  completed: 'completed',
+  cancelled: 'cancelled',
+} as const;
+
+export interface BookingStatus {
+  id: number;
+  customerName: string;
+  jobType: string;
+  suburb: string;
+  serviceType: string;
+  status: BookingStatusStatus;
+  preferredDate: string;
+  createdAt: string;
+}
+
+export type BlogPostStatus = typeof BlogPostStatus[keyof typeof BlogPostStatus];
+
+
+export const BlogPostStatus = {
+  draft: 'draft',
+  published: 'published',
+} as const;
+
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  imageUrl?: string | null;
+  category: string;
+  status: BlogPostStatus;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateBlogPostBodyStatus = typeof CreateBlogPostBodyStatus[keyof typeof CreateBlogPostBodyStatus];
+
+
+export const CreateBlogPostBodyStatus = {
+  draft: 'draft',
+  published: 'published',
+} as const;
+
+export interface CreateBlogPostBody {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  imageUrl?: string;
+  category: string;
+  status: CreateBlogPostBodyStatus;
+  publishedAt?: string;
+}
+
+export interface SiteSettings {
+  googleReviewsUrl?: string;
+}
+
+export type TrackBookingParams = {
+id: number;
+email: string;
+};
+
+export type ListBlogPostsParams = {
+category?: string;
+};
 
 export type UpdateMediaItemBody = {
   title?: string;

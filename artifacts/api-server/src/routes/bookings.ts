@@ -135,6 +135,41 @@ async function upsertCustomer(booking: typeof bookingsTable.$inferSelect) {
   }
 }
 
+router.get("/track", async (req, res, next) => {
+  const id = Number(req.query["id"]);
+  const email = (req.query["email"] as string | undefined)?.trim().toLowerCase();
+
+  if (!id || isNaN(id) || !email) {
+    res.status(400).json({ error: "id and email are required" });
+    return;
+  }
+
+  try {
+    const [row] = await db
+      .select()
+      .from(bookingsTable)
+      .where(eq(bookingsTable.id, id));
+
+    if (!row || row.customerEmail.toLowerCase() !== email) {
+      res.status(404).json({ error: "Booking not found. Please check your ID and email address." });
+      return;
+    }
+
+    res.json({
+      id: row.id,
+      customerName: row.customerName,
+      jobType: row.jobType,
+      suburb: row.suburb,
+      serviceType: row.serviceType,
+      status: row.status,
+      preferredDate: row.preferredDate,
+      createdAt: row.createdAt.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/", requireAdmin, async (req, res, next) => {
   try {
     const parsed = ListBookingsQueryParams.safeParse(req.query);

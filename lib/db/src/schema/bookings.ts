@@ -15,6 +15,7 @@ export const bookingsTable = pgTable("bookings", {
   photoUrl: text("photo_url"),
   status: text("status").notNull().default("pending"),
   adminNotes: text("admin_notes"),
+  referralSource: text("referral_source"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

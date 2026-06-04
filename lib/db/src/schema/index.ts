@@ -8,3 +8,4 @@ export * from "./messages";
 export * from "./settings";
 export * from "./media";
 export * from "./customers";
+export * from "./blog_posts";
