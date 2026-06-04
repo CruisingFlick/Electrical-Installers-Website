@@ -16,7 +16,11 @@ const app: Express = express();
 
 app.set("trust proxy", 1);
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 
 app.use(
   pinoHttp({
@@ -47,6 +51,7 @@ const allowedOrigins: (string | RegExp)[] =
           .filter(Boolean)
           .map((d) => `https://${d}`),
         "https://electricalinstallers.com.au",
+        "https://www.electricalinstallers.com.au",
       ]
     : [/.*/];
 
