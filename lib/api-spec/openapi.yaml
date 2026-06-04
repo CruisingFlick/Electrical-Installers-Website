@@ -1400,8 +1400,10 @@ components:
           type: string
           nullable: true
         tags:
-          type: string
+          type: array
           nullable: true
+          items:
+            type: string
         createdAt:
           type: string
           format: date-time
@@ -1435,8 +1437,10 @@ components:
           type: string
           nullable: true
         tags:
-          type: string
+          type: array
           nullable: true
+          items:
+            type: string
 
     GetCustomerParams:
       type: object

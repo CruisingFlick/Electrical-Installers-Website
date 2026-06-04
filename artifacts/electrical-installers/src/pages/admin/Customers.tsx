@@ -15,7 +15,7 @@ type Customer = {
   lastJobDate?: string | null;
   lastServiceType?: string | null;
   marketingNotes?: string | null;
-  tags?: string | null;
+  tags?: string[] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -55,7 +55,7 @@ function CustomerDetailPanel({
   const updateCustomer = useUpdateCustomer();
 
   const [notes, setNotes] = useState(customer.marketingNotes ?? "");
-  const [tagsValue, setTagsValue] = useState(customer.tags ?? "");
+  const [tagsValue, setTagsValue] = useState((customer.tags ?? []).join(", "));
   const [savedNotes, setSavedNotes] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -70,7 +70,7 @@ function CustomerDetailPanel({
         id: customer.id,
         data: {
           marketingNotes: notes || null,
-          tags: tagsValue || null,
+          tags: tagsValue ? tagsValue.split(",").map((t) => t.trim()).filter(Boolean) : null,
         },
       },
       {
@@ -275,7 +275,7 @@ export default function AdminCustomers() {
         c.email.toLowerCase().includes(q) ||
         (c.suburb ?? "").toLowerCase().includes(q) ||
         (c.lastServiceType ?? "").toLowerCase().includes(q) ||
-        (c.tags ?? "").toLowerCase().includes(q) ||
+        (c.tags ?? []).some((t) => t.toLowerCase().includes(q)) ||
         (c.phone ?? "").includes(q)
       );
     });
@@ -389,10 +389,10 @@ export default function AdminCustomers() {
                           {c.jobCount}× returning
                         </span>
                       )}
-                      {c.tags && (
+                      {c.tags && c.tags.length > 0 && (
                         <div className="flex gap-1 flex-wrap">
-                          {c.tags.split(",").slice(0, 3).map((tag) => (
-                            <span key={tag} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">{tag.trim()}</span>
+                          {c.tags.slice(0, 3).map((tag) => (
+                            <span key={tag} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">{tag}</span>
                           ))}
                         </div>
                       )}

@@ -391,7 +391,7 @@ export interface Customer {
   lastJobDate?: string | null;
   lastServiceType?: string | null;
   marketingNotes?: string | null;
-  tags?: string | null;
+  tags?: string[] | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -402,7 +402,7 @@ export type CustomerWithBookings = Customer & {
 
 export interface UpdateCustomerBody {
   marketingNotes?: string | null;
-  tags?: string | null;
+  tags?: string[] | null;
 }
 
 export interface GetCustomerParams {

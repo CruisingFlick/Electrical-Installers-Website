@@ -275,7 +275,7 @@ export const ListCustomersResponseItem = zod.object({
   "lastJobDate": zod.string().nullish(),
   "lastServiceType": zod.string().nullish(),
   "marketingNotes": zod.string().nullish(),
-  "tags": zod.string().nullish(),
+  "tags": zod.array(zod.string()).nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -299,7 +299,7 @@ export const GetCustomerResponse = zod.object({
   "lastJobDate": zod.string().nullish(),
   "lastServiceType": zod.string().nullish(),
   "marketingNotes": zod.string().nullish(),
-  "tags": zod.string().nullish(),
+  "tags": zod.array(zod.string()).nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 }).and(zod.object({
@@ -330,7 +330,7 @@ export const UpdateCustomerParams = zod.object({
 
 export const UpdateCustomerBody = zod.object({
   "marketingNotes": zod.string().nullish(),
-  "tags": zod.string().nullish()
+  "tags": zod.array(zod.string()).nullish()
 })
 
 export const UpdateCustomerResponse = zod.object({
@@ -343,7 +343,7 @@ export const UpdateCustomerResponse = zod.object({
   "lastJobDate": zod.string().nullish(),
   "lastServiceType": zod.string().nullish(),
   "marketingNotes": zod.string().nullish(),
-  "tags": zod.string().nullish(),
+  "tags": zod.array(zod.string()).nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })

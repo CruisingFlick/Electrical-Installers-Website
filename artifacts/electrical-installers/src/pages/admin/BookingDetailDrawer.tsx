@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock, StickyNote, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock, StickyNote, Save, AlertCircle } from "lucide-react";
 import { useConfirmBooking, useUpdateBookingStatus, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -45,6 +45,13 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
   const [notesValue, setNotesValue] = useState(booking?.adminNotes ?? "");
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
+  const [notesError, setNotesError] = useState(false);
+
+  useEffect(() => {
+    setNotesValue(booking?.adminNotes ?? "");
+    setNotesSaved(false);
+    setNotesError(false);
+  }, [booking?.id]);
 
   if (!booking) return null;
 
@@ -82,6 +89,7 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
   async function saveNotes() {
     if (!booking) return;
     setNotesSaving(true);
+    setNotesError(false);
     try {
       const resp = await fetch(`/api/bookings/${booking.id}/notes`, {
         method: "PATCH",
@@ -97,7 +105,11 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
         onUpdate?.({ ...booking, adminNotes: updated.adminNotes });
         setNotesSaved(true);
         setTimeout(() => setNotesSaved(false), 2500);
+      } else {
+        setNotesError(true);
       }
+    } catch {
+      setNotesError(true);
     } finally {
       setNotesSaving(false);
     }
@@ -233,10 +245,18 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
               className={`mt-2 flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
                 notesSaved
                   ? "bg-green-100 text-green-700"
+                  : notesError
+                  ? "bg-red-100 text-red-700"
                   : "bg-[hsl(214,60%,14%)] text-white hover:bg-[hsl(214,60%,20%)]"
               } disabled:opacity-50`}
             >
-              {notesSaved ? <><CheckCircle size={13} /> Saved</> : <><Save size={13} /> {notesSaving ? "Saving…" : "Save Notes"}</>}
+              {notesSaved ? (
+                <><CheckCircle size={13} /> Saved</>
+              ) : notesError ? (
+                <><AlertCircle size={13} /> Failed — try again</>
+              ) : (
+                <><Save size={13} /> {notesSaving ? "Saving…" : "Save Notes"}</>
+              )}
             </button>
           </div>
 
