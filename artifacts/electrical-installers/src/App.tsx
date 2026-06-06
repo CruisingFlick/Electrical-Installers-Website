@@ -59,6 +59,11 @@ function AdminGuard({ component: Component }: { component: React.ComponentType }
       .catch(() => setStatus("denied"));
   }, []);
 
+  useEffect(() => {
+    document.body.classList.add("admin-view");
+    return () => document.body.classList.remove("admin-view");
+  }, []);
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[hsl(210,20%,96%)]">

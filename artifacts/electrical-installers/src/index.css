@@ -154,3 +154,11 @@
   height: 100%;
   z-index: 0;
 }
+
+body.admin-view replit-badge,
+body.admin-view #replit-badge,
+body.admin-view [id*="replit"],
+body.admin-view [class*="replit-pill"],
+body.admin-view iframe[src*="replit-cdn"] {
+  display: none !important;
+}
