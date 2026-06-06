@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock, StickyNote, Save, AlertCircle } from "lucide-react";
+import { X, Phone, Mail, MapPin, Calendar, Briefcase, MessageSquare, ImageIcon, CheckCircle, Clock, StickyNote, Save, AlertCircle, CalendarPlus, Download } from "lucide-react";
 import { useConfirmBooking, useUpdateBookingStatus, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { buildIcs, googleCalendarUrl, downloadIcs, melbourneWallClockToUtc, type CalEvent } from "@/lib/calendar";
 
 type Booking = {
   id: number;
@@ -62,6 +63,30 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
     if (!pickedTime) return datePart;
     const timePart = d.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit", hour12: true });
     return `${datePart} at ${timePart}`;
+  }
+
+  function buildBookingEvent(): CalEvent | null {
+    if (!booking || !pickedDate) return null;
+    const dm = pickedDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!dm) return null;
+    const [th, tm] = (pickedTime || "09:00").split(":");
+    const start = melbourneWallClockToUtc(
+      Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]),
+      Number(th ?? "9"), Number(tm ?? "0"),
+    );
+    const descParts = [
+      `${booking.serviceType} — ${booking.jobType}`,
+      booking.customerPhone ? `Phone: ${booking.customerPhone}` : "",
+      booking.customerEmail ? `Email: ${booking.customerEmail}` : "",
+      booking.message ? `Notes: ${booking.message}` : "",
+    ].filter(Boolean);
+    return {
+      title: `${booking.customerName} — ${booking.serviceType}`,
+      start,
+      durationMins: 60,
+      location: booking.suburb || undefined,
+      description: descParts.join("\n"),
+    };
   }
 
   function handleStatusChange(status: string) {
@@ -309,6 +334,34 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
                       <Clock size={11} className="inline mr-1" />
                       Customer requested: <strong>{booking.preferredDate}</strong>
                     </p>
+                    {(() => {
+                      const ev = buildBookingEvent();
+                      if (!ev) return null;
+                      return (
+                      <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                        <a
+                          href={googleCalendarUrl(ev)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 flex-1 bg-white border border-gray-200 text-[hsl(214,60%,14%)] font-semibold text-xs px-3 py-2 rounded-lg hover:border-[hsl(25,95%,53%)] transition-colors"
+                        >
+                          <CalendarPlus size={14} className="text-[hsl(25,95%,53%)]" />
+                          Add to Google Calendar
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const ev = buildBookingEvent();
+                            if (ev) downloadIcs(`job-${booking.id}.ics`, buildIcs([ev]));
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 flex-1 bg-white border border-gray-200 text-[hsl(214,60%,14%)] font-semibold text-xs px-3 py-2 rounded-lg hover:border-[hsl(25,95%,53%)] transition-colors"
+                        >
+                          <Download size={14} className="text-[hsl(25,95%,53%)]" />
+                          Apple / Outlook (.ics)
+                        </button>
+                      </div>
+                      );
+                    })()}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">

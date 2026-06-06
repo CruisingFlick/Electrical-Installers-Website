@@ -1,7 +1,25 @@
 import { Phone, Mail, MapPin, Shield } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useRef } from "react";
 
 export default function Footer() {
+  const [, navigate] = useLocation();
+  const tapCount = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleSecretTap() {
+    tapCount.current += 1;
+    if (tapTimer.current) clearTimeout(tapTimer.current);
+    if (tapCount.current >= 5) {
+      tapCount.current = 0;
+      navigate("/admin");
+      return;
+    }
+    tapTimer.current = setTimeout(() => {
+      tapCount.current = 0;
+    }, 1500);
+  }
+
   return (
     <footer className="bg-[hsl(214,60%,10%)] text-gray-300 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -58,7 +76,7 @@ export default function Footer() {
           <div className="text-right">
             <p>Compliant with AS/NZS 3000:2018 (Wiring Rules)</p>
             <p>ESV Licensed Electrical Contractor</p>
-            <p className="mt-2">&copy; {new Date().getFullYear()} Electrical Installers Pty Ltd</p>
+            <p className="mt-2 select-none" onClick={handleSecretTap}>&copy; {new Date().getFullYear()} Electrical Installers Pty Ltd</p>
             <Link href="/privacy-policy" className="mt-1 inline-block hover:text-gray-300 transition-colors underline underline-offset-2">Privacy Policy</Link>
           </div>
         </div>

@@ -32,6 +32,96 @@ function csvCell(value: string | number | null | undefined): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
+const BUSINESS_TIMEZONE = "Australia/Melbourne";
+
+// Offset (ms) between the given timezone's wall clock and UTC at a point in time.
+function tzOffsetMs(date: Date, timeZone: string): number {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const map: Record<string, string> = {};
+  for (const p of dtf.formatToParts(date)) map[p.type] = p.value;
+  const asUTC = Date.UTC(
+    Number(map["year"]),
+    Number(map["month"]) - 1,
+    Number(map["day"]),
+    Number(map["hour"]),
+    Number(map["minute"]),
+    Number(map["second"]),
+  );
+  return asUTC - date.getTime();
+}
+
+// Interpret year/month/day/hour/minute as wall-clock time in `timeZone`, return the UTC instant.
+function wallClockToUtc(y: number, mo: number, d: number, h: number, mi: number, timeZone: string): Date {
+  const guess = Date.UTC(y, mo, d, h, mi);
+  const offset = tzOffsetMs(new Date(guess), timeZone);
+  return new Date(guess - offset);
+}
+
+function parseConfirmedDate(text: string): Date | null {
+  if (!text) return null;
+  const dm = text.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (!dm) return null;
+  // Extract calendar date components (read back in the same local tz the string was built in, so safe).
+  const cal = new Date(`${dm[2]} ${dm[1]}, ${dm[3]}`);
+  if (isNaN(cal.getTime())) return null;
+  let h = 9;
+  let min = 0;
+  const tm = text.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (tm) {
+    h = parseInt(tm[1] ?? "9", 10);
+    min = parseInt(tm[2] ?? "0", 10);
+    const ap = (tm[3] ?? "").toUpperCase();
+    if (ap === "PM" && h !== 12) h += 12;
+    if (ap === "AM" && h === 12) h = 0;
+  }
+  return wallClockToUtc(cal.getFullYear(), cal.getMonth(), cal.getDate(), h, min, BUSINESS_TIMEZONE);
+}
+
+function icsDate(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return (
+    d.getUTCFullYear() +
+    p(d.getUTCMonth() + 1) +
+    p(d.getUTCDate()) +
+    "T" +
+    p(d.getUTCHours()) +
+    p(d.getUTCMinutes()) +
+    p(d.getUTCSeconds()) +
+    "Z"
+  );
+}
+
+function buildBookingIcs(start: Date, summary: string, description: string, location: string): string {
+  const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  const end = new Date(start.getTime() + 60 * 60000);
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Electrical Installers//Bookings//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${start.getTime()}@electricalinstallers.com.au`,
+    `DTSTAMP:${icsDate(new Date())}`,
+    `DTSTART:${icsDate(start)}`,
+    `DTEND:${icsDate(end)}`,
+    `SUMMARY:${esc(summary)}`,
+    `DESCRIPTION:${esc(description)}`,
+    `LOCATION:${esc(location)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
 function createTransporter() {
   return nodemailer.createTransport({
     host: (process.env["SMTP_HOST"] || "smtp.gmail.com").trim(),
@@ -280,10 +370,27 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
         ? `\n\nMessage from us:\n${adminNote}`
         : "";
 
+      const eventStart = parseConfirmedDate(confirmedDate);
+      const icsAttachment = eventStart
+        ? [
+            {
+              filename: "appointment.ics",
+              content: buildBookingIcs(
+                eventStart,
+                `Electrical Installers — ${row.jobType}`,
+                `Your confirmed appointment with Electrical Installers.${adminNote ? `\n\n${adminNote}` : ""}\n\nPh ${BUSINESS_PHONE}.`,
+                row.suburb,
+              ),
+              contentType: "text/calendar; charset=utf-8; method=PUBLISH",
+            },
+          ]
+        : undefined;
+
       await transporter.sendMail({
         from,
         to: row.customerEmail,
         subject: "Your booking is confirmed — Electrical Installers",
+        ...(icsAttachment ? { attachments: icsAttachment, icalEvent: { method: "PUBLISH", content: icsAttachment[0]!.content } } : {}),
         text: [
           `Hi ${row.customerName},`,
           "",

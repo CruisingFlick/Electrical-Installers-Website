@@ -1,3 +1,4 @@
 - [Orval query hook options](orval-query-options.md) — generated hooks require `queryKey` alongside `enabled`; omitting it causes TS2741.
 - [Navbar path](navbar-path.md) — Navbar is at `src/components/Navbar.tsx`, not `src/pages/`.
 - [Thread access-token](thread-access-token.md) — public message threads guarded by per-thread UUID `?token=`; token returned ONLY on create (separate `CreatedThread` schema), stripped from all reads.
+- [Calendar event timezone](calendar-timezone.md) — all ICS/Google Calendar events must use Australia/Melbourne wall-clock → UTC (server host is UTC), via wallClockToUtc helper.

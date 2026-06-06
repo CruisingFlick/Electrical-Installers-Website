@@ -2,8 +2,9 @@ import { useCreateBooking } from "@workspace/api-client-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star, ImagePlus, X } from "lucide-react";
+import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star, ImagePlus, X, CalendarPlus, Download } from "lucide-react";
 import { useState, useRef, useCallback, useMemo } from "react";
+import { buildIcs, googleCalendarUrl, downloadIcs, parseSlotDate, type CalEvent } from "@/lib/calendar";
 
 function getTimeSlotsForDate(dateStr: string): string[] {
   if (!dateStr) return [];
@@ -147,6 +148,22 @@ export default function BookPage() {
     }
   }
 
+  const calendarEvent: CalEvent | null = useMemo(() => {
+    if (!submitted) return null;
+    const start = parseSlotDate(selectedDateRaw, selectedTime);
+    if (!start) return null;
+    const serviceLabel = SERVICE_TYPES.find((s) => s.value === form.getValues("serviceType"))?.label ?? "Appointment";
+    const suburb = form.getValues("suburb");
+    const jobType = form.getValues("jobType");
+    return {
+      title: `Electrical Installers — ${serviceLabel}`,
+      start,
+      durationMins: 60,
+      location: suburb || undefined,
+      description: `Your requested ${serviceLabel.toLowerCase()} booking with Electrical Installers${jobType ? ` (${jobType})` : ""}. We'll call to confirm. Ph 0419 868 703.`,
+    };
+  }, [submitted, selectedDateRaw, selectedTime, form]);
+
   const inputClass =
     "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)] focus:border-transparent";
 
@@ -194,8 +211,35 @@ export default function BookPage() {
                 <p className="text-gray-600 mt-2 max-w-sm mx-auto">
                   Thanks for reaching out. We'll call you within one business day to confirm your appointment.
                 </p>
+                {calendarEvent && (
+                  <div className="mt-6 max-w-sm mx-auto">
+                    <p className="text-xs text-gray-500 mb-2">Save your requested time to your calendar:</p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <a
+                        href={googleCalendarUrl(calendarEvent)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-[hsl(214,60%,14%)] font-semibold text-sm px-4 py-2.5 rounded-xl hover:border-[hsl(25,95%,53%)] transition-colors"
+                        data-testid="button-add-google-calendar"
+                      >
+                        <CalendarPlus size={16} className="text-[hsl(25,95%,53%)]" />
+                        Google Calendar
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => downloadIcs("electrical-installers-booking.ics", buildIcs([calendarEvent]))}
+                        className="inline-flex items-center justify-center gap-2 bg-white border border-gray-200 text-[hsl(214,60%,14%)] font-semibold text-sm px-4 py-2.5 rounded-xl hover:border-[hsl(25,95%,53%)] transition-colors"
+                        data-testid="button-download-ics"
+                      >
+                        <Download size={16} className="text-[hsl(25,95%,53%)]" />
+                        Apple / Outlook
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-2">This is your requested time — we'll call to confirm the final appointment.</p>
+                  </div>
+                )}
                 <button
-                  onClick={() => { setSubmitted(false); form.reset(); setPhotoPreview(null); }}
+                  onClick={() => { setSubmitted(false); form.reset(); setPhotoPreview(null); setSelectedDateRaw(""); setSelectedTime(""); }}
                   className="mt-6 text-[hsl(25,95%,53%)] underline text-sm"
                   data-testid="button-book-again"
                 >

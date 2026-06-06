@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Briefcase, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Briefcase, Calendar, Download } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useListBookings } from "@workspace/api-client-react";
 import BookingDetailDrawer from "./BookingDetailDrawer";
+import { buildIcs, downloadIcs, parsePreferredDate, type CalEvent } from "@/lib/calendar";
 
 type Booking = {
   id: number;
@@ -124,6 +125,27 @@ export default function AdminCalendarView() {
     setViewDate(new Date(year, month + 1, 1));
   }
 
+  function exportAll() {
+    const events: CalEvent[] = [];
+    for (const b of bookings as Booking[]) {
+      if (b.status === "cancelled") continue;
+      const start = parsePreferredDate(b.preferredDate);
+      if (!start) continue;
+      events.push({
+        title: `${b.customerName} — ${b.serviceType}`,
+        start,
+        durationMins: 60,
+        location: b.suburb || undefined,
+        description: [
+          `${b.serviceType} — ${b.jobType}`,
+          b.customerPhone ? `Phone: ${b.customerPhone}` : "",
+          b.customerEmail ? `Email: ${b.customerEmail}` : "",
+        ].filter(Boolean).join("\n"),
+      });
+    }
+    if (events.length > 0) downloadIcs("electrical-installers-jobs.ics", buildIcs(events));
+  }
+
   const monthName = viewDate.toLocaleDateString("en-AU", { month: "long", year: "numeric" });
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const todayDay = today.getFullYear() === year && today.getMonth() === month ? today.getDate() : null;
@@ -140,6 +162,14 @@ export default function AdminCalendarView() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Booking Calendar</h1>
           <div className="flex items-center gap-3">
+            <button
+              onClick={exportAll}
+              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg border border-gray-200 text-[hsl(214,60%,14%)] hover:border-[hsl(25,95%,53%)] transition-colors"
+              title="Download all jobs as a calendar file you can import into Google, Apple or Outlook calendar"
+            >
+              <Download size={16} className="text-[hsl(25,95%,53%)]" />
+              Export to calendar
+            </button>
             <button
               onClick={prevMonth}
               className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
