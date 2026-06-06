@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Briefcase, Calendar, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, Mail, MapPin, Briefcase, Calendar, Download, Rss, X, Copy, Check } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useListBookings } from "@workspace/api-client-react";
 import BookingDetailDrawer from "./BookingDetailDrawer";
@@ -97,6 +97,34 @@ export default function AdminCalendarView() {
   const [hoveredBookingId, setHoveredBookingId] = useState<number | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [feedUrls, setFeedUrls] = useState<{ httpsUrl: string; webcalUrl: string } | null>(null);
+  const [feedError, setFeedError] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function openSubscribe() {
+    setSubscribeOpen(true);
+    setFeedError(false);
+    if (feedUrls) return;
+    try {
+      const res = await fetch("/api/admin/calendar/feed-url", { credentials: "same-origin" });
+      if (!res.ok) throw new Error("failed");
+      setFeedUrls(await res.json());
+    } catch {
+      setFeedError(true);
+    }
+  }
+
+  async function copyFeedUrl() {
+    if (!feedUrls) return;
+    try {
+      await navigator.clipboard.writeText(feedUrls.httpsUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -163,12 +191,20 @@ export default function AdminCalendarView() {
           <h1 className="text-2xl font-bold text-[hsl(214,60%,14%)]">Booking Calendar</h1>
           <div className="flex items-center gap-3">
             <button
+              onClick={openSubscribe}
+              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-[hsl(25,95%,53%)] text-white hover:bg-[hsl(25,95%,47%)] transition-colors"
+              title="Subscribe once so new jobs appear in your calendar automatically"
+            >
+              <Rss size={16} />
+              Auto-sync calendar
+            </button>
+            <button
               onClick={exportAll}
               className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg border border-gray-200 text-[hsl(214,60%,14%)] hover:border-[hsl(25,95%,53%)] transition-colors"
               title="Download all jobs as a calendar file you can import into Google, Apple or Outlook calendar"
             >
               <Download size={16} className="text-[hsl(25,95%,53%)]" />
-              Export to calendar
+              Export (one-off)
             </button>
             <button
               onClick={prevMonth}
@@ -286,6 +322,114 @@ export default function AdminCalendarView() {
           onLightbox={(url) => setLightboxUrl(url)}
           onUpdate={(updated) => setSelectedBooking(updated)}
         />
+
+        {/* Auto-sync subscribe modal */}
+        {subscribeOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setSubscribeOpen(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-[hsl(214,60%,14%)] flex items-center gap-2">
+                  <Rss size={18} className="text-[hsl(25,95%,53%)]" />
+                  Auto-sync your calendar
+                </h2>
+                <button
+                  onClick={() => setSubscribeOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="px-6 py-5 space-y-4">
+                <p className="text-sm text-gray-600">
+                  Subscribe to this private link <strong>once</strong> in your calendar app. New and
+                  updated jobs will then appear automatically — no need to export again.
+                </p>
+
+                {feedError && (
+                  <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    Couldn't load your subscribe link. Please refresh and try again.
+                  </div>
+                )}
+
+                {!feedUrls && !feedError && (
+                  <div className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                )}
+
+                {feedUrls && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 mb-1">
+                        Your private calendar link
+                      </label>
+                      <div className="flex items-stretch gap-2">
+                        <input
+                          readOnly
+                          value={feedUrls.httpsUrl}
+                          onFocus={(e) => e.currentTarget.select()}
+                          className="flex-1 min-w-0 text-xs font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-gray-700"
+                        />
+                        <button
+                          onClick={copyFeedUrl}
+                          className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-[hsl(214,60%,14%)] text-white hover:bg-[hsl(214,60%,20%)] transition-colors"
+                        >
+                          {copied ? <Check size={15} /> : <Copy size={15} />}
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(feedUrls.httpsUrl)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg border border-gray-200 text-[hsl(214,60%,14%)] hover:border-[hsl(25,95%,53%)] transition-colors"
+                      >
+                        <Calendar size={15} className="text-[hsl(25,95%,53%)]" />
+                        Add to Google Calendar
+                      </a>
+                      <a
+                        href={feedUrls.webcalUrl}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg border border-gray-200 text-[hsl(214,60%,14%)] hover:border-[hsl(25,95%,53%)] transition-colors"
+                      >
+                        <Calendar size={15} className="text-[hsl(25,95%,53%)]" />
+                        Add to Apple / Outlook
+                      </a>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-900 space-y-2">
+                      <p className="font-semibold">How to add it</p>
+                      <p>
+                        <strong>iPhone / Mac (Apple Calendar):</strong> tap “Add to Apple / Outlook”
+                        above, then confirm Subscribe.
+                      </p>
+                      <p>
+                        <strong>Google Calendar:</strong> tap “Add to Google Calendar”, or in
+                        Google Calendar go to <em>Other calendars → From URL</em> and paste the link.
+                      </p>
+                      <p>
+                        <strong>Outlook:</strong> Add calendar → Subscribe from web → paste the link.
+                      </p>
+                      <p className="text-blue-700">
+                        Calendars refresh on their own schedule — usually within a few hours (Google
+                        can take up to a day). Keep this link private; anyone with it can view your
+                        job schedule.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

@@ -2,3 +2,4 @@
 - [Navbar path](navbar-path.md) — Navbar is at `src/components/Navbar.tsx`, not `src/pages/`.
 - [Thread access-token](thread-access-token.md) — public message threads guarded by per-thread UUID `?token=`; token returned ONLY on create (separate `CreatedThread` schema), stripped from all reads.
 - [Calendar event timezone](calendar-timezone.md) — all ICS/Google Calendar events must use Australia/Melbourne wall-clock → UTC (server host is UTC), via wallClockToUtc helper.
+- [Calendar feed subscribe token](calendar-feed-token.md) — auto-sync ICS feed token is persisted in settings table (not derived from SESSION_SECRET) so "subscribe once" URLs survive secret rotation.

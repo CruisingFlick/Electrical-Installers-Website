@@ -14,6 +14,7 @@ import customersRouter from "./customers";
 import { publicBlogRouter, adminBlogRouter } from "./blog";
 import settingsRouter from "./settings";
 import { threadsPublicRouter, threadsAdminRouter } from "./threads";
+import { calendarPublicRouter, calendarAdminRouter } from "./calendar";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,7 @@ router.use("/jobs", jobsRouter);
 router.use("/openai", openaiRouter);
 router.use("/blog", publicBlogRouter);
 router.use("/admin/blog", adminBlogRouter);
+router.use("/calendar", calendarPublicRouter);
+router.use("/admin/calendar", calendarAdminRouter);
 
 export default router;
