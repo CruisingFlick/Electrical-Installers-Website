@@ -1,2 +1,3 @@
 - [Orval query hook options](orval-query-options.md) — generated hooks require `queryKey` alongside `enabled`; omitting it causes TS2741.
 - [Navbar path](navbar-path.md) — Navbar is at `src/components/Navbar.tsx`, not `src/pages/`.
+- [Thread access-token](thread-access-token.md) — public message threads guarded by per-thread UUID `?token=`; token returned ONLY on create (separate `CreatedThread` schema), stripped from all reads.

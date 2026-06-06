@@ -13,6 +13,7 @@ import mediaRouter from "./media";
 import customersRouter from "./customers";
 import { publicBlogRouter, adminBlogRouter } from "./blog";
 import settingsRouter from "./settings";
+import { threadsPublicRouter, threadsAdminRouter } from "./threads";
 
 const router: IRouter = Router();
 
@@ -26,6 +27,8 @@ router.use("/bookings", bookingsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/reviews", reviewsRouter);
 router.use("/quotes", quotesRouter);
+router.use("/threads", threadsPublicRouter);
+router.use("/admin/threads", threadsAdminRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/jobs", jobsRouter);
 router.use("/openai", openaiRouter);

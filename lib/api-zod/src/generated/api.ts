@@ -734,6 +734,160 @@ export const UpdateQuoteStatusResponse = zod.object({
 
 
 /**
+ * @summary Start a new message thread
+ */
+export const CreateThreadBody = zod.object({
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().optional(),
+  "referenceType": zod.string().optional(),
+  "referenceId": zod.string().optional(),
+  "message": zod.string(),
+  "photoUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary Get a thread with its messages
+ */
+export const GetThreadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetThreadQueryParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetThreadResponse = zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().nullish(),
+  "referenceType": zod.string().nullish(),
+  "referenceId": zod.string().nullish(),
+  "status": zod.string(),
+  "unreadForAdmin": zod.number(),
+  "unreadForCustomer": zod.number(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "messages": zod.array(zod.object({
+  "id": zod.number(),
+  "threadId": zod.number(),
+  "sender": zod.string(),
+  "body": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Post a customer message to a thread
+ */
+export const CreateThreadMessageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const CreateThreadMessageQueryParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const CreateThreadMessageBody = zod.object({
+  "body": zod.string(),
+  "photoUrl": zod.string().optional()
+})
+
+
+/**
+ * @summary List all message threads (admin)
+ */
+export const ListThreadsResponseItem = zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().nullish(),
+  "referenceType": zod.string().nullish(),
+  "referenceId": zod.string().nullish(),
+  "status": zod.string(),
+  "unreadForAdmin": zod.number(),
+  "unreadForCustomer": zod.number(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListThreadsResponse = zod.array(ListThreadsResponseItem)
+
+
+/**
+ * @summary Get a thread with its messages (admin)
+ */
+export const GetAdminThreadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetAdminThreadResponse = zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().nullish(),
+  "referenceType": zod.string().nullish(),
+  "referenceId": zod.string().nullish(),
+  "status": zod.string(),
+  "unreadForAdmin": zod.number(),
+  "unreadForCustomer": zod.number(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "messages": zod.array(zod.object({
+  "id": zod.number(),
+  "threadId": zod.number(),
+  "sender": zod.string(),
+  "body": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Update thread status or mark read (admin)
+ */
+export const UpdateThreadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateThreadBody = zod.object({
+  "status": zod.enum(['open', 'closed']).optional(),
+  "markReadForAdmin": zod.boolean().optional()
+})
+
+export const UpdateThreadResponse = zod.object({
+  "id": zod.number(),
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().nullish(),
+  "referenceType": zod.string().nullish(),
+  "referenceId": zod.string().nullish(),
+  "status": zod.string(),
+  "unreadForAdmin": zod.number(),
+  "unreadForCustomer": zod.number(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Post an admin reply to a thread
+ */
+export const ReplyToThreadParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReplyToThreadBody = zod.object({
+  "body": zod.string(),
+  "photoUrl": zod.string().optional()
+})
+
+
+/**
  * @summary Get dashboard summary stats
  */
 export const GetAnalyticsSummaryResponse = zod.object({

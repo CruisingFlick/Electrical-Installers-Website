@@ -18,6 +18,7 @@ import PortfolioPage from "@/pages/Portfolio";
 import ReviewsPage from "@/pages/Reviews";
 import BookPage from "@/pages/Book";
 import QuotePage from "@/pages/Quote";
+import MessagesPage from "@/pages/Messages";
 import NotFound from "@/pages/not-found";
 
 import AdminLogin from "@/pages/admin/Login";
@@ -33,6 +34,7 @@ import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
 import AdminCustomers from "@/pages/admin/Customers";
 import AdminBlog from "@/pages/admin/Blog";
 import AdminSiteSettings from "@/pages/admin/SiteSettings";
+import AdminMessages from "@/pages/admin/Messages";
 import ServiceAreaPage from "@/pages/ServiceArea";
 import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 import TrackBookingPage from "@/pages/TrackBooking";
@@ -109,6 +111,7 @@ function Router() {
       <Route path="/reviews" component={() => <PublicLayout><ReviewsPage /></PublicLayout>} />
       <Route path="/book" component={() => <PublicLayout><BookPage /></PublicLayout>} />
       <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
+      <Route path="/messages" component={() => <PublicLayout><MessagesPage /></PublicLayout>} />
       <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
       <Route path="/privacy-policy" component={() => <PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
       <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
@@ -129,6 +132,7 @@ function Router() {
       <Route path="/admin/customers" component={() => <AdminGuard component={AdminCustomers} />} />
       <Route path="/admin/blog" component={() => <AdminGuard component={AdminBlog} />} />
       <Route path="/admin/site-settings" component={() => <AdminGuard component={AdminSiteSettings} />} />
+      <Route path="/admin/messages" component={() => <AdminGuard component={AdminMessages} />} />
 
       <Route component={NotFound} />
     </Switch>

@@ -226,6 +226,93 @@ export interface UpdateQuoteStatusBody {
   status: UpdateQuoteStatusBodyStatus;
 }
 
+export interface Thread {
+  id: number;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  status: string;
+  unreadForAdmin: number;
+  unreadForCustomer: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ThreadMessage {
+  id: number;
+  threadId: number;
+  sender: string;
+  body: string;
+  photoUrl?: string | null;
+  createdAt: string;
+}
+
+export interface ThreadWithMessages {
+  id: number;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  status: string;
+  unreadForAdmin: number;
+  unreadForCustomer: number;
+  createdAt: string;
+  updatedAt: string;
+  messages: ThreadMessage[];
+}
+
+export interface CreatedThread {
+  id: number;
+  accessToken: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  status: string;
+  unreadForAdmin: number;
+  unreadForCustomer: number;
+  createdAt: string;
+  updatedAt: string;
+  messages: ThreadMessage[];
+}
+
+export interface CreateThreadBody {
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  referenceType?: string;
+  referenceId?: string;
+  message: string;
+  photoUrl?: string;
+}
+
+export interface CreateThreadMessageBody {
+  body: string;
+  photoUrl?: string;
+}
+
+export interface ReplyToThreadBody {
+  body: string;
+  photoUrl?: string;
+}
+
+export type UpdateThreadBodyStatus = typeof UpdateThreadBodyStatus[keyof typeof UpdateThreadBodyStatus];
+
+
+export const UpdateThreadBodyStatus = {
+  open: 'open',
+  closed: 'closed',
+} as const;
+
+export interface UpdateThreadBody {
+  status?: UpdateThreadBodyStatus;
+  markReadForAdmin?: boolean;
+}
+
 export interface AnalyticsSummary {
   totalBookings: number;
   pendingBookings: number;
@@ -527,4 +614,12 @@ export const ListReviewsStatus = {
   approved: 'approved',
   rejected: 'rejected',
 } as const;
+
+export type GetThreadParams = {
+token: string;
+};
+
+export type CreateThreadMessageParams = {
+token: string;
+};
 

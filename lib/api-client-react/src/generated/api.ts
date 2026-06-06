@@ -33,8 +33,13 @@ import type {
   CreatePortfolioItemBody,
   CreateQuoteBody,
   CreateReviewBody,
+  CreateThreadBody,
+  CreateThreadMessageBody,
+  CreateThreadMessageParams,
+  CreatedThread,
   Customer,
   CustomerWithBookings,
+  GetThreadParams,
   HealthStatus,
   Job,
   ListBlogPostsParams,
@@ -50,9 +55,13 @@ import type {
   QuoteRequest,
   RegionCount,
   ReorderPortfolioItemsBody,
+  ReplyToThreadBody,
   Review,
   ServiceCount,
   SiteSettings,
+  Thread,
+  ThreadMessage,
+  ThreadWithMessages,
   TrackBookingParams,
   UpdateAiSettingsBody,
   UpdateBookingStatusBody,
@@ -61,7 +70,8 @@ import type {
   UpdateMediaItemBody,
   UpdatePortfolioItemBody,
   UpdateQuoteStatusBody,
-  UpdateReviewStatusBody
+  UpdateReviewStatusBody,
+  UpdateThreadBody
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -3030,6 +3040,541 @@ export const useUpdateQuoteStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateQuoteStatusMutationOptions(options));
+    }
+
+export const getCreateThreadUrl = () => {
+
+
+
+
+  return `/api/threads`
+}
+
+/**
+ * @summary Start a new message thread
+ */
+export const createThread = async (createThreadBody: CreateThreadBody, options?: RequestInit): Promise<CreatedThread> => {
+
+  return customFetch<CreatedThread>(getCreateThreadUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createThreadBody)
+  }
+);}
+
+
+
+
+export const getCreateThreadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createThread>>, TError,{data: BodyType<CreateThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createThread>>, TError,{data: BodyType<CreateThreadBody>}, TContext> => {
+
+const mutationKey = ['createThread'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createThread>>, {data: BodyType<CreateThreadBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createThread(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateThreadMutationResult = NonNullable<Awaited<ReturnType<typeof createThread>>>
+    export type CreateThreadMutationBody = BodyType<CreateThreadBody>
+    export type CreateThreadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Start a new message thread
+ */
+export const useCreateThread = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createThread>>, TError,{data: BodyType<CreateThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createThread>>,
+        TError,
+        {data: BodyType<CreateThreadBody>},
+        TContext
+      > => {
+      return useMutation(getCreateThreadMutationOptions(options));
+    }
+
+export const getGetThreadUrl = (id: number,
+    params: GetThreadParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/threads/${id}?${stringifiedParams}` : `/api/threads/${id}`
+}
+
+/**
+ * @summary Get a thread with its messages
+ */
+export const getThread = async (id: number,
+    params: GetThreadParams, options?: RequestInit): Promise<ThreadWithMessages> => {
+
+  return customFetch<ThreadWithMessages>(getGetThreadUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetThreadQueryKey = (id: number,
+    params?: GetThreadParams,) => {
+    return [
+    `/api/threads/${id}`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetThreadQueryOptions = <TData = Awaited<ReturnType<typeof getThread>>, TError = ErrorType<unknown>>(id: number,
+    params: GetThreadParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getThread>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetThreadQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getThread>>> = ({ signal }) => getThread(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getThread>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetThreadQueryResult = NonNullable<Awaited<ReturnType<typeof getThread>>>
+export type GetThreadQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a thread with its messages
+ */
+
+export function useGetThread<TData = Awaited<ReturnType<typeof getThread>>, TError = ErrorType<unknown>>(
+ id: number,
+    params: GetThreadParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getThread>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetThreadQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateThreadMessageUrl = (id: number,
+    params: CreateThreadMessageParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/threads/${id}/messages?${stringifiedParams}` : `/api/threads/${id}/messages`
+}
+
+/**
+ * @summary Post a customer message to a thread
+ */
+export const createThreadMessage = async (id: number,
+    createThreadMessageBody: CreateThreadMessageBody,
+    params: CreateThreadMessageParams, options?: RequestInit): Promise<ThreadMessage> => {
+
+  return customFetch<ThreadMessage>(getCreateThreadMessageUrl(id,params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createThreadMessageBody)
+  }
+);}
+
+
+
+
+export const getCreateThreadMessageMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createThreadMessage>>, TError,{id: number;data: BodyType<CreateThreadMessageBody>;params: CreateThreadMessageParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createThreadMessage>>, TError,{id: number;data: BodyType<CreateThreadMessageBody>;params: CreateThreadMessageParams}, TContext> => {
+
+const mutationKey = ['createThreadMessage'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createThreadMessage>>, {id: number;data: BodyType<CreateThreadMessageBody>;params: CreateThreadMessageParams}> = (props) => {
+          const {id,data,params} = props ?? {};
+
+          return  createThreadMessage(id,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateThreadMessageMutationResult = NonNullable<Awaited<ReturnType<typeof createThreadMessage>>>
+    export type CreateThreadMessageMutationBody = BodyType<CreateThreadMessageBody>
+    export type CreateThreadMessageMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Post a customer message to a thread
+ */
+export const useCreateThreadMessage = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createThreadMessage>>, TError,{id: number;data: BodyType<CreateThreadMessageBody>;params: CreateThreadMessageParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createThreadMessage>>,
+        TError,
+        {id: number;data: BodyType<CreateThreadMessageBody>;params: CreateThreadMessageParams},
+        TContext
+      > => {
+      return useMutation(getCreateThreadMessageMutationOptions(options));
+    }
+
+export const getListThreadsUrl = () => {
+
+
+
+
+  return `/api/admin/threads`
+}
+
+/**
+ * @summary List all message threads (admin)
+ */
+export const listThreads = async ( options?: RequestInit): Promise<Thread[]> => {
+
+  return customFetch<Thread[]>(getListThreadsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListThreadsQueryKey = () => {
+    return [
+    `/api/admin/threads`
+    ] as const;
+    }
+
+
+export const getListThreadsQueryOptions = <TData = Awaited<ReturnType<typeof listThreads>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListThreadsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listThreads>>> = ({ signal }) => listThreads({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListThreadsQueryResult = NonNullable<Awaited<ReturnType<typeof listThreads>>>
+export type ListThreadsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all message threads (admin)
+ */
+
+export function useListThreads<TData = Awaited<ReturnType<typeof listThreads>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listThreads>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListThreadsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetAdminThreadUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/threads/${id}`
+}
+
+/**
+ * @summary Get a thread with its messages (admin)
+ */
+export const getAdminThread = async (id: number, options?: RequestInit): Promise<ThreadWithMessages> => {
+
+  return customFetch<ThreadWithMessages>(getGetAdminThreadUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminThreadQueryKey = (id: number,) => {
+    return [
+    `/api/admin/threads/${id}`
+    ] as const;
+    }
+
+
+export const getGetAdminThreadQueryOptions = <TData = Awaited<ReturnType<typeof getAdminThread>>, TError = ErrorType<unknown>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminThread>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminThreadQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminThread>>> = ({ signal }) => getAdminThread(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminThread>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminThreadQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminThread>>>
+export type GetAdminThreadQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a thread with its messages (admin)
+ */
+
+export function useGetAdminThread<TData = Awaited<ReturnType<typeof getAdminThread>>, TError = ErrorType<unknown>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminThread>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminThreadQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateThreadUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/threads/${id}`
+}
+
+/**
+ * @summary Update thread status or mark read (admin)
+ */
+export const updateThread = async (id: number,
+    updateThreadBody: UpdateThreadBody, options?: RequestInit): Promise<Thread> => {
+
+  return customFetch<Thread>(getUpdateThreadUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateThreadBody)
+  }
+);}
+
+
+
+
+export const getUpdateThreadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateThread>>, TError,{id: number;data: BodyType<UpdateThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateThread>>, TError,{id: number;data: BodyType<UpdateThreadBody>}, TContext> => {
+
+const mutationKey = ['updateThread'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateThread>>, {id: number;data: BodyType<UpdateThreadBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateThread(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateThreadMutationResult = NonNullable<Awaited<ReturnType<typeof updateThread>>>
+    export type UpdateThreadMutationBody = BodyType<UpdateThreadBody>
+    export type UpdateThreadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Update thread status or mark read (admin)
+ */
+export const useUpdateThread = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateThread>>, TError,{id: number;data: BodyType<UpdateThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateThread>>,
+        TError,
+        {id: number;data: BodyType<UpdateThreadBody>},
+        TContext
+      > => {
+      return useMutation(getUpdateThreadMutationOptions(options));
+    }
+
+export const getReplyToThreadUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/threads/${id}/reply`
+}
+
+/**
+ * @summary Post an admin reply to a thread
+ */
+export const replyToThread = async (id: number,
+    replyToThreadBody: ReplyToThreadBody, options?: RequestInit): Promise<ThreadMessage> => {
+
+  return customFetch<ThreadMessage>(getReplyToThreadUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(replyToThreadBody)
+  }
+);}
+
+
+
+
+export const getReplyToThreadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replyToThread>>, TError,{id: number;data: BodyType<ReplyToThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof replyToThread>>, TError,{id: number;data: BodyType<ReplyToThreadBody>}, TContext> => {
+
+const mutationKey = ['replyToThread'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof replyToThread>>, {id: number;data: BodyType<ReplyToThreadBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  replyToThread(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReplyToThreadMutationResult = NonNullable<Awaited<ReturnType<typeof replyToThread>>>
+    export type ReplyToThreadMutationBody = BodyType<ReplyToThreadBody>
+    export type ReplyToThreadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Post an admin reply to a thread
+ */
+export const useReplyToThread = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof replyToThread>>, TError,{id: number;data: BodyType<ReplyToThreadBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof replyToThread>>,
+        TError,
+        {id: number;data: BodyType<ReplyToThreadBody>},
+        TContext
+      > => {
+      return useMutation(getReplyToThreadMutationOptions(options));
     }
 
 export const getGetAnalyticsSummaryUrl = () => {

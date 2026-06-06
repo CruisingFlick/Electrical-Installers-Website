@@ -22,6 +22,11 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 
 ## Features
 
+### Messaging (Customer ↔ Admin)
+- **Message Us** (`/messages`) — customers start a private thread with name+phone (email + booking/quote reference optional), send messages and attach photos. Conversation persists via `localStorage` thread id; polls for admin replies.
+- **Admin → Messages** (`/admin/messages`) — inbox of threads with unread badges; admin replies (with photo support), changes status (open/closed). Email notification sent to `BUSINESS_EMAIL` on each new customer message.
+- Tables: `threads` + `thread_messages` in `lib/db/src/schema/threads.ts` (separate from AI-chat `conversations`/`messages`). Photos stored as base64 data URLs.
+
 ### Public-facing Pages
 - **Home** (`/`) — hero section, service cards, portfolio highlights, customer reviews, CTA
 - **Services** (`/services`) — detailed service descriptions with images

@@ -5,6 +5,7 @@ export * from "./quotes";
 export * from "./jobs";
 export * from "./conversations";
 export * from "./messages";
+export * from "./threads";
 export * from "./settings";
 export * from "./media";
 export * from "./customers";

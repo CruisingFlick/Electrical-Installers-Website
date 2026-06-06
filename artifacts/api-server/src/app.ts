@@ -84,6 +84,12 @@ const formLimiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
 });
 
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { error: "Too many messages, please slow down." },
+});
+
 const aiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 20,
@@ -99,6 +105,7 @@ const loginLimiter = rateLimit({
 app.use("/api/bookings", formLimiter);
 app.use("/api/quotes", formLimiter);
 app.use("/api/reviews", formLimiter);
+app.use("/api/threads", messageLimiter);
 app.use("/api/openai", aiLimiter);
 app.use("/api/admin/login", loginLimiter);
 

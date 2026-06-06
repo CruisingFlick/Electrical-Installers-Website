@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/blog", label: "Tips & Guides" },
   { href: "/book", label: "Book Now" },
   { href: "/quote", label: "Get a Quote" },
+  { href: "/messages", label: "Message Us" },
 ];
 
 export default function Navbar() {

@@ -817,6 +817,161 @@ paths:
               schema:
                 $ref: "#/components/schemas/QuoteRequest"
 
+  /threads:
+    post:
+      operationId: createThread
+      tags: [threads]
+      summary: Start a new message thread
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateThreadBody"
+      responses:
+        "201":
+          description: Thread created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreatedThread"
+
+  /threads/{id}:
+    get:
+      operationId: getThread
+      tags: [threads]
+      summary: Get a thread with its messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Thread with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadWithMessages"
+
+  /threads/{id}/messages:
+    post:
+      operationId: createThreadMessage
+      tags: [threads]
+      summary: Post a customer message to a thread
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateThreadMessageBody"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadMessage"
+
+  /admin/threads:
+    get:
+      operationId: listThreads
+      tags: [threads]
+      summary: List all message threads (admin)
+      responses:
+        "200":
+          description: Threads
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Thread"
+
+  /admin/threads/{id}:
+    get:
+      operationId: getAdminThread
+      tags: [threads]
+      summary: Get a thread with its messages (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Thread with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadWithMessages"
+    patch:
+      operationId: updateThread
+      tags: [threads]
+      summary: Update thread status or mark read (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateThreadBody"
+      responses:
+        "200":
+          description: Updated thread
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thread"
+
+  /admin/threads/{id}/reply:
+    post:
+      operationId: replyToThread
+      tags: [threads]
+      summary: Post an admin reply to a thread
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyToThreadBody"
+      responses:
+        "201":
+          description: Reply created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreadMessage"
+
   /analytics/summary:
     get:
       operationId: getAnalyticsSummary
@@ -1284,6 +1439,207 @@ components:
           enum: [pending, reviewed, quoted, accepted, declined]
       required:
         - status
+
+    Thread:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: string
+          nullable: true
+        referenceType:
+          type: string
+          nullable: true
+        referenceId:
+          type: string
+          nullable: true
+        status:
+          type: string
+        unreadForAdmin:
+          type: integer
+        unreadForCustomer:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - customerName
+        - customerPhone
+        - status
+        - unreadForAdmin
+        - unreadForCustomer
+        - createdAt
+        - updatedAt
+
+    ThreadMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        threadId:
+          type: integer
+        sender:
+          type: string
+        body:
+          type: string
+        photoUrl:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - threadId
+        - sender
+        - body
+        - createdAt
+
+    ThreadWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: string
+          nullable: true
+        referenceType:
+          type: string
+          nullable: true
+        referenceId:
+          type: string
+          nullable: true
+        status:
+          type: string
+        unreadForAdmin:
+          type: integer
+        unreadForCustomer:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThreadMessage"
+      required:
+        - id
+        - customerName
+        - customerPhone
+        - status
+        - unreadForAdmin
+        - unreadForCustomer
+        - createdAt
+        - updatedAt
+        - messages
+
+    CreatedThread:
+      type: object
+      properties:
+        id:
+          type: integer
+        accessToken:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: string
+          nullable: true
+        referenceType:
+          type: string
+          nullable: true
+        referenceId:
+          type: string
+          nullable: true
+        status:
+          type: string
+        unreadForAdmin:
+          type: integer
+        unreadForCustomer:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThreadMessage"
+      required:
+        - id
+        - accessToken
+        - customerName
+        - customerPhone
+        - status
+        - unreadForAdmin
+        - unreadForCustomer
+        - createdAt
+        - updatedAt
+        - messages
+
+    CreateThreadBody:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: string
+        referenceType:
+          type: string
+        referenceId:
+          type: string
+        message:
+          type: string
+        photoUrl:
+          type: string
+      required:
+        - customerName
+        - customerPhone
+        - message
+
+    CreateThreadMessageBody:
+      type: object
+      properties:
+        body:
+          type: string
+        photoUrl:
+          type: string
+      required:
+        - body
+
+    ReplyToThreadBody:
+      type: object
+      properties:
+        body:
+          type: string
+        photoUrl:
+          type: string
+      required:
+        - body
+
+    UpdateThreadBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, closed]
+        markReadForAdmin:
+          type: boolean
 
     AnalyticsSummary:
       type: object
