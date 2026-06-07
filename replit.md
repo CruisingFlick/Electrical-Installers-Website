@@ -29,21 +29,38 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 
 ### Public-facing Pages
 - **Home** (`/`) — hero section, service cards, portfolio highlights, customer reviews, CTA
-- **Services** (`/services`) — detailed service descriptions with images
+- **Services** (`/services`) — detailed service descriptions with images + links to detailed service guides
+- **Service Detail** (`/services/:slug`) — CMS-driven detailed service page (DB-backed, admin editable)
+- **Suburb landing** (`/:slug`) — CMS-driven suburb/service-area landing pages (catch-all route, before NotFound)
 - **Underground Power** (`/underground-power`) — 5-step United Energy process guide with disclaimer
-- **Portfolio** (`/portfolio`) — before/after photo grid with category filtering
-- **Reviews** (`/reviews`) — approved customer reviews + submit review form (pending moderation)
-- **Book** (`/book`) — booking form (consulting/quoting/work) with thank-you confirmation
+- **Portfolio** (`/portfolio`) — before/after photo grid with category filtering + before/after slider in lightbox
+- **Pricing** (`/pricing`) — indicative price ranges (CMS-driven, admin editable)
+- **FAQ** (`/faq`) — frequently asked questions accordion (CMS-driven, admin editable)
+- **Reviews** (`/reviews`) — live Google rating badge + Google reviews (when configured), approved customer reviews + submit review form (pending moderation)
+- **Blog/Tips & Guides** (`/blog`, `/blog/:slug`) — articles with a Related Articles section (same-category first, ≤3)
+- **Book** (`/book`) — booking form (consulting/quoting/work) with reference number + thank-you confirmation + track link
+- **Track Booking** (`/track`) — booking status stepper, lookup by reference number
 - **Quote** (`/quote`) — virtual quote form with photo URL fields, thank-you confirmation
+
+### AI Chat Widget (`ChatWidget.tsx`)
+- Streaming AI chat via `/api/openai/conversations`
+- **Request a callback** lead-capture form — posts to `/api/threads` (admin Messages inbox) with `referenceType: "callback"`; name + phone required
 
 ### Admin Dashboard (`/admin`)
 - **Login** — password set via `ADMIN_PASSWORD` secret; auth uses server-side session cookie (express-session), no localStorage
 - **Dashboard** — analytics stats + recharts bar charts (bookings by service, by region)
-- **Bookings** — table with status change dropdowns (pending/confirmed/completed/cancelled)
+- **Bookings** — table with status change dropdowns (pending/confirmed/scheduled/completed/cancelled)
 - **Portfolio** — add/delete portfolio items via modal form
 - **Reviews** — moderation queue (pending/approve/reject/delete)
 - **Quotes** — review quote requests with status workflow and photo links
+- **FAQ / Pricing / Service Pages / Suburb Pages** — config-driven CRUD via generic `admin/CmsManager.tsx` (4 thin wrappers); each backed by its own public+admin Express router
+- **Site Settings** — Google Reviews link + Google Place ID (for live reviews)
 - **Job Map** — Leaflet map centred on Mornington Peninsula; orange pins = pending, green = accepted/in_progress/completed; add/remove jobs
+
+### CMS Feature Routes (FAQ, Pricing, Service Pages, Suburb Pages, Google Reviews)
+- These newer routes use **local Zod + raw fetch** (NOT OpenAPI/Orval codegen), matching the blog/settings pattern. Public pages use TanStack `useQuery` + `src/lib/cms.ts` helpers (`apiGet`/`apiSend`).
+- Each router exposes a public read router (`/faqs`, `/pricing`, `/service-pages`, `/suburb-pages`) and an admin CRUD router (`/admin/...`) guarded by `requireAdmin`.
+- **Google Reviews** (`/api/google-reviews`): lazy 24h cache in `google_reviews_cache` table; needs `GOOGLE_PLACES_API_KEY` secret + `googlePlaceId` setting. Degrades gracefully (returns `configured:false`) when either is missing; serves stale cache on upstream failure. API key stays server-side only.
 
 ## Colour Scheme
 - Primary (navy): `hsl(214, 60%, 14%)`
@@ -53,11 +70,18 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 ## Database Schema (Drizzle)
 
 Tables in `lib/db/src/schema/index.ts`:
-- `bookings` — customer booking requests
+- `bookings` — customer booking requests (with `referenceNumber` `EI-{year}-{id padded 4}`; status: pending/confirmed/scheduled/completed/cancelled)
 - `portfolio_items` — completed job showcase with before/after images
 - `reviews` — customer reviews (status: pending/approved/rejected)
 - `quotes` — virtual quote requests with photo URLs
 - `jobs` — job map entries with lat/lng coordinates, priority, estimatedDuration, totalAmount (numeric), clientName, clientPhone, clientEmail
+- `faqs` — FAQ entries (question/answer/sortOrder)
+- `pricing_items` — pricing guide rows (label/priceRange/description/sortOrder)
+- `service_pages` — CMS service detail pages (slug-based)
+- `suburb_pages` — CMS suburb landing pages (slug-based)
+- `blog_posts` — articles (slug, category, excerpt, content, published)
+- `google_reviews_cache` — cached Google Places rating + reviews (24h lazy refresh)
+- `settings` — key/value store (`googleReviewsUrl`, `googlePlaceId`)
 
 ## Key Commands
 

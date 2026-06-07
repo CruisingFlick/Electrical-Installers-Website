@@ -30,16 +30,21 @@ router.get("/", requireAdmin, async (req, res, next) => {
 
 router.put("/", requireAdmin, async (req, res, next) => {
   try {
-    const body = req.body as Partial<Record<SettingsKey, string>>;
+    const body = (req.body ?? {}) as Record<string, unknown>;
 
     for (const key of SETTINGS_KEYS) {
       if (key in body && body[key] !== undefined) {
+        const value = body[key];
+        if (typeof value !== "string") {
+          res.status(400).json({ error: `"${key}" must be a string` });
+          return;
+        }
         await db
           .insert(settings)
-          .values({ key, value: body[key]! })
+          .values({ key, value })
           .onConflictDoUpdate({
             target: settings.key,
-            set: { value: body[key]!, updatedAt: new Date() },
+            set: { value, updatedAt: new Date() },
           });
       }
     }
