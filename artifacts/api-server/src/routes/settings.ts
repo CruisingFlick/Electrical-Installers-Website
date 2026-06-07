@@ -5,7 +5,7 @@ import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
 
-const SETTINGS_KEYS = ["googleReviewsUrl"] as const;
+const SETTINGS_KEYS = ["googleReviewsUrl", "googlePlaceId"] as const;
 type SettingsKey = (typeof SETTINGS_KEYS)[number];
 
 async function getSettingsMap(): Promise<Record<SettingsKey, string>> {
@@ -16,6 +16,7 @@ async function getSettingsMap(): Promise<Record<SettingsKey, string>> {
   }
   return {
     googleReviewsUrl: map["googleReviewsUrl"] ?? "",
+    googlePlaceId: map["googlePlaceId"] ?? "",
   };
 }
 

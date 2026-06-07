@@ -23,6 +23,7 @@ type Booking = {
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
   confirmed: "bg-blue-100 text-blue-800 border-blue-200",
+  scheduled: "bg-indigo-100 text-indigo-800 border-indigo-200",
   completed: "bg-green-100 text-green-800 border-green-200",
   cancelled: "bg-red-100 text-red-800 border-red-200",
 };
@@ -92,7 +93,7 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
   function handleStatusChange(status: string) {
     if (!booking) return;
     updateStatus.mutate(
-      { id: booking.id, data: { status: status as "pending" | "confirmed" | "completed" | "cancelled" } },
+      { id: booking.id, data: { status: status as "pending" | "confirmed" | "scheduled" | "completed" | "cancelled" } },
       { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }) }
     );
   }
@@ -175,8 +176,9 @@ export default function BookingDetailDrawer({ booking, onClose, onLightbox, onUp
               onChange={(e) => handleStatusChange(e.target.value)}
               className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
             >
-              <option value="pending">Pending</option>
+              <option value="pending">Received</option>
               <option value="confirmed">Confirmed</option>
+              <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
             </select>

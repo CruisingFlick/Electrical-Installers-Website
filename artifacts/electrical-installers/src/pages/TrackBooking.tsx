@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Search, CheckCircle, Clock, AlertCircle, XCircle, Phone } from "lucide-react";
+import { Search, CheckCircle, Clock, AlertCircle, XCircle, Phone, CalendarCheck, Wrench } from "lucide-react";
 
 type BookingStatus = {
   id: number;
+  referenceNumber?: string | null;
   customerName: string;
   jobType: string;
   suburb: string;
@@ -14,7 +15,7 @@ type BookingStatus = {
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle; color: string; bg: string; desc: string }> = {
   pending: {
-    label: "Pending Review",
+    label: "Received",
     icon: Clock,
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
@@ -26,6 +27,13 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle; c
     color: "text-blue-700",
     bg: "bg-blue-50 border-blue-200",
     desc: "Your booking has been confirmed. Our electrician will be in contact if they need to reach you.",
+  },
+  scheduled: {
+    label: "Scheduled",
+    icon: CalendarCheck,
+    color: "text-indigo-700",
+    bg: "bg-indigo-50 border-indigo-200",
+    desc: "Your job has been scheduled. We'll see you at the agreed time.",
   },
   completed: {
     label: "Completed",
@@ -43,8 +51,53 @@ const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle; c
   },
 };
 
+const STEPS = [
+  { key: "pending", label: "Received", icon: Clock },
+  { key: "confirmed", label: "Confirmed", icon: CheckCircle },
+  { key: "scheduled", label: "Scheduled", icon: CalendarCheck },
+  { key: "completed", label: "Completed", icon: Wrench },
+] as const;
+
+function Stepper({ status }: { status: string }) {
+  const currentIndex = STEPS.findIndex((s) => s.key === status);
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-6">Progress</h3>
+      <div className="flex items-start">
+        {STEPS.map((step, i) => {
+          const done = currentIndex >= 0 && i <= currentIndex;
+          const isCurrent = i === currentIndex;
+          const StepIcon = step.icon;
+          return (
+            <div key={step.key} className="flex-1 flex flex-col items-center relative">
+              {i > 0 && (
+                <div
+                  className={`absolute top-5 right-1/2 w-full h-0.5 ${done ? "bg-[hsl(25,95%,53%)]" : "bg-gray-200"}`}
+                  aria-hidden
+                />
+              )}
+              <div
+                className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  done
+                    ? "bg-[hsl(25,95%,53%)] border-[hsl(25,95%,53%)] text-white"
+                    : "bg-white border-gray-200 text-gray-300"
+                } ${isCurrent ? "ring-4 ring-[hsl(25,95%,53%)]/20" : ""}`}
+              >
+                <StepIcon size={18} />
+              </div>
+              <span className={`mt-2 text-xs font-medium text-center ${done ? "text-[hsl(214,60%,14%)]" : "text-gray-400"}`}>
+                {step.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function TrackBookingPage() {
-  const [bookingId, setBookingId] = useState("");
+  const [reference, setReference] = useState("");
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<BookingStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,9 +109,15 @@ export default function TrackBookingPage() {
     setResult(null);
     setLoading(true);
 
+    const ref = reference.trim();
+    const isNumericId = /^\d+$/.test(ref);
+    const lookupParam = isNumericId
+      ? `id=${encodeURIComponent(ref)}`
+      : `ref=${encodeURIComponent(ref)}`;
+
     try {
       const res = await fetch(
-        `/api/bookings/track?id=${encodeURIComponent(bookingId)}&email=${encodeURIComponent(email.trim())}`,
+        `/api/bookings/track?${lookupParam}&email=${encodeURIComponent(email.trim())}`,
         { credentials: "same-origin" }
       );
       if (res.ok) {
@@ -66,7 +125,7 @@ export default function TrackBookingPage() {
         setResult(data);
       } else {
         const data = await res.json() as { error?: string };
-        setError(data.error ?? "Booking not found. Please check your booking ID and email address.");
+        setError(data.error ?? "Booking not found. Please check your reference number and email address.");
       }
     } catch {
       setError("Unable to reach the server. Please try again or call us on 0419 868 703.");
@@ -91,16 +150,16 @@ export default function TrackBookingPage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
           <h2 className="text-xl font-bold text-[hsl(214,60%,14%)] mb-1">Enter Your Details</h2>
-          <p className="text-sm text-gray-500 mb-6">Your booking ID was included in the confirmation email we sent you.</p>
+          <p className="text-sm text-gray-500 mb-6">Your reference number was included in the confirmation email we sent you (e.g. EI-2026-0042).</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Booking ID</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
               <input
-                type="number"
-                value={bookingId}
-                onChange={(e) => setBookingId(e.target.value)}
-                placeholder="e.g. 42"
+                type="text"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="e.g. EI-2026-0042"
                 required
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
                 data-testid="input-booking-id"
@@ -152,11 +211,13 @@ export default function TrackBookingPage() {
               </div>
             </div>
 
+            {result.status !== "cancelled" && <Stepper status={result.status} />}
+
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-4">Booking Details</h3>
               <dl className="space-y-3">
                 {[
-                  { label: "Booking ID", value: `#${result.id}` },
+                  { label: "Reference", value: result.referenceNumber ?? `#${result.id}` },
                   { label: "Name", value: result.customerName },
                   { label: "Job Type", value: result.jobType },
                   { label: "Suburb", value: result.suburb },

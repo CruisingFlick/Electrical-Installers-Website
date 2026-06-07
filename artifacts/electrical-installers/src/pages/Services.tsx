@@ -1,5 +1,8 @@
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Home, Factory, Zap, Cable, Warehouse, CheckCircle, ArrowRight } from "lucide-react";
+import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import { apiGet, type ServicePage } from "@/lib/cms";
 
 const services = [
   {
@@ -43,6 +46,11 @@ const services = [
 ];
 
 export default function ServicesPage() {
+  const { data: servicePages = [] } = useQuery({
+    queryKey: ["service-pages"],
+    queryFn: () => apiGet<ServicePage[]>("/service-pages"),
+  });
+
   return (
     <div>
       <div className="bg-[hsl(214,60%,14%)] text-white py-16">
@@ -83,16 +91,11 @@ export default function ServicesPage() {
             </div>
             <div className={`${idx % 2 === 1 ? "lg:order-1" : ""}`}>
               {service.imageBefore && service.imageAfter ? (
-                <div className="grid grid-cols-2 gap-3 h-72 lg:h-96">
-                  <div className="relative rounded-xl overflow-hidden shadow-md bg-gray-100">
-                    <img src={service.imageBefore} alt={`${service.title} — before`} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded">Before</span>
-                  </div>
-                  <div className="relative rounded-xl overflow-hidden shadow-md bg-gray-100">
-                    <img src={service.imageAfter} alt={`${service.title} — after`} className="w-full h-full object-cover" />
-                    <span className="absolute bottom-2 left-2 bg-[hsl(25,95%,53%)] text-white text-xs font-semibold px-2 py-1 rounded">After</span>
-                  </div>
-                </div>
+                <BeforeAfterSlider
+                  beforeUrl={service.imageBefore}
+                  afterUrl={service.imageAfter}
+                  className="rounded-xl shadow-md h-72 lg:h-96 bg-gray-100"
+                />
               ) : service.image ? (
                 <div className="rounded-xl overflow-hidden shadow-md h-72 lg:h-96 bg-gray-100">
                   <img src={service.image} alt={service.title} className="w-full h-full object-cover" />
@@ -106,6 +109,36 @@ export default function ServicesPage() {
           </div>
         ))}
       </div>
+
+      {servicePages.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-2">Detailed service guides</h2>
+          <p className="text-gray-600 mb-8">In-depth information on specific services we offer.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {servicePages.map((sp) => (
+              <Link
+                key={sp.id}
+                href={sp.externalPath || `/services/${sp.slug}`}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col"
+                data-testid={`service-page-${sp.slug}`}
+              >
+                {sp.heroImageUrl && (
+                  <div className="h-40 overflow-hidden">
+                    <img src={sp.heroImageUrl} alt={sp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+                )}
+                <div className="p-5 flex flex-col flex-1">
+                  <h3 className="text-lg font-bold text-[hsl(214,60%,14%)] mb-2 group-hover:text-[hsl(25,95%,53%)] transition-colors">{sp.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed flex-1">{sp.shortDescription}</p>
+                  <div className="flex items-center gap-1 text-sm font-semibold text-[hsl(25,95%,53%)] mt-4">
+                    Learn more <ArrowRight size={14} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-[hsl(210,20%,96%)] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

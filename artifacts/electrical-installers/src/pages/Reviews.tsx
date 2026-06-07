@@ -15,6 +15,22 @@ const reviewSchema = z.object({
 });
 type ReviewForm = z.infer<typeof reviewSchema>;
 
+type GoogleReviewItem = {
+  authorName: string;
+  rating: number;
+  text: string;
+  relativeTime: string;
+  profilePhotoUrl?: string;
+  time: number;
+};
+type GoogleReviewsData = {
+  configured: boolean;
+  rating: number | null;
+  totalRatings: number | null;
+  reviews: GoogleReviewItem[];
+  reviewsUrl: string;
+};
+
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0);
   return (
@@ -44,6 +60,7 @@ export default function ReviewsPage() {
   const createReview = useCreateReview();
   const [submitted, setSubmitted] = useState(false);
   const [googleReviewsUrl, setGoogleReviewsUrl] = useState<string>("");
+  const [google, setGoogle] = useState<GoogleReviewsData | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/settings/public")
@@ -51,6 +68,15 @@ export default function ReviewsPage() {
       .then((d) => setGoogleReviewsUrl(d.googleReviewsUrl ?? ""))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch("/api/google-reviews")
+      .then((r) => (r.ok ? (r.json() as Promise<GoogleReviewsData>) : Promise.resolve(null)))
+      .then((d) => setGoogle(d))
+      .catch(() => {});
+  }, []);
+
+  const effectiveReviewsUrl = google?.reviewsUrl || googleReviewsUrl;
 
   const form = useForm<ReviewForm>({
     resolver: zodResolver(reviewSchema),
@@ -73,10 +99,55 @@ export default function ReviewsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold mb-4">Customer Reviews</h1>
           <p className="text-gray-300 text-lg">What our customers say about our work.</p>
+          {google?.configured && google.rating != null && (
+            <div className="mt-6 inline-flex items-center gap-3 bg-white/10 rounded-xl px-5 py-3" data-testid="google-rating-badge">
+              <span className="text-3xl font-bold">{google.rating.toFixed(1)}</span>
+              <div>
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} size={16} className={i < Math.round(google.rating!) ? "text-[hsl(25,95%,53%)] fill-[hsl(25,95%,53%)]" : "text-gray-500"} />
+                  ))}
+                </div>
+                <p className="text-xs text-gray-300 mt-0.5">
+                  {google.totalRatings ?? 0} Google review{(google.totalRatings ?? 0) === 1 ? "" : "s"}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {google?.configured && google.reviews.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center gap-2 mb-5">
+              <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)]">From Google</h2>
+              <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">Live</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {google.reviews.map((gr) => (
+                <div key={gr.time} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm" data-testid={`google-review-${gr.time}`}>
+                  <div className="flex items-center gap-1 mb-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} size={16} className={i < gr.rating ? "text-[hsl(25,95%,53%)] fill-[hsl(25,95%,53%)]" : "text-gray-300"} />
+                    ))}
+                    <span className="text-sm text-gray-500 ml-2">{gr.rating}/5</span>
+                  </div>
+                  <p className="text-gray-700 italic mb-4">&ldquo;{gr.text}&rdquo;</p>
+                  <div className="flex items-center gap-3">
+                    {gr.profilePhotoUrl && (
+                      <img src={gr.profilePhotoUrl} alt={gr.authorName} className="w-8 h-8 rounded-full" referrerPolicy="no-referrer" />
+                    )}
+                    <div>
+                      <p className="font-semibold text-sm">{gr.authorName}</p>
+                      <p className="text-xs text-gray-500">{gr.relativeTime}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -116,14 +187,14 @@ export default function ReviewsPage() {
         )}
 
         {/* Google Reviews CTA */}
-        {googleReviewsUrl && (
+        {effectiveReviewsUrl && (
           <div className="bg-[hsl(214,60%,14%)] text-white rounded-2xl p-6 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
               <p className="font-bold text-lg">Happy with our work?</p>
               <p className="text-gray-300 text-sm mt-0.5">Leaving a Google review helps other locals find us — it only takes 30 seconds.</p>
             </div>
             <a
-              href={googleReviewsUrl}
+              href={effectiveReviewsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 inline-flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm whitespace-nowrap"

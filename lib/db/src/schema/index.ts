@@ -10,3 +10,8 @@ export * from "./settings";
 export * from "./media";
 export * from "./customers";
 export * from "./blog_posts";
+export * from "./faqs";
+export * from "./pricing_items";
+export * from "./service_pages";
+export * from "./suburb_pages";
+export * from "./google_reviews";

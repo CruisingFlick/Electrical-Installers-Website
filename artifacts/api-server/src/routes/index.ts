@@ -15,6 +15,11 @@ import { publicBlogRouter, adminBlogRouter } from "./blog";
 import settingsRouter from "./settings";
 import { threadsPublicRouter, threadsAdminRouter } from "./threads";
 import { calendarPublicRouter, calendarAdminRouter } from "./calendar";
+import { publicFaqsRouter, adminFaqsRouter } from "./faqs";
+import { publicPricingRouter, adminPricingRouter } from "./pricing";
+import { publicServicePagesRouter, adminServicePagesRouter } from "./service-pages";
+import { publicSuburbPagesRouter, adminSuburbPagesRouter } from "./suburb-pages";
+import googleReviewsRouter from "./google-reviews";
 
 const router: IRouter = Router();
 
@@ -37,5 +42,14 @@ router.use("/blog", publicBlogRouter);
 router.use("/admin/blog", adminBlogRouter);
 router.use("/calendar", calendarPublicRouter);
 router.use("/admin/calendar", calendarAdminRouter);
+router.use("/faqs", publicFaqsRouter);
+router.use("/admin/faqs", adminFaqsRouter);
+router.use("/pricing", publicPricingRouter);
+router.use("/admin/pricing", adminPricingRouter);
+router.use("/service-pages", publicServicePagesRouter);
+router.use("/admin/service-pages", adminServicePagesRouter);
+router.use("/suburb-pages", publicSuburbPagesRouter);
+router.use("/admin/suburb-pages", adminSuburbPagesRouter);
+router.use("/google-reviews", googleReviewsRouter);
 
 export default router;

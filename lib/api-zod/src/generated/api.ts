@@ -301,6 +301,7 @@ export const ListBookingsQueryParams = zod.object({
 
 export const ListBookingsResponseItem = zod.object({
   "id": zod.number(),
+  "referenceNumber": zod.string().nullish(),
   "customerName": zod.string(),
   "customerEmail": zod.string(),
   "customerPhone": zod.string().optional(),
@@ -310,7 +311,7 @@ export const ListBookingsResponseItem = zod.object({
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
   "photoUrl": zod.string().optional(),
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
@@ -349,6 +350,7 @@ export const ConfirmBookingBody = zod.object({
 
 export const ConfirmBookingResponse = zod.object({
   "id": zod.number(),
+  "referenceNumber": zod.string().nullish(),
   "customerName": zod.string(),
   "customerEmail": zod.string(),
   "customerPhone": zod.string().optional(),
@@ -358,7 +360,7 @@ export const ConfirmBookingResponse = zod.object({
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
   "photoUrl": zod.string().optional(),
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
@@ -374,6 +376,7 @@ export const GetBookingParams = zod.object({
 
 export const GetBookingResponse = zod.object({
   "id": zod.number(),
+  "referenceNumber": zod.string().nullish(),
   "customerName": zod.string(),
   "customerEmail": zod.string(),
   "customerPhone": zod.string().optional(),
@@ -383,7 +386,7 @@ export const GetBookingResponse = zod.object({
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
   "photoUrl": zod.string().optional(),
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
@@ -398,11 +401,12 @@ export const UpdateBookingStatusParams = zod.object({
 })
 
 export const UpdateBookingStatusBody = zod.object({
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled'])
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled'])
 })
 
 export const UpdateBookingStatusResponse = zod.object({
   "id": zod.number(),
+  "referenceNumber": zod.string().nullish(),
   "customerName": zod.string(),
   "customerEmail": zod.string(),
   "customerPhone": zod.string().optional(),
@@ -412,7 +416,7 @@ export const UpdateBookingStatusResponse = zod.object({
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
   "photoUrl": zod.string().optional(),
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
   "createdAt": zod.string()
@@ -470,6 +474,7 @@ export const GetCustomerResponse = zod.object({
 }).and(zod.object({
   "bookings": zod.array(zod.object({
   "id": zod.number(),
+  "referenceNumber": zod.string().nullish(),
   "customerName": zod.string(),
   "customerEmail": zod.string(),
   "customerPhone": zod.string().optional(),
@@ -479,7 +484,7 @@ export const GetCustomerResponse = zod.object({
   "preferredDate": zod.string(),
   "message": zod.string().optional(),
   "photoUrl": zod.string().optional(),
-  "status": zod.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
   "createdAt": zod.string()

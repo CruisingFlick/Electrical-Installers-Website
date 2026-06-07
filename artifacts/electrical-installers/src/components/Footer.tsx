@@ -45,6 +45,8 @@ export default function Footer() {
               <li><Link href="/services" className="hover:text-white transition-colors">Commercial & Industrial</Link></li>
               <li><Link href="/services" className="hover:text-white transition-colors">3-Phase Upgrades</Link></li>
               <li><Link href="/underground-power" className="hover:text-white transition-colors">Underground Power</Link></li>
+              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing Guide</Link></li>
+              <li><Link href="/faq" className="hover:text-white transition-colors">FAQ</Link></li>
             </ul>
           </div>
 

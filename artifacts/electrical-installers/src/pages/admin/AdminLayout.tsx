@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot, CalendarDays, Library, Users, BookOpen, Settings, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Calendar, Image, Star, FileText, Map, LogOut, Zap, Menu, Bot, CalendarDays, Library, Users, BookOpen, Settings, MessageSquare, HelpCircle, DollarSign, Wrench, MapPin } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
@@ -14,6 +14,10 @@ const navItems = [
   { href: "/admin/quotes", icon: FileText, label: "Quotes" },
   { href: "/admin/jobs", icon: Map, label: "Job Map" },
   { href: "/admin/blog", icon: BookOpen, label: "Blog & Tips" },
+  { href: "/admin/service-pages", icon: Wrench, label: "Service Pages" },
+  { href: "/admin/suburb-pages", icon: MapPin, label: "Suburb Pages" },
+  { href: "/admin/pricing", icon: DollarSign, label: "Pricing" },
+  { href: "/admin/faqs", icon: HelpCircle, label: "FAQ" },
   { href: "/admin/site-settings", icon: Settings, label: "Site Settings" },
   { href: "/admin/ai-settings", icon: Bot, label: "AI Chat" },
 ];

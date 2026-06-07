@@ -1,11 +1,16 @@
-import { useGetBlogPost, getGetBlogPostQueryKey } from "@workspace/api-client-react";
+import { useGetBlogPost, getGetBlogPostQueryKey, useListBlogPosts } from "@workspace/api-client-react";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Calendar, Tag, BookOpen, Phone } from "lucide-react";
+import { ArrowLeft, Calendar, Tag, BookOpen, Phone, ArrowRight } from "lucide-react";
 
 export default function BlogPostPage() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug ?? "";
   const { data: post, isLoading, error } = useGetBlogPost(slug, { query: { queryKey: getGetBlogPostQueryKey(slug), enabled: !!slug } });
+  const { data: allPosts = [] } = useListBlogPosts();
+  const related = allPosts
+    .filter((p) => p.slug !== slug)
+    .sort((a, b) => (a.category === post?.category ? -1 : 0) - (b.category === post?.category ? -1 : 0))
+    .slice(0, 3);
 
   if (isLoading) {
     return (
@@ -69,6 +74,39 @@ export default function BlogPostPage() {
         <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
           {post.content}
         </div>
+
+        {related.length > 0 && (
+          <div className="mt-12">
+            <h3 className="text-lg font-bold text-[hsl(214,60%,14%)] mb-4 flex items-center gap-2">
+              <BookOpen size={18} className="text-[hsl(25,95%,53%)]" />
+              Related Articles
+            </h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/blog/${r.slug}`}
+                  className="group block border border-gray-200 rounded-xl p-4 hover:border-[hsl(25,95%,53%)] hover:shadow-sm transition-all"
+                  data-testid={`related-post-${r.slug}`}
+                >
+                  {r.category && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-[hsl(25,95%,40%)] mb-2">
+                      <Tag size={11} />
+                      {r.category}
+                    </span>
+                  )}
+                  <h4 className="font-semibold text-[hsl(214,60%,14%)] leading-snug group-hover:text-[hsl(25,95%,45%)] transition-colors">
+                    {r.title}
+                  </h4>
+                  {r.excerpt && <p className="text-sm text-gray-500 mt-1 line-clamp-2">{r.excerpt}</p>}
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[hsl(25,95%,53%)] mt-3">
+                    Read more <ArrowRight size={12} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-12 bg-[hsl(214,60%,14%)] text-white rounded-2xl p-8 text-center">
           <h3 className="text-xl font-bold mb-2">Got electrical questions?</h3>

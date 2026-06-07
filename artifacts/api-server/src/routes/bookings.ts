@@ -16,7 +16,7 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
 import { logger } from "../lib/logger";
-import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL } from "../lib/constants";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, SITE_BASE_URL } from "../lib/constants";
 import { parseAuDateTime, buildSingleEventIcs } from "../lib/ical";
 
 const router = Router();
@@ -54,17 +54,31 @@ async function sendBookingEmails(booking: {
   suburb: string;
   preferredDate: string;
   message?: string | null;
+  referenceNumber?: string | null;
 }) {
   try {
     const transporter = createTransporter();
     const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
+    const ref = booking.referenceNumber ?? "";
+    const trackUrl = `${SITE_BASE_URL}/track`;
+
+    const refLineText = ref ? `\nYour reference number: ${ref}` : "";
+    const summaryText = [
+      "",
+      "Your request:",
+      `  Job:    ${booking.jobType}`,
+      `  Suburb: ${booking.suburb}`,
+      `  Date:   ${booking.preferredDate}`,
+    ].join("\n");
 
     await transporter.sendMail({
       from,
       to: booking.customerEmail,
-      subject: "Thank you for contacting Electrical Installers",
-      text: `Hi ${booking.customerName},\n\nThank you for contacting Electrical Installers. We've received your booking request and will be in touch within one business day to confirm your appointment.\n\nIf you have any urgent questions, please call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
-      html: `<p>Hi ${he.escape(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will be in touch within one business day to confirm your appointment.</p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
+      subject: ref
+        ? `We've received your booking (${ref}) — Electrical Installers`
+        : "Thank you for contacting Electrical Installers",
+      text: `Hi ${booking.customerName},\n\nThank you for contacting Electrical Installers. We've received your booking request and will contact you within one business day to confirm your appointment.${refLineText}\n${summaryText}\n\nTrack your booking status any time: ${trackUrl}\n\nIf you have any urgent questions, please call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
+      html: `<p>Hi ${he.escape(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will contact you within one business day to confirm your appointment.</p>${ref ? `<p style="font-size:15px;">Your reference number: <strong>${he.escape(ref)}</strong></p>` : ""}<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;margin:8px 0;"><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Job</td><td style="padding:4px 0;"><strong>${he.escape(booking.jobType)}</strong></td></tr><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Suburb</td><td style="padding:4px 0;"><strong>${he.escape(booking.suburb)}</strong></td></tr><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Date</td><td style="padding:4px 0;"><strong>${he.escape(booking.preferredDate)}</strong></td></tr></table><p><a href="${trackUrl}" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">Track your booking</a></p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
     await transporter.sendMail({
@@ -136,12 +150,50 @@ async function upsertCustomer(booking: typeof bookingsTable.$inferSelect) {
   }
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Received",
+  confirmed: "Confirmed",
+  scheduled: "Scheduled",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+const STATUS_MESSAGES: Record<string, string> = {
+  pending: "We've received your booking and will be in touch within one business day to confirm.",
+  confirmed: "Your booking has been confirmed. We'll be in touch to arrange a time if we haven't already.",
+  scheduled: "Your job has been scheduled. We'll see you at the agreed time.",
+  completed: "Your job is complete — thank you for choosing Electrical Installers!",
+  cancelled: "This booking has been cancelled. Please call us if you'd like to rebook.",
+};
+
+async function sendStatusUpdateEmail(booking: typeof bookingsTable.$inferSelect) {
+  try {
+    const label = STATUS_LABELS[booking.status] ?? booking.status;
+    const message = STATUS_MESSAGES[booking.status] ?? "";
+    const ref = booking.referenceNumber ?? `#${booking.id}`;
+    const trackUrl = `${SITE_BASE_URL}/track`;
+    const transporter = createTransporter();
+    const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
+
+    await transporter.sendMail({
+      from,
+      to: booking.customerEmail,
+      subject: `Booking ${ref} update: ${label} — Electrical Installers`,
+      text: `Hi ${booking.customerName},\n\nThere's an update on your booking (${ref}).\n\nStatus: ${label}\n${message}\n\nJob:    ${booking.jobType}\nSuburb: ${booking.suburb}\n\nTrack your booking: ${trackUrl}\n\nQuestions? Call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers`,
+      html: `<p>Hi ${he.escape(booking.customerName)},</p><p>There's an update on your booking (<strong>${he.escape(ref)}</strong>).</p><p style="font-size:16px;">Status: <strong>${he.escape(label)}</strong></p><p>${he.escape(message)}</p><table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;margin:8px 0;"><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Job</td><td style="padding:4px 0;"><strong>${he.escape(booking.jobType)}</strong></td></tr><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Suburb</td><td style="padding:4px 0;"><strong>${he.escape(booking.suburb)}</strong></td></tr></table><p><a href="${trackUrl}" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">Track your booking</a></p><p>Questions? Call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong></p>`,
+    });
+  } catch (err) {
+    logger.error({ err }, "Failed to send booking status update email");
+  }
+}
+
 router.get("/track", async (req, res, next) => {
+  const ref = (req.query["ref"] as string | undefined)?.trim();
   const id = Number(req.query["id"]);
   const email = (req.query["email"] as string | undefined)?.trim().toLowerCase();
 
-  if (!id || isNaN(id) || !email) {
-    res.status(400).json({ error: "id and email are required" });
+  if (!email || (!ref && (!id || isNaN(id)))) {
+    res.status(400).json({ error: "A reference number (or booking ID) and email are required" });
     return;
   }
 
@@ -149,15 +201,16 @@ router.get("/track", async (req, res, next) => {
     const [row] = await db
       .select()
       .from(bookingsTable)
-      .where(eq(bookingsTable.id, id));
+      .where(ref ? eq(bookingsTable.referenceNumber, ref) : eq(bookingsTable.id, id));
 
     if (!row || row.customerEmail.toLowerCase() !== email) {
-      res.status(404).json({ error: "Booking not found. Please check your ID and email address." });
+      res.status(404).json({ error: "Booking not found. Please check your reference number and email address." });
       return;
     }
 
     res.json({
       id: row.id,
+      referenceNumber: row.referenceNumber,
       customerName: row.customerName,
       jobType: row.jobType,
       suburb: row.suburb,
@@ -227,16 +280,23 @@ router.post("/", async (req, res, next) => {
   }
 
   try {
-    const [row] = await db
+    const [inserted] = await db
       .insert(bookingsTable)
       .values({ ...parsed.data, status: "pending" })
       .returning();
 
-    void sendBookingEmails(parsed.data);
+    const referenceNumber = `EI-${inserted.createdAt.getFullYear()}-${String(inserted.id).padStart(4, "0")}`;
+    const [row] = await db
+      .update(bookingsTable)
+      .set({ referenceNumber })
+      .where(eq(bookingsTable.id, inserted.id))
+      .returning();
+
+    void sendBookingEmails({ ...parsed.data, referenceNumber });
 
     void sendSms(
       parsed.data.customerPhone,
-      `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. We'll be in touch within one business day to confirm. Call us: ${BUSINESS_PHONE}`
+      `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. Ref: ${referenceNumber}. We'll be in touch within one business day to confirm. Track it: ${SITE_BASE_URL}/track — or call ${BUSINESS_PHONE}`
     );
 
     res.status(201).json(formatBooking(row));
@@ -401,6 +461,12 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     if (bodyParsed.data.status === "completed" || bodyParsed.data.status === "cancelled") {
       void upsertCustomer(row);
     }
+
+    void sendStatusUpdateEmail(row);
+    void sendSms(
+      row.customerPhone,
+      `Hi ${row.customerName}, your Electrical Installers booking ${row.referenceNumber ?? `#${row.id}`} is now: ${STATUS_LABELS[row.status] ?? row.status}. Track it: ${SITE_BASE_URL}/track`
+    );
 
     res.json(formatBooking(row));
   } catch (err) {

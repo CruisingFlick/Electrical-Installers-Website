@@ -40,6 +40,15 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 import TrackBookingPage from "@/pages/TrackBooking";
 import BlogPage from "@/pages/Blog";
 import BlogPostPage from "@/pages/BlogPost";
+import FaqPage from "@/pages/Faq";
+import PricingPage from "@/pages/Pricing";
+import ServiceDetailPage from "@/pages/ServiceDetail";
+import SuburbDetailPage from "@/pages/SuburbDetail";
+
+import AdminFaqs from "@/pages/admin/Faqs";
+import AdminPricing from "@/pages/admin/Pricing";
+import AdminServicePages from "@/pages/admin/ServicePages";
+import AdminSuburbPages from "@/pages/admin/SuburbPages";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +126,9 @@ function Router() {
       <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
       <Route path="/blog" component={() => <PublicLayout><BlogPage /></PublicLayout>} />
       <Route path="/blog/:slug" component={() => <PublicLayout><BlogPostPage /></PublicLayout>} />
+      <Route path="/faq" component={() => <PublicLayout><FaqPage /></PublicLayout>} />
+      <Route path="/pricing" component={() => <PublicLayout><PricingPage /></PublicLayout>} />
+      <Route path="/services/:slug" component={() => <PublicLayout><ServiceDetailPage /></PublicLayout>} />
 
       {/* Admin routes */}
       <Route path="/admin" component={AdminLogin} />
@@ -133,6 +145,13 @@ function Router() {
       <Route path="/admin/blog" component={() => <AdminGuard component={AdminBlog} />} />
       <Route path="/admin/site-settings" component={() => <AdminGuard component={AdminSiteSettings} />} />
       <Route path="/admin/messages" component={() => <AdminGuard component={AdminMessages} />} />
+      <Route path="/admin/faqs" component={() => <AdminGuard component={AdminFaqs} />} />
+      <Route path="/admin/pricing" component={() => <AdminGuard component={AdminPricing} />} />
+      <Route path="/admin/service-pages" component={() => <AdminGuard component={AdminServicePages} />} />
+      <Route path="/admin/suburb-pages" component={() => <AdminGuard component={AdminSuburbPages} />} />
+
+      {/* Suburb landing pages — catch-all before NotFound */}
+      <Route path="/:slug" component={() => <PublicLayout><SuburbDetailPage /></PublicLayout>} />
 
       <Route component={NotFound} />
     </Switch>

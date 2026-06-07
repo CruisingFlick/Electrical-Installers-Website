@@ -64,6 +64,24 @@ async function* streamMessage(
   }
 }
 
+async function createCallbackLead(opts: {
+  customerName: string;
+  customerPhone: string;
+  message: string;
+}): Promise<void> {
+  const res = await fetch(`${BASE}/api/threads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      customerName: opts.customerName,
+      customerPhone: opts.customerPhone,
+      referenceType: "callback",
+      message: opts.message,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to submit callback request");
+}
+
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -103,6 +121,11 @@ export default function ChatWidget() {
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [showCallback, setShowCallback] = useState(false);
+  const [cbName, setCbName] = useState("");
+  const [cbPhone, setCbPhone] = useState("");
+  const [cbMsg, setCbMsg] = useState("");
+  const [cbStatus, setCbStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -183,6 +206,24 @@ export default function ChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(input);
+    }
+  }
+
+  async function submitCallback() {
+    if (!cbName.trim() || !cbPhone.trim() || cbStatus === "sending") return;
+    setCbStatus("sending");
+    try {
+      await createCallbackLead({
+        customerName: cbName.trim(),
+        customerPhone: cbPhone.trim(),
+        message: cbMsg.trim() || "Requested a callback via website chat.",
+      });
+      setCbStatus("sent");
+      setCbName("");
+      setCbPhone("");
+      setCbMsg("");
+    } catch {
+      setCbStatus("error");
     }
   }
 
@@ -292,7 +333,7 @@ export default function ChatWidget() {
           </div>
 
           {/* Quick questions (shown when no user messages yet) */}
-          {messages.filter((m) => m.role === "user").length === 0 && (
+          {messages.filter((m) => m.role === "user").length === 0 && !showCallback && (
             <div className="px-4 pb-2 flex flex-wrap gap-1.5">
               {QUICK_QUESTIONS.map((q) => (
                 <button
@@ -303,6 +344,69 @@ export default function ChatWidget() {
                   {q}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Callback request */}
+          {!showCallback ? (
+            <div className="px-4 pb-2">
+              <button
+                onClick={() => { setShowCallback(true); setCbStatus("idle"); }}
+                className="flex items-center gap-1.5 text-xs font-semibold text-[hsl(214,60%,14%)] hover:text-[hsl(25,95%,45%)] transition-colors"
+                data-testid="chat-callback-toggle"
+              >
+                <Phone size={13} />
+                Prefer a call? Request a callback
+              </button>
+            </div>
+          ) : (
+            <div className="px-4 pb-3 border-t border-gray-100 pt-3">
+              {cbStatus === "sent" ? (
+                <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                  Thanks! We've received your callback request and will be in touch shortly.
+                  <button onClick={() => { setShowCallback(false); setCbStatus("idle"); }} className="block mt-2 text-xs font-semibold text-[hsl(25,95%,45%)] hover:underline">
+                    Back to chat
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-600">Request a callback</p>
+                    <button onClick={() => setShowCallback(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                  </div>
+                  <input
+                    value={cbName}
+                    onChange={(e) => setCbName(e.target.value)}
+                    placeholder="Your name *"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+                    data-testid="chat-callback-name"
+                  />
+                  <input
+                    value={cbPhone}
+                    onChange={(e) => setCbPhone(e.target.value)}
+                    placeholder="Phone number *"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+                    data-testid="chat-callback-phone"
+                  />
+                  <textarea
+                    value={cbMsg}
+                    onChange={(e) => setCbMsg(e.target.value)}
+                    placeholder="What can we help with? (optional)"
+                    rows={2}
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+                  />
+                  {cbStatus === "error" && <p className="text-xs text-red-500">Something went wrong. Please try again or call us.</p>}
+                  <button
+                    onClick={submitCallback}
+                    disabled={!cbName.trim() || !cbPhone.trim() || cbStatus === "sending"}
+                    className="w-full flex items-center justify-center gap-1.5 bg-[hsl(25,95%,53%)] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[hsl(25,95%,45%)] disabled:opacity-50 transition-colors"
+                    data-testid="chat-callback-submit"
+                  >
+                    {cbStatus === "sending" ? <Loader2 size={14} className="animate-spin" /> : <Phone size={14} />}
+                    {cbStatus === "sending" ? "Sending…" : "Request callback"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

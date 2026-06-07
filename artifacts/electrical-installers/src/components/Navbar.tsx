@@ -11,6 +11,8 @@ const navLinks = [
   { href: "/portfolio", label: "Portfolio" },
   { href: "/reviews", label: "Reviews" },
   { href: "/blog", label: "Tips & Guides" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/faq", label: "FAQ" },
   { href: "/book", label: "Book Now" },
   { href: "/quote", label: "Get a Quote" },
   { href: "/messages", label: "Message Us" },

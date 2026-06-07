@@ -4,10 +4,11 @@ import { Settings, ExternalLink, CheckCircle, Save, AlertCircle, Star } from "lu
 
 type SiteSettings = {
   googleReviewsUrl: string;
+  googlePlaceId: string;
 };
 
 export default function AdminSiteSettings() {
-  const [settings, setSettings] = useState<SiteSettings>({ googleReviewsUrl: "" });
+  const [settings, setSettings] = useState<SiteSettings>({ googleReviewsUrl: "", googlePlaceId: "" });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -107,6 +108,28 @@ export default function AdminSiteSettings() {
                   Test this link
                 </a>
               )}
+
+              <div className="space-y-2 mt-6 pt-6 border-t border-gray-100">
+                <label className="block text-sm font-medium text-gray-700">Google Place ID</label>
+                <p className="text-sm text-gray-600">
+                  Add your Place ID to automatically pull your live Google star rating and latest reviews onto the Reviews page. Requires the <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">GOOGLE_PLACES_API_KEY</code> to be configured.
+                </p>
+                <input
+                  type="text"
+                  value={settings.googlePlaceId}
+                  onChange={(e) => setSettings((s) => ({ ...s, googlePlaceId: e.target.value }))}
+                  className={inputClass}
+                  placeholder="ChIJ..."
+                  data-testid="input-google-place-id"
+                />
+                <p className="text-xs text-gray-400">
+                  Find it at{" "}
+                  <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="text-[hsl(25,95%,53%)] hover:underline">
+                    Google's Place ID finder
+                  </a>
+                  .
+                </p>
+              </div>
             </div>
 
             <div className="flex justify-end">

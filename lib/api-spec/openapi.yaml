@@ -1100,6 +1100,9 @@ components:
       properties:
         id:
           type: integer
+        referenceNumber:
+          type: string
+          nullable: true
         customerName:
           type: string
         customerEmail:
@@ -1121,7 +1124,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, confirmed, completed, cancelled]
+          enum: [pending, confirmed, scheduled, completed, cancelled]
         adminNotes:
           type: string
         referralSource:
@@ -1177,7 +1180,7 @@ components:
       properties:
         status:
           type: string
-          enum: [pending, confirmed, completed, cancelled]
+          enum: [pending, confirmed, scheduled, completed, cancelled]
       required:
         - status
 

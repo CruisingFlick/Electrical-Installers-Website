@@ -24,12 +24,14 @@ export type BookingStatusProperty = typeof BookingStatusProperty[keyof typeof Bo
 export const BookingStatusProperty = {
   pending: 'pending',
   confirmed: 'confirmed',
+  scheduled: 'scheduled',
   completed: 'completed',
   cancelled: 'cancelled',
 } as const;
 
 export interface Booking {
   id: number;
+  referenceNumber?: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
@@ -73,6 +75,7 @@ export type UpdateBookingStatusBodyStatus = typeof UpdateBookingStatusBodyStatus
 export const UpdateBookingStatusBodyStatus = {
   pending: 'pending',
   confirmed: 'confirmed',
+  scheduled: 'scheduled',
   completed: 'completed',
   cancelled: 'cancelled',
 } as const;

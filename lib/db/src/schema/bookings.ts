@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const bookingsTable = pgTable("bookings", {
   id: serial("id").primaryKey(),
+  referenceNumber: text("reference_number").unique(),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone"),
@@ -21,6 +22,7 @@ export const bookingsTable = pgTable("bookings", {
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({
   id: true,
+  referenceNumber: true,
   createdAt: true,
 });
 

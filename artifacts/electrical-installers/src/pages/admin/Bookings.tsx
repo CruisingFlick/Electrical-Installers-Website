@@ -8,11 +8,12 @@ import BookingDetailDrawer from "./BookingDetailDrawer";
 const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800",
   confirmed: "bg-blue-100 text-blue-800",
+  scheduled: "bg-indigo-100 text-indigo-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
 };
 
-const STATUS_OPTIONS = ["all", "pending", "confirmed", "completed", "cancelled"] as const;
+const STATUS_OPTIONS = ["all", "pending", "confirmed", "scheduled", "completed", "cancelled"] as const;
 
 type Booking = {
   id: number;

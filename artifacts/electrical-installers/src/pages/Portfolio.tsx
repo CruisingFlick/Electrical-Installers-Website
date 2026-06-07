@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useListPortfolioItems, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
 import { Filter, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
+import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 
 const categories = ["All", "New Homes", "3-Phase Upgrade", "Underground Power", "Commercial", "Renovations"];
 
 const FALLBACK = "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800";
 const FALLBACK_BEFORE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800";
 
-interface LightboxPhoto {
-  url: string;
-  title: string;
-}
+type LightboxPhoto =
+  | { type: "image"; url: string; title: string }
+  | { type: "compare"; beforeUrl: string; afterUrl: string; title: string };
 
 interface LightboxState {
   photos: LightboxPhoto[];
@@ -84,12 +84,28 @@ export default function PortfolioPage() {
             className="max-w-[90vw] max-h-[90vh] flex flex-col items-center gap-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={lightbox.photos[lightbox.index].url}
-              alt={lightbox.photos[lightbox.index].title}
-              className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
-              onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
-            />
+            {(() => {
+              const photo = lightbox.photos[lightbox.index];
+              if (photo.type === "compare") {
+                return (
+                  <BeforeAfterSlider
+                    beforeUrl={photo.beforeUrl}
+                    afterUrl={photo.afterUrl}
+                    className="w-[90vw] max-w-3xl aspect-[4/3] rounded shadow-2xl"
+                    onBeforeError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_BEFORE; }}
+                    onAfterError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
+                  />
+                );
+              }
+              return (
+                <img
+                  src={photo.url}
+                  alt={photo.title}
+                  className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }}
+                />
+              );
+            })()}
             <div className="text-white text-sm text-center">
               {lightbox.photos[lightbox.index].title}
               {lightbox.photos.length > 1 && (
@@ -156,12 +172,23 @@ export default function PortfolioPage() {
               const totalPhotos = afterPhotos.length + beforePhotos.length;
               const thumb = afterPhotos[0] ?? FALLBACK;
 
+              const hasCompare = beforePhotos.length > 0 && afterPhotos.length > 0;
               const allPhotos: LightboxPhoto[] = [
+                ...(hasCompare
+                  ? [{
+                      type: "compare" as const,
+                      beforeUrl: beforePhotos[0] || FALLBACK_BEFORE,
+                      afterUrl: afterPhotos[0] || FALLBACK,
+                      title: `${item.title} — Before & After (drag to compare)`,
+                    }]
+                  : []),
                 ...afterPhotos.map((url, i) => ({
+                  type: "image" as const,
                   url: url || FALLBACK,
                   title: `${item.title} — After${afterPhotos.length > 1 ? ` (${i + 1}/${afterPhotos.length})` : ""}`,
                 })),
                 ...beforePhotos.map((url, i) => ({
+                  type: "image" as const,
                   url: url || FALLBACK_BEFORE,
                   title: `${item.title} — Before${beforePhotos.length > 1 ? ` (${i + 1}/${beforePhotos.length})` : ""}`,
                 })),
