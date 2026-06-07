@@ -1,0 +1,197 @@
+Here's the full developer brief ready to paste directly to Replit:
+
+---
+
+## 🛠️ Replit Developer Brief — Electrical Installers Website Feature Additions
+
+**Site:** electricalinstallers.com.au
+**Stack:** React (Vite/Wouter), Express API, Drizzle ORM, PostgreSQL
+**Repo:** https://github.com/CruisingFlick/Electrical-Installers-Website
+
+---
+
+### FEATURE 1 — Booking Status Tracker 🔥
+**Page:** `/track-booking`
+
+After a customer submits a booking, they should be able to check its status using their email address and booking reference number.
+
+**What to build:**
+- Add a `status` field to the bookings table: `received | confirmed | scheduled | completed | cancelled`
+- Add a `referenceNumber` field (auto-generated, e.g. `EI-2026-0042`)
+- Public API endpoint `GET /api/bookings/track?ref=EI-2026-0042&email=customer@email.com` — returns status without requiring login
+- `/track-booking` page with a simple form (email + reference number) that displays a visual progress stepper: **Received → Confirmed → Scheduled → Completed**
+- Admin panel: add status dropdown on each booking card so the contractor can update it
+- When status changes in admin, automatically send the customer a status update email
+
+---
+
+### FEATURE 2 — Auto Email/SMS Confirmation to Customer 🔥
+**Triggered:** on booking and quote form submission
+
+**What to build:**
+- When a booking is submitted, send a confirmation email to the customer containing:
+  - Their reference number
+  - Summary of what they booked (job type, date, suburb)
+  - "We'll contact you within 1 business day" message
+  - Link to `/track-booking` page
+- Same for quote submissions — confirm receipt with their details
+- Use the existing SendGrid integration already in the codebase (`artifacts/api-server/src/lib/email.ts`)
+- SMS optional — if Twilio or similar is available, send a short SMS: *"Hi [Name], we've received your booking request. Ref: EI-2026-0042. We'll call to confirm within 1 business day. – Electrical Installers"*
+
+---
+
+### FEATURE 3 — Google Reviews Integration 🔥
+**Page:** `/reviews`
+
+The reviews page currently shows "No reviews yet" because no one has manually submitted a review. Pull real Google reviews automatically.
+
+**What to build:**
+- Use the **Google Places API** (`https://maps.googleapis.com/maps/api/place/details/json?place_id=PLACE_ID&fields=reviews,rating`)
+- Store the Google API key in environment variables
+- Cache the Google reviews in the database (refresh every 24 hours via a cron job) so the page loads fast and doesn't hit API limits
+- Display Google reviews alongside any manually submitted reviews
+- Show a Google badge/star rating summary at the top (e.g. "4.9 ★ on Google — 47 reviews")
+- Add a "Leave us a Google Review" button linking to the business Google review URL
+- Admin panel: `Site Settings` page — add a field to enter the Google Place ID
+
+---
+
+### FEATURE 4 — Before/After Image Slider 🔥
+**Page:** `/services` and portfolio items
+
+**What to build:**
+- A drag-handle slider component that reveals the "before" image on the left and "after" image on the right
+- On the Services page, the Sheds & Garages section already references before/after — wire up the first portfolio item that has both before and after photos
+- On the Portfolio page (`/portfolio`), each card that has both before AND after images should show the slider in the lightbox
+- The slider should be touch-friendly (works on mobile swipe)
+- Use a simple CSS clip-path or `react-compare-image` library
+
+---
+
+### FEATURE 5 — FAQ Page 🟡
+**Page:** `/faq`
+**Nav:** Add to footer links and Services page bottom CTA
+
+**What to build:**
+- Static accordion-style FAQ page with these initial questions (can be expanded in admin later):
+  - *Do I need to be home during the job?*
+  - *How long does underground power conversion take?*
+  - *What areas do you service?*
+  - *Do you provide a Certificate of Electrical Safety?*
+  - *What's the difference between a quote and a booking?*
+  - *Do you do emergency callouts?*
+  - *How long does a switchboard upgrade take?*
+  - *Are your electricians licensed?*
+- Admin panel: add a simple FAQ manager in `Site Settings` — a list of question/answer pairs the contractor can edit, add, and reorder
+- Store FAQs in the database so they're CMS-managed
+
+---
+
+### FEATURE 6 — Individual Service Pages 🟡
+**Pages:** `/services/new-homes`, `/services/renovations`, `/services/3-phase-upgrades`, `/services/sheds-garages`, `/services/commercial`, `/services/underground-power`, `/services/fault-finding`
+
+**What to build:**
+- Each service gets its own dedicated page with:
+  - Full description of the service
+  - What's included (bullet list)
+  - Relevant portfolio photos pulled dynamically from the portfolio table filtered by category
+  - Pricing guide section (ranges, not fixed prices)
+  - A CTA (Book / Get a Quote)
+- Update the `/services` overview page to link to each individual page instead of being a dead-end
+- Update all nav and service card links to point to the specific page
+- Admin panel: add a "Service Pages" section in Site Settings where content for each page can be edited (title, description, bullet points, pricing blurb)
+
+---
+
+### FEATURE 7 — Blog Content & Admin Editor 🟡
+**Page:** `/blog` (exists but empty)
+
+**What to build:**
+- The blog infrastructure already exists — the admin panel has a Blog editor
+- Pre-populate with 5 starter articles (content below):
+  1. *"How to Know If Your Switchboard Needs Upgrading"*
+  2. *"Underground Power in Victoria: The Complete United Energy Process Explained"*
+  3. *"3-Phase Power at Home: Do You Really Need It?"*
+  4. *"What Is a Certificate of Electrical Safety and When Do You Need One?"*
+  5. *"Wiring a New Home: What to Expect at Each Stage"*
+- Each article should have: title, slug, category, featured image, published date, SEO meta description field
+- Blog listing page should show article cards with image, title, category tag, and excerpt
+- Individual article pages at `/blog/[slug]`
+- Add a "Related Articles" section at the bottom of each post
+
+---
+
+### FEATURE 8 — Working AI Chat Widget 🟡
+**Component:** The chat button already exists in the footer
+
+**What to build:**
+- Connect the existing "Open chat" button to a real chat interface
+- Use the Claude API (already likely configured via the `AI Chat` admin settings page) to power an AI assistant
+- The AI should be pre-prompted with business context:
+  - Services offered, service areas, phone number, hours
+  - How to book / get a quote
+  - Common FAQ answers
+- The chat should:
+  - Answer general electrical questions
+  - Direct people to book/quote when they ask about prices or jobs
+  - Collect name + email if the user wants a callback, and save to the messages inbox
+- Admin panel: The existing `AI Chat` admin settings page — add a text box where the contractor can customise the AI's instructions/persona
+
+---
+
+### FEATURE 9 — Pricing Guide Page 🟢
+**Page:** `/pricing`
+
+**What to build:**
+- A page with ballpark price ranges (NOT fixed quotes) for common jobs:
+  - Switchboard upgrade: from $800–$2,500
+  - Underground power: from $3,500–$8,000+
+  - New home wiring: priced by quote
+  - 3-phase upgrade: from $1,200–$4,000
+  - Shed/garage wiring: from $800–$2,500
+  - Safety switch install: from $250
+- Prominent disclaimer: *"All prices are indicative only. Get a free quote for your specific job."*
+- Big CTA at the bottom: Get a Free Quote
+- Admin panel: add a "Pricing" section in Site Settings where the contractor can update the ranges and descriptions without needing a developer
+
+---
+
+### FEATURE 10 — Emergency / After-Hours Section 🟢
+**Locations:** Homepage hero, Booking page, footer
+
+**What to build:**
+- Add a small "⚡ Electrical Emergency?" banner/section that says: *"For urgent electrical faults, call us directly: 0419 868 703"*
+- On the `/book` page, add "Emergency" as a job type option
+- When "Emergency" is selected, show a message: *"For urgent jobs please call us directly on 0419 868 703 — booking requests are checked within one business day and may not be fast enough for emergencies"*
+- In the admin bookings list, emergency bookings should be flagged with a red badge
+
+---
+
+### FEATURE 11 — Suburb-Specific Landing Pages 🟢
+**Pages:** `/frankston-electrician`, `/mornington-electrician`, `/mount-martha-electrician`, `/bayside-electrician`, `/pakenham-electrician`, `/berwick-electrician`, `/cranbourne-electrician`, `/brighton-electrician`, `/st-kilda-electrician`
+
+**What to build:**
+- Template-driven pages — one React component, content driven by a config object per suburb
+- Each page has:
+  - H1: "Licensed Electrician in [Suburb]"
+  - Local blurb mentioning the suburb specifically
+  - Services list
+  - Portfolio items filtered to that suburb (from the portfolio table's `suburb` field)
+  - Map or service area mention
+  - CTA: Book / Get a Quote
+- Admin panel: add suburb pages manager where new suburbs can be added and their intro text edited
+- All suburb pages linked from the `/service-area` page
+
+---
+
+### General Notes for Replit:
+- All new API routes must use the existing `requireAdmin` middleware for admin-only actions
+- New database tables should be added via Drizzle migrations in `/lib/db`
+- All new pages must be added to the Wouter router in `App.tsx`
+- Email sending uses the existing SendGrid helper in `artifacts/api-server/src/lib/email.ts`
+- Follow the existing code style — Tailwind CSS, shadcn/ui components, React Query for data fetching
+- Environment variables go in Replit Secrets — document any new ones needed (e.g. `GOOGLE_PLACES_API_KEY`)
+
+---
+
+That's the full brief — copy and paste the whole thing to Replit. Each feature is self-contained so Replit can tackle them one at a time starting from the top. Want me to prioritise or cut any of them before you send it?
