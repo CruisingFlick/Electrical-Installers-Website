@@ -8,47 +8,47 @@ import ShareButton from "@/components/ShareButton";
 import QrButton from "@/components/QrButton";
 import ChatWidget from "@/components/ChatWidget";
 import { Phone } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 
-import HomePage from "@/pages/Home";
-import AboutPage from "@/pages/About";
-import ServicesPage from "@/pages/Services";
-import UndergroundPowerPage from "@/pages/UndergroundPower";
-import PortfolioPage from "@/pages/Portfolio";
-import ReviewsPage from "@/pages/Reviews";
-import BookPage from "@/pages/Book";
-import QuotePage from "@/pages/Quote";
-import MessagesPage from "@/pages/Messages";
-import NotFound from "@/pages/not-found";
+const HomePage = lazy(() => import("@/pages/Home"));
+const AboutPage = lazy(() => import("@/pages/About"));
+const ServicesPage = lazy(() => import("@/pages/Services"));
+const UndergroundPowerPage = lazy(() => import("@/pages/UndergroundPower"));
+const PortfolioPage = lazy(() => import("@/pages/Portfolio"));
+const ReviewsPage = lazy(() => import("@/pages/Reviews"));
+const BookPage = lazy(() => import("@/pages/Book"));
+const QuotePage = lazy(() => import("@/pages/Quote"));
+const MessagesPage = lazy(() => import("@/pages/Messages"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
-import AdminLogin from "@/pages/admin/Login";
-import AdminDashboard from "@/pages/admin/Dashboard";
-import AdminBookings from "@/pages/admin/Bookings";
-import AdminPortfolio from "@/pages/admin/Portfolio";
-import AdminReviews from "@/pages/admin/Reviews";
-import AdminQuotes from "@/pages/admin/Quotes";
-import AdminJobMap from "@/pages/admin/JobMap";
-import AdminAiSettings from "@/pages/admin/AiSettings";
-import AdminCalendarView from "@/pages/admin/CalendarView";
-import AdminMediaLibrary from "@/pages/admin/MediaLibrary";
-import AdminCustomers from "@/pages/admin/Customers";
-import AdminBlog from "@/pages/admin/Blog";
-import AdminSiteSettings from "@/pages/admin/SiteSettings";
-import AdminMessages from "@/pages/admin/Messages";
-import ServiceAreaPage from "@/pages/ServiceArea";
-import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
-import TrackBookingPage from "@/pages/TrackBooking";
-import BlogPage from "@/pages/Blog";
-import BlogPostPage from "@/pages/BlogPost";
-import FaqPage from "@/pages/Faq";
-import PricingPage from "@/pages/Pricing";
-import ServiceDetailPage from "@/pages/ServiceDetail";
-import SuburbDetailPage from "@/pages/SuburbDetail";
+const AdminLogin = lazy(() => import("@/pages/admin/Login"));
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const AdminBookings = lazy(() => import("@/pages/admin/Bookings"));
+const AdminPortfolio = lazy(() => import("@/pages/admin/Portfolio"));
+const AdminReviews = lazy(() => import("@/pages/admin/Reviews"));
+const AdminQuotes = lazy(() => import("@/pages/admin/Quotes"));
+const AdminJobMap = lazy(() => import("@/pages/admin/JobMap"));
+const AdminAiSettings = lazy(() => import("@/pages/admin/AiSettings"));
+const AdminCalendarView = lazy(() => import("@/pages/admin/CalendarView"));
+const AdminMediaLibrary = lazy(() => import("@/pages/admin/MediaLibrary"));
+const AdminCustomers = lazy(() => import("@/pages/admin/Customers"));
+const AdminBlog = lazy(() => import("@/pages/admin/Blog"));
+const AdminSiteSettings = lazy(() => import("@/pages/admin/SiteSettings"));
+const AdminMessages = lazy(() => import("@/pages/admin/Messages"));
+const ServiceAreaPage = lazy(() => import("@/pages/ServiceArea"));
+const PrivacyPolicyPage = lazy(() => import("@/pages/PrivacyPolicy"));
+const TrackBookingPage = lazy(() => import("@/pages/TrackBooking"));
+const BlogPage = lazy(() => import("@/pages/Blog"));
+const BlogPostPage = lazy(() => import("@/pages/BlogPost"));
+const FaqPage = lazy(() => import("@/pages/Faq"));
+const PricingPage = lazy(() => import("@/pages/Pricing"));
+const ServiceDetailPage = lazy(() => import("@/pages/ServiceDetail"));
+const SuburbDetailPage = lazy(() => import("@/pages/SuburbDetail"));
 
-import AdminFaqs from "@/pages/admin/Faqs";
-import AdminPricing from "@/pages/admin/Pricing";
-import AdminServicePages from "@/pages/admin/ServicePages";
-import AdminSuburbPages from "@/pages/admin/SuburbPages";
+const AdminFaqs = lazy(() => import("@/pages/admin/Faqs"));
+const AdminPricing = lazy(() => import("@/pages/admin/Pricing"));
+const AdminServicePages = lazy(() => import("@/pages/admin/ServicePages"));
+const AdminSuburbPages = lazy(() => import("@/pages/admin/SuburbPages"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +60,14 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function PageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(210,20%,98%)]">
+      <div className="text-gray-400 text-sm">Loading…</div>
+    </div>
+  );
+}
 
 function AdminGuard({ component: Component }: { component: React.ComponentType }) {
   const [status, setStatus] = useState<"loading" | "ok" | "denied">("loading");
@@ -110,51 +118,53 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 
 function Router() {
   return (
-    <Switch>
-      {/* Public routes */}
-      <Route path="/" component={() => <PublicLayout><HomePage /></PublicLayout>} />
-      <Route path="/about" component={() => <PublicLayout><AboutPage /></PublicLayout>} />
-      <Route path="/services" component={() => <PublicLayout><ServicesPage /></PublicLayout>} />
-      <Route path="/underground-power" component={() => <PublicLayout><UndergroundPowerPage /></PublicLayout>} />
-      <Route path="/portfolio" component={() => <PublicLayout><PortfolioPage /></PublicLayout>} />
-      <Route path="/reviews" component={() => <PublicLayout><ReviewsPage /></PublicLayout>} />
-      <Route path="/book" component={() => <PublicLayout><BookPage /></PublicLayout>} />
-      <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
-      <Route path="/messages" component={() => <PublicLayout><MessagesPage /></PublicLayout>} />
-      <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
-      <Route path="/privacy-policy" component={() => <PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
-      <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
-      <Route path="/blog" component={() => <PublicLayout><BlogPage /></PublicLayout>} />
-      <Route path="/blog/:slug" component={() => <PublicLayout><BlogPostPage /></PublicLayout>} />
-      <Route path="/faq" component={() => <PublicLayout><FaqPage /></PublicLayout>} />
-      <Route path="/pricing" component={() => <PublicLayout><PricingPage /></PublicLayout>} />
-      <Route path="/services/:slug" component={() => <PublicLayout><ServiceDetailPage /></PublicLayout>} />
+    <Suspense fallback={<PageFallback />}>
+      <Switch>
+        {/* Public routes */}
+        <Route path="/" component={() => <PublicLayout><HomePage /></PublicLayout>} />
+        <Route path="/about" component={() => <PublicLayout><AboutPage /></PublicLayout>} />
+        <Route path="/services" component={() => <PublicLayout><ServicesPage /></PublicLayout>} />
+        <Route path="/underground-power" component={() => <PublicLayout><UndergroundPowerPage /></PublicLayout>} />
+        <Route path="/portfolio" component={() => <PublicLayout><PortfolioPage /></PublicLayout>} />
+        <Route path="/reviews" component={() => <PublicLayout><ReviewsPage /></PublicLayout>} />
+        <Route path="/book" component={() => <PublicLayout><BookPage /></PublicLayout>} />
+        <Route path="/quote" component={() => <PublicLayout><QuotePage /></PublicLayout>} />
+        <Route path="/messages" component={() => <PublicLayout><MessagesPage /></PublicLayout>} />
+        <Route path="/service-area" component={() => <PublicLayout><ServiceAreaPage /></PublicLayout>} />
+        <Route path="/privacy-policy" component={() => <PublicLayout><PrivacyPolicyPage /></PublicLayout>} />
+        <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
+        <Route path="/blog" component={() => <PublicLayout><BlogPage /></PublicLayout>} />
+        <Route path="/blog/:slug" component={() => <PublicLayout><BlogPostPage /></PublicLayout>} />
+        <Route path="/faq" component={() => <PublicLayout><FaqPage /></PublicLayout>} />
+        <Route path="/pricing" component={() => <PublicLayout><PricingPage /></PublicLayout>} />
+        <Route path="/services/:slug" component={() => <PublicLayout><ServiceDetailPage /></PublicLayout>} />
 
-      {/* Admin routes */}
-      <Route path="/admin" component={AdminLogin} />
-      <Route path="/admin/dashboard" component={() => <AdminGuard component={AdminDashboard} />} />
-      <Route path="/admin/bookings" component={() => <AdminGuard component={AdminBookings} />} />
-      <Route path="/admin/portfolio" component={() => <AdminGuard component={AdminPortfolio} />} />
-      <Route path="/admin/reviews" component={() => <AdminGuard component={AdminReviews} />} />
-      <Route path="/admin/quotes" component={() => <AdminGuard component={AdminQuotes} />} />
-      <Route path="/admin/jobs" component={() => <AdminGuard component={AdminJobMap} />} />
-      <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
-      <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
-      <Route path="/admin/media" component={() => <AdminGuard component={AdminMediaLibrary} />} />
-      <Route path="/admin/customers" component={() => <AdminGuard component={AdminCustomers} />} />
-      <Route path="/admin/blog" component={() => <AdminGuard component={AdminBlog} />} />
-      <Route path="/admin/site-settings" component={() => <AdminGuard component={AdminSiteSettings} />} />
-      <Route path="/admin/messages" component={() => <AdminGuard component={AdminMessages} />} />
-      <Route path="/admin/faqs" component={() => <AdminGuard component={AdminFaqs} />} />
-      <Route path="/admin/pricing" component={() => <AdminGuard component={AdminPricing} />} />
-      <Route path="/admin/service-pages" component={() => <AdminGuard component={AdminServicePages} />} />
-      <Route path="/admin/suburb-pages" component={() => <AdminGuard component={AdminSuburbPages} />} />
+        {/* Admin routes */}
+        <Route path="/admin" component={() => <Suspense fallback={<PageFallback />}><AdminLogin /></Suspense>} />
+        <Route path="/admin/dashboard" component={() => <AdminGuard component={AdminDashboard} />} />
+        <Route path="/admin/bookings" component={() => <AdminGuard component={AdminBookings} />} />
+        <Route path="/admin/portfolio" component={() => <AdminGuard component={AdminPortfolio} />} />
+        <Route path="/admin/reviews" component={() => <AdminGuard component={AdminReviews} />} />
+        <Route path="/admin/quotes" component={() => <AdminGuard component={AdminQuotes} />} />
+        <Route path="/admin/jobs" component={() => <AdminGuard component={AdminJobMap} />} />
+        <Route path="/admin/ai-settings" component={() => <AdminGuard component={AdminAiSettings} />} />
+        <Route path="/admin/calendar" component={() => <AdminGuard component={AdminCalendarView} />} />
+        <Route path="/admin/media" component={() => <AdminGuard component={AdminMediaLibrary} />} />
+        <Route path="/admin/customers" component={() => <AdminGuard component={AdminCustomers} />} />
+        <Route path="/admin/blog" component={() => <AdminGuard component={AdminBlog} />} />
+        <Route path="/admin/site-settings" component={() => <AdminGuard component={AdminSiteSettings} />} />
+        <Route path="/admin/messages" component={() => <AdminGuard component={AdminMessages} />} />
+        <Route path="/admin/faqs" component={() => <AdminGuard component={AdminFaqs} />} />
+        <Route path="/admin/pricing" component={() => <AdminGuard component={AdminPricing} />} />
+        <Route path="/admin/service-pages" component={() => <AdminGuard component={AdminServicePages} />} />
+        <Route path="/admin/suburb-pages" component={() => <AdminGuard component={AdminSuburbPages} />} />
 
-      {/* Suburb landing pages — catch-all before NotFound */}
-      <Route path="/:slug" component={() => <PublicLayout><SuburbDetailPage /></PublicLayout>} />
+        {/* Suburb landing pages — catch-all before NotFound */}
+        <Route path="/:slug" component={() => <PublicLayout><SuburbDetailPage /></PublicLayout>} />
 
-      <Route component={NotFound} />
-    </Switch>
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 

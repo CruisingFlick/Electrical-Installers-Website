@@ -57,6 +57,22 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Admin pages — only loaded when visiting /admin routes
+          if (id.includes("/pages/admin/")) return "admin";
+          // Map-heavy feature (Leaflet) — only on /admin/jobs
+          if (id.includes("leaflet") || id.includes("react-leaflet")) return "leaflet";
+          // Recharts — only on admin dashboard
+          if (id.includes("recharts") || id.includes("victory")) return "charts";
+          // React core
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) return "react";
+          // Other large vendor libs
+          if (id.includes("node_modules/")) return "vendor";
+        },
+      },
+    },
   },
   server: {
     port,
