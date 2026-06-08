@@ -11,6 +11,12 @@ const suburbPageSchema = z.object({
   heading: z.string().min(1),
   intro: z.string().min(1),
   portfolioSuburb: z.string().optional().nullable(),
+  servicesCopy: z.string().optional().nullable(),
+  recentProjects: z.string().optional().nullable(),
+  localTestimonial: z.string().optional().nullable(),
+  localTestimonialAuthor: z.string().optional().nullable(),
+  nearbyAreas: z.string().optional().nullable(),
+  localFaqs: z.string().optional().nullable(),
   sortOrder: z.number().int().optional(),
 });
 
@@ -21,6 +27,12 @@ function values(data: z.infer<typeof suburbPageSchema>) {
     heading: data.heading,
     intro: data.intro,
     portfolioSuburb: data.portfolioSuburb ?? null,
+    servicesCopy: data.servicesCopy ?? null,
+    recentProjects: data.recentProjects ?? null,
+    localTestimonial: data.localTestimonial ?? null,
+    localTestimonialAuthor: data.localTestimonialAuthor ?? null,
+    nearbyAreas: data.nearbyAreas ?? null,
+    localFaqs: data.localFaqs ?? null,
     sortOrder: data.sortOrder ?? 0,
   };
 }

@@ -34,6 +34,12 @@ export type SuburbPage = {
   heading: string;
   intro: string;
   portfolioSuburb?: string | null;
+  servicesCopy?: string | null;
+  recentProjects?: string | null;
+  localTestimonial?: string | null;
+  localTestimonialAuthor?: string | null;
+  nearbyAreas?: string | null;
+  localFaqs?: string | null;
   sortOrder: number;
 };
 
