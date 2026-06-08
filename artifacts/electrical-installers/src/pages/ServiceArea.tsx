@@ -25,7 +25,7 @@ const SERVICE_AREAS = [
     ] as [number, number][],
   },
   {
-    name: "St Kilda & Bayside",
+    name: "South-East Victoria",
     color: "#f97316",
     fillColor: "#f97316",
     description: "Serving St Kilda, South Yarra, Port Melbourne, Elwood, Brighton, Sandringham, and surrounding inner south suburbs.",
