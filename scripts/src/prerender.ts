@@ -570,79 +570,121 @@ async function main() {
 
   console.log("\nListing pages + dynamic detail routes (from database):");
 
-  // DATABASE_URL is required. If it is absent the build fails so that
-  // dynamic SEO pages (blog, service, suburb) are never silently omitted
-  // from a production deployment. Provide DATABASE_URL in your build
-  // environment (or CI secrets) to enable full prerendering.
-  if (!process.env.DATABASE_URL) {
-    console.error(
-      "\nError: DATABASE_URL is not set. Cannot prerender dynamic routes (blog posts, service pages, suburb pages).",
-    );
-    console.error(
-      "Set DATABASE_URL in your build environment to generate route-specific HTML for every public detail page.\n",
-    );
-    process.exit(1);
+  // Dynamic SEO routes are sourced from the database. Two realities make a hard
+  // database dependency at build time fragile for production deployments:
+  //   1. The production schema can lag the development schema on the very release
+  //      that introduces a new column — Replit applies the publish-time schema
+  //      diff to production *after* the build runs, so a build that queries the
+  //      new column sees the old schema and a "column does not exist" error.
+  //   2. The build sandbox may not always have a reachable DATABASE_URL.
+  // Rather than aborting the whole deployment in those cases, degrade gracefully:
+  // static routes always prerender, and each dynamic collection prerenders only
+  // when its query succeeds. Skipped routes still render client-side at runtime
+  // and get prerendered on the next publish once production has caught up.
+  async function loadDynamicData() {
+    const empty = {
+      blogPosts: [],
+      servicePages: [],
+      suburbPages: [],
+      faqs: [],
+    };
+
+    if (!process.env.DATABASE_URL) {
+      console.warn(
+        "\n  ! DATABASE_URL is not set — skipping dynamic SEO routes (blog, service, suburb, faq).\n",
+      );
+      return empty;
+    }
+
+    try {
+      const {
+        db,
+        blogPostsTable,
+        servicePagesTable,
+        suburbPagesTable,
+        faqsTable,
+      } = await import("@workspace/db");
+      const { eq, asc } = await import("drizzle-orm");
+
+      const skip = (label: string) => (err: unknown) => {
+        console.warn(
+          `  ! Skipping ${label} (database not ready): ${(err as Error).message}`,
+        );
+        return [] as never[];
+      };
+
+      const [blogPosts, servicePages, suburbPages, faqs] = await Promise.all([
+        Promise.resolve(
+          db
+            .select({
+              slug: blogPostsTable.slug,
+              title: blogPostsTable.title,
+              excerpt: blogPostsTable.excerpt,
+              content: blogPostsTable.content,
+              category: blogPostsTable.category,
+              imageUrl: blogPostsTable.imageUrl,
+              publishedAt: blogPostsTable.publishedAt,
+            })
+            .from(blogPostsTable)
+            .where(eq(blogPostsTable.status, "published")),
+        ).catch(skip("blog posts")),
+
+        Promise.resolve(
+          db
+            .select({
+              slug: servicePagesTable.slug,
+              title: servicePagesTable.title,
+              shortDescription: servicePagesTable.shortDescription,
+              fullDescription: servicePagesTable.fullDescription,
+              bullets: servicePagesTable.bullets,
+              pricingBlurb: servicePagesTable.pricingBlurb,
+              portfolioCategory: servicePagesTable.portfolioCategory,
+              heroImageUrl: servicePagesTable.heroImageUrl,
+            })
+            .from(servicePagesTable),
+        ).catch(skip("service pages")),
+
+        Promise.resolve(
+          db
+            .select({
+              slug: suburbPagesTable.slug,
+              suburb: suburbPagesTable.suburb,
+              heading: suburbPagesTable.heading,
+              intro: suburbPagesTable.intro,
+              servicesCopy: suburbPagesTable.servicesCopy,
+              recentProjects: suburbPagesTable.recentProjects,
+              localTestimonial: suburbPagesTable.localTestimonial,
+              localTestimonialAuthor: suburbPagesTable.localTestimonialAuthor,
+              nearbyAreas: suburbPagesTable.nearbyAreas,
+              localFaqs: suburbPagesTable.localFaqs,
+            })
+            .from(suburbPagesTable),
+        ).catch(skip("suburb pages")),
+
+        Promise.resolve(
+          db
+            .select({
+              id: faqsTable.id,
+              question: faqsTable.question,
+              answer: faqsTable.answer,
+              sortOrder: faqsTable.sortOrder,
+            })
+            .from(faqsTable)
+            .orderBy(asc(faqsTable.sortOrder), asc(faqsTable.id)),
+        ).catch(skip("faqs")),
+      ]);
+
+      return { blogPosts, servicePages, suburbPages, faqs };
+    } catch (err) {
+      console.warn(
+        `\n  ! Could not load CMS data — skipping dynamic SEO routes: ${(err as Error).message}\n`,
+      );
+      return empty;
+    }
   }
 
-  // Dynamic import keeps @workspace/db from throwing at module load time when
-  // DATABASE_URL happens to be missing, but here we know it is present so any
-  // error propagates and fails the build.
-  const { db, blogPostsTable, servicePagesTable, suburbPagesTable, faqsTable } =
-    await import("@workspace/db");
-  const { eq, asc } = await import("drizzle-orm");
-
-  const [blogPosts, servicePages, suburbPages, faqs] = await Promise.all([
-    db
-      .select({
-        slug: blogPostsTable.slug,
-        title: blogPostsTable.title,
-        excerpt: blogPostsTable.excerpt,
-        content: blogPostsTable.content,
-        category: blogPostsTable.category,
-        imageUrl: blogPostsTable.imageUrl,
-        publishedAt: blogPostsTable.publishedAt,
-      })
-      .from(blogPostsTable)
-      .where(eq(blogPostsTable.status, "published")),
-
-    db
-      .select({
-        slug: servicePagesTable.slug,
-        title: servicePagesTable.title,
-        shortDescription: servicePagesTable.shortDescription,
-        fullDescription: servicePagesTable.fullDescription,
-        bullets: servicePagesTable.bullets,
-        pricingBlurb: servicePagesTable.pricingBlurb,
-        portfolioCategory: servicePagesTable.portfolioCategory,
-        heroImageUrl: servicePagesTable.heroImageUrl,
-      })
-      .from(servicePagesTable),
-
-    db
-      .select({
-        slug: suburbPagesTable.slug,
-        suburb: suburbPagesTable.suburb,
-        heading: suburbPagesTable.heading,
-        intro: suburbPagesTable.intro,
-        servicesCopy: suburbPagesTable.servicesCopy,
-        recentProjects: suburbPagesTable.recentProjects,
-        localTestimonial: suburbPagesTable.localTestimonial,
-        localTestimonialAuthor: suburbPagesTable.localTestimonialAuthor,
-        nearbyAreas: suburbPagesTable.nearbyAreas,
-        localFaqs: suburbPagesTable.localFaqs,
-      })
-      .from(suburbPagesTable),
-
-    db
-      .select({
-        id: faqsTable.id,
-        question: faqsTable.question,
-        answer: faqsTable.answer,
-        sortOrder: faqsTable.sortOrder,
-      })
-      .from(faqsTable)
-      .orderBy(asc(faqsTable.sortOrder), asc(faqsTable.id)),
-  ]);
+  const { blogPosts, servicePages, suburbPages, faqs } =
+    await loadDynamicData();
 
   // --- Listing pages with real crawlable content and links ---
 
