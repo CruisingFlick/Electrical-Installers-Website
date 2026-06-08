@@ -1,6 +1,14 @@
 import { useGetBlogPost, getGetBlogPostQueryKey, useListBlogPosts } from "@workspace/api-client-react";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Calendar, Tag, BookOpen, Phone, ArrowRight } from "lucide-react";
+import { useJsonLd } from "@/hooks/useJsonLd";
+
+const PUBLISHER = {
+  "@type": "Organization",
+  "@id": "https://www.electricalinstallers.com.au/#business",
+  "name": "Electrical Installers",
+  "url": "https://www.electricalinstallers.com.au",
+} as const;
 
 export default function BlogPostPage() {
   const params = useParams<{ slug: string }>();
@@ -11,6 +19,19 @@ export default function BlogPostPage() {
     .filter((p) => p.slug !== slug)
     .sort((a, b) => (a.category === post?.category ? -1 : 0) - (b.category === post?.category ? -1 : 0))
     .slice(0, 3);
+
+  const pageUrl = `https://www.electricalinstallers.com.au/blog/${slug}`;
+  useJsonLd(post ? {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
+    "headline": post.title,
+    "description": post.excerpt ?? undefined,
+    ...(post.imageUrl ? { "image": post.imageUrl } : {}),
+    ...(post.publishedAt ? { "datePublished": post.publishedAt } : {}),
+    "publisher": PUBLISHER,
+    "author": PUBLISHER,
+  } : null);
 
   if (isLoading) {
     return (

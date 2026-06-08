@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Check, Phone, Wrench, ArrowRight } from "lucide-react";
 import { apiGet, type ServicePage } from "@/lib/cms";
+import { useJsonLd } from "@/hooks/useJsonLd";
 
 export default function ServiceDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -12,6 +13,23 @@ export default function ServiceDetailPage() {
     enabled: !!slug,
     retry: false,
   });
+
+  const pageUrl = `https://www.electricalinstallers.com.au/services/${slug}`;
+  useJsonLd(service ? {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": service.title,
+    "description": service.shortDescription || service.fullDescription,
+    ...(service.heroImageUrl ? { "image": service.heroImageUrl } : {}),
+    "url": pageUrl,
+    "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
+    "provider": {
+      "@type": "LocalBusiness",
+      "@id": "https://www.electricalinstallers.com.au/#business",
+      "name": "Electrical Installers",
+      "url": "https://www.electricalinstallers.com.au",
+    },
+  } : null);
 
   if (isLoading) {
     return (

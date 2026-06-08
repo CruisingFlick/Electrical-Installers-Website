@@ -3,6 +3,7 @@ import { Link, useParams } from "wouter";
 import { MapPin, Phone, Check, Shield, Clock, Star } from "lucide-react";
 import { apiGet, type SuburbPage } from "@/lib/cms";
 import NotFound from "@/pages/not-found";
+import { useJsonLd } from "@/hooks/useJsonLd";
 
 const HIGHLIGHTS = [
   { icon: Shield, label: "Licensed & insured", desc: "REC 25510 — fully compliant work" },
@@ -19,6 +20,23 @@ export default function SuburbDetailPage() {
     enabled: !!slug,
     retry: false,
   });
+
+  const pageUrl = `https://www.electricalinstallers.com.au/${slug}`;
+  useJsonLd(page ? {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": page.heading,
+    "description": page.intro,
+    "areaServed": { "@type": "Place", "name": page.suburb },
+    "url": pageUrl,
+    "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
+    "provider": {
+      "@type": "LocalBusiness",
+      "@id": "https://www.electricalinstallers.com.au/#business",
+      "name": "Electrical Installers",
+      "url": "https://www.electricalinstallers.com.au",
+    },
+  } : null);
 
   if (isLoading) {
     return (

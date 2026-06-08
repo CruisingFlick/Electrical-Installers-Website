@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { ChevronDown, HelpCircle, Phone } from "lucide-react";
 import { apiGet, type Faq } from "@/lib/cms";
+import { useJsonLd } from "@/hooks/useJsonLd";
 
 export default function FaqPage() {
   const { data: faqs = [], isLoading } = useQuery({
@@ -10,6 +11,19 @@ export default function FaqPage() {
     queryFn: () => apiGet<Faq[]>("/faqs"),
   });
   const [open, setOpen] = useState<number | null>(null);
+
+  useJsonLd(faqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer,
+      },
+    })),
+  } : null);
 
   return (
     <div>
