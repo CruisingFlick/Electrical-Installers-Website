@@ -125,14 +125,6 @@ const STATIC_ROUTES: Array<{
       "<h1>About Electrical Installers</h1><p>Victorian licensed electricians (REC 25510) with over 35 years of design expertise, serving the Mornington Peninsula, Bayside, and South East Melbourne. Fully licensed and insured, with a commitment to honest, reliable workmanship on every job.</p>",
   },
   {
-    path: "/services",
-    title: "Electrical Services | Mornington Peninsula Electricians",
-    description:
-      "Full range of residential and commercial electrical services on the Mornington Peninsula. New homes, renovations, switchboard upgrades, underground power, 3-phase upgrades, and more.",
-    noscript:
-      "<h1>Our Electrical Services</h1><p>Complete electrical services for residential and commercial properties across the Mornington Peninsula, Bayside, and South East Melbourne. New home wiring, renovations, switchboard upgrades, underground power, 3-phase industrial work, and safety inspections.</p>",
-  },
-  {
     path: "/underground-power",
     title: "Underground Power Specialists | Mornington Peninsula",
     description:
@@ -173,14 +165,6 @@ const STATIC_ROUTES: Array<{
       "<h1>Get a Free Electrical Quote</h1><p>Request a free virtual electrical quote for your project. Describe your work and attach photos. We'll provide indicative pricing and follow up to arrange a site visit.</p>",
   },
   {
-    path: "/blog",
-    title: "Electrical Tips & Guides | Electrical Installers",
-    description:
-      "Practical electrical tips and guides from our licensed electricians. Learn about home electrical systems, safety, switchboards, underground power, and more.",
-    noscript:
-      "<h1>Electrical Tips & Guides</h1><p>Practical advice from our licensed electricians helping you understand your home's electrical system, stay safe, and get the most from your electrical investment on the Mornington Peninsula.</p>",
-  },
-  {
     path: "/faq",
     title: "Electrical FAQs | Mornington Peninsula Electricians",
     description:
@@ -195,14 +179,6 @@ const STATIC_ROUTES: Array<{
       "Indicative electrical pricing for common jobs on the Mornington Peninsula — power points, switchboard upgrades, underground power, lighting, and more.",
     noscript:
       "<h1>Electrical Pricing Guide</h1><p>Indicative price ranges for common electrical jobs on the Mornington Peninsula. Actual quotes depend on your specific requirements. Contact us for a free personalised quote.</p>",
-  },
-  {
-    path: "/service-area",
-    title: "Service Areas | Mornington Peninsula Electricians",
-    description:
-      "Electrical Installers serves the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding South East Melbourne areas. Licensed local electricians.",
-    noscript:
-      "<h1>Our Service Areas</h1><p>We serve residential and commercial customers across the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding areas of South East Melbourne with professional electrical services.</p>",
   },
   {
     path: "/messages",
@@ -253,17 +229,53 @@ async function main() {
     writeRoute(route.path, html);
   }
 
-  console.log("\nDynamic routes (from database):");
+  console.log("\nListing pages + dynamic detail routes (from database):");
 
   // If DATABASE_URL is absent there is genuinely no DB in this build environment
-  // — skip dynamic routes with a clear warning. If it IS set, any failure is a
-  // real error and must abort the build so dynamic SEO pages are never silently
-  // omitted from a production deployment.
+  // — write the listing pages with generic noscript copy and skip detail routes,
+  // with a clear warning. If DATABASE_URL IS set, any failure is a real error and
+  // must abort the build so dynamic SEO pages are never silently omitted from a
+  // production deployment.
   if (!process.env.DATABASE_URL) {
     console.warn(
-      "\nWarning: DATABASE_URL not set — dynamic routes (blog, services, suburbs) skipped.",
+      "\nWarning: DATABASE_URL not set — using generic noscript for listing pages; detail routes skipped.",
     );
     console.warn("Set DATABASE_URL at build time to prerender dynamic pages.\n");
+
+    // Write listing pages with plain fallback noscript (no crawlable links)
+    writeRoute(
+      "/blog",
+      injectMeta(baseHtml, {
+        title: "Electrical Tips & Guides | Electrical Installers",
+        description:
+          "Practical electrical tips and guides from our licensed electricians. Learn about home electrical systems, safety, switchboards, underground power, and more.",
+        canonicalPath: "/blog",
+        noscriptHtml:
+          "<h1>Electrical Tips &amp; Guides</h1><p>Practical advice from our licensed electricians helping you understand your home's electrical system, stay safe, and get the most from your electrical investment on the Mornington Peninsula.</p>",
+      }),
+    );
+    writeRoute(
+      "/services",
+      injectMeta(baseHtml, {
+        title: "Electrical Services | Mornington Peninsula Electricians",
+        description:
+          "Full range of residential and commercial electrical services on the Mornington Peninsula. New homes, renovations, switchboard upgrades, underground power, 3-phase upgrades, and more.",
+        canonicalPath: "/services",
+        noscriptHtml:
+          "<h1>Our Electrical Services</h1><p>Complete electrical services for residential and commercial properties across the Mornington Peninsula, Bayside, and South East Melbourne. New home wiring, renovations, switchboard upgrades, underground power, 3-phase industrial work, and safety inspections.</p>",
+      }),
+    );
+    writeRoute(
+      "/service-area",
+      injectMeta(baseHtml, {
+        title: "Service Areas | Mornington Peninsula Electricians",
+        description:
+          "Electrical Installers serves the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding South East Melbourne areas. Licensed local electricians.",
+        canonicalPath: "/service-area",
+        noscriptHtml:
+          "<h1>Our Service Areas</h1><p>We serve residential and commercial customers across the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding areas of South East Melbourne with professional electrical services.</p>",
+      }),
+    );
   } else {
     // Dynamic import keeps @workspace/db from throwing at module load time when
     // DATABASE_URL happens to be missing, but here we know it is present so any
@@ -301,6 +313,58 @@ async function main() {
         })
         .from(suburbPagesTable),
     ]);
+
+    // --- Listing pages with real crawlable anchor links ---
+
+    // /blog — link to every published post
+    const blogLinksHtml =
+      blogPosts.length > 0
+        ? `<ul>${blogPosts.map((p) => `<li><a href="/blog/${p.slug}">${escapeAttr(p.title)}</a> — ${escapeAttr(truncate(p.excerpt, 120))}</li>`).join("")}</ul>`
+        : "";
+    writeRoute(
+      "/blog",
+      injectMeta(baseHtml, {
+        title: "Electrical Tips & Guides | Electrical Installers",
+        description:
+          "Practical electrical tips and guides from our licensed electricians. Learn about home electrical systems, safety, switchboards, underground power, and more.",
+        canonicalPath: "/blog",
+        noscriptHtml: `<h1>Electrical Tips &amp; Guides</h1><p>Practical advice from our licensed electricians helping you understand your home's electrical system, stay safe, and get the most from your electrical investment on the Mornington Peninsula.</p>${blogLinksHtml}`,
+      }),
+    );
+
+    // /services — link to every CMS service detail page
+    const serviceLinksHtml =
+      servicePages.length > 0
+        ? `<ul>${servicePages.map((p) => `<li><a href="/services/${p.slug}">${escapeAttr(p.title)}</a> — ${escapeAttr(truncate(p.shortDescription, 120))}</li>`).join("")}</ul>`
+        : "";
+    writeRoute(
+      "/services",
+      injectMeta(baseHtml, {
+        title: "Electrical Services | Mornington Peninsula Electricians",
+        description:
+          "Full range of residential and commercial electrical services on the Mornington Peninsula. New homes, renovations, switchboard upgrades, underground power, 3-phase upgrades, and more.",
+        canonicalPath: "/services",
+        noscriptHtml: `<h1>Our Electrical Services</h1><p>Complete electrical services for residential and commercial properties across the Mornington Peninsula, Bayside, and South East Melbourne. New home wiring, renovations, switchboard upgrades, underground power, 3-phase industrial work, and safety inspections.</p>${serviceLinksHtml}`,
+      }),
+    );
+
+    // /service-area — link to every suburb landing page
+    const suburbLinksHtml =
+      suburbPages.length > 0
+        ? `<ul>${suburbPages.map((p) => `<li><a href="/${p.slug}">${escapeAttr(p.suburb)}</a></li>`).join("")}</ul>`
+        : "";
+    writeRoute(
+      "/service-area",
+      injectMeta(baseHtml, {
+        title: "Service Areas | Mornington Peninsula Electricians",
+        description:
+          "Electrical Installers serves the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding South East Melbourne areas. Licensed local electricians.",
+        canonicalPath: "/service-area",
+        noscriptHtml: `<h1>Our Service Areas</h1><p>We serve residential and commercial customers across the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding areas of South East Melbourne with professional electrical services.</p>${suburbLinksHtml}`,
+      }),
+    );
+
+    // --- Individual detail pages ---
 
     for (const post of blogPosts) {
       const canonicalPath = `/blog/${post.slug}`;
