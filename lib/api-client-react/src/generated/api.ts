@@ -39,6 +39,7 @@ import type {
   CreatedThread,
   Customer,
   CustomerWithBookings,
+  DeleteBookingBody,
   GetThreadParams,
   HealthStatus,
   Job,
@@ -1880,14 +1881,15 @@ export const getDeleteBookingUrl = (id: number,) => {
 /**
  * @summary Delete a booking
  */
-export const deleteBooking = async (id: number, options?: RequestInit): Promise<void> => {
+export const deleteBooking = async (id: number,
+    deleteBookingBody?: DeleteBookingBody, options?: RequestInit): Promise<void> => {
 
   return customFetch<void>(getDeleteBookingUrl(id),
   {
     ...options,
-    method: 'DELETE'
-
-
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(deleteBookingBody)
   }
 );}
 
@@ -1895,8 +1897,8 @@ export const deleteBooking = async (id: number, options?: RequestInit): Promise<
 
 
 export const getDeleteBookingMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number;data?: BodyType<DeleteBookingBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number;data?: BodyType<DeleteBookingBody>}, TContext> => {
 
 const mutationKey = ['deleteBooking'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1908,10 +1910,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBooking>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBooking>>, {id: number;data?: BodyType<DeleteBookingBody>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  deleteBooking(id,requestOptions)
+          return  deleteBooking(id,data,requestOptions)
         }
 
 
@@ -1922,18 +1924,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type DeleteBookingMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBooking>>>
-
+    export type DeleteBookingMutationBody = BodyType<DeleteBookingBody> | undefined
     export type DeleteBookingMutationError = ErrorType<unknown>
 
     /**
  * @summary Delete a booking
  */
 export const useDeleteBooking = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBooking>>, TError,{id: number;data?: BodyType<DeleteBookingBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof deleteBooking>>,
         TError,
-        {id: number},
+        {id: number;data?: BodyType<DeleteBookingBody>},
         TContext
       > => {
       return useMutation(getDeleteBookingMutationOptions(options));

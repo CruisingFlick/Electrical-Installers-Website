@@ -44,6 +44,8 @@ export interface Booking {
   status: BookingStatusProperty;
   adminNotes?: string;
   referralSource?: string | null;
+  deletedAt?: string | null;
+  deletionReason?: string | null;
   createdAt: string;
 }
 
@@ -82,6 +84,11 @@ export const UpdateBookingStatusBodyStatus = {
 
 export interface UpdateBookingStatusBody {
   status: UpdateBookingStatusBodyStatus;
+}
+
+export interface DeleteBookingBody {
+  /** Optional reason recorded in the customer's history when the job is deleted */
+  reason?: string;
 }
 
 export interface ConfirmBookingBody {

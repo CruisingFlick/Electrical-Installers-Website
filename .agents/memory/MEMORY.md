@@ -4,3 +4,4 @@
 - [Calendar event timezone](calendar-timezone.md) — all ICS/Google Calendar events must use Australia/Melbourne wall-clock → UTC (server host is UTC), via wallClockToUtc helper.
 - [Calendar feed subscribe token](calendar-feed-token.md) — auto-sync ICS feed token is persisted in settings table (not derived from SESSION_SECRET) so "subscribe once" URLs survive secret rotation.
 - [CMS feature routes use raw fetch](cms-raw-fetch-convention.md) — FAQ/Pricing/Service/Suburb/Google-reviews routes intentionally use local Zod + raw fetch (not Orval codegen), matching blog/settings; don't "fix" the OpenAPI drift.
+- [Booking soft-delete consistency](booking-soft-delete.md) — soft-deleted bookings (deletedAt) must be excluded from list/export/track/analytics/mutations/customer-sync, but STILL shown in customer job history.

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, customersTable, bookingsTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { requireAdmin } from "../middleware/admin-auth";
 
@@ -22,6 +22,7 @@ function formatCustomer(c: typeof customersTable.$inferSelect) {
 function formatBooking(b: typeof bookingsTable.$inferSelect) {
   return {
     ...b,
+    deletedAt: b.deletedAt ? b.deletedAt.toISOString() : null,
     createdAt: b.createdAt.toISOString(),
   };
 }
@@ -33,7 +34,11 @@ function csvCell(value: string | null | undefined): string {
 
 router.post("/sync", requireAdmin, async (req, res, next) => {
   try {
-    const bookings = await db.select().from(bookingsTable).orderBy(bookingsTable.createdAt);
+    const bookings = await db
+      .select()
+      .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
+      .orderBy(bookingsTable.createdAt);
     let synced = 0;
     for (const booking of bookings) {
       if (!booking.customerEmail) continue;

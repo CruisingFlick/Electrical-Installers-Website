@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, bookingsTable, reviewsTable, quotesTable, portfolioTable } from "@workspace/db";
-import { eq, count, sql } from "drizzle-orm";
+import { eq, count, sql, and, isNull } from "drizzle-orm";
 import { requireAdmin } from "../middleware/admin-auth";
 
 const router = Router();
@@ -9,12 +9,13 @@ router.get("/summary", requireAdmin, async (req, res, next) => {
   try {
     const [totalBookings] = await db
       .select({ count: count() })
-      .from(bookingsTable);
+      .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt));
 
     const [pendingBookings] = await db
       .select({ count: count() })
       .from(bookingsTable)
-      .where(eq(bookingsTable.status, "pending"));
+      .where(and(eq(bookingsTable.status, "pending"), isNull(bookingsTable.deletedAt)));
 
     const [totalQuotes] = await db
       .select({ count: count() })
@@ -32,11 +33,12 @@ router.get("/summary", requireAdmin, async (req, res, next) => {
     const recentBookings = await db
       .select({ count: count() })
       .from(bookingsTable)
-      .where(sql`created_at > now() - interval '30 days'`);
+      .where(sql`created_at > now() - interval '30 days' and deleted_at is null`);
 
     const topServiceRows = await db
       .select({ serviceType: bookingsTable.serviceType, cnt: count() })
       .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
       .groupBy(bookingsTable.serviceType)
       .orderBy(sql`count(*) desc`)
       .limit(1);
@@ -44,6 +46,7 @@ router.get("/summary", requireAdmin, async (req, res, next) => {
     const topRegionRows = await db
       .select({ suburb: bookingsTable.suburb, cnt: count() })
       .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
       .groupBy(bookingsTable.suburb)
       .orderBy(sql`count(*) desc`)
       .limit(1);
@@ -68,6 +71,7 @@ router.get("/bookings-by-service", requireAdmin, async (req, res, next) => {
     const rows = await db
       .select({ service: bookingsTable.jobType, count: count() })
       .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
       .groupBy(bookingsTable.jobType)
       .orderBy(sql`count(*) desc`);
 
@@ -82,6 +86,7 @@ router.get("/bookings-by-region", requireAdmin, async (req, res, next) => {
     const rows = await db
       .select({ region: bookingsTable.suburb, count: count() })
       .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
       .groupBy(bookingsTable.suburb)
       .orderBy(sql`count(*) desc`);
 

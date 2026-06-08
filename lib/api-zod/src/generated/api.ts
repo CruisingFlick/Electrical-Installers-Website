@@ -314,6 +314,8 @@ export const ListBookingsResponseItem = zod.object({
   "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
+  "deletedAt": zod.string().nullish(),
+  "deletionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListBookingsResponse = zod.array(ListBookingsResponseItem)
@@ -363,6 +365,8 @@ export const ConfirmBookingResponse = zod.object({
   "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
+  "deletedAt": zod.string().nullish(),
+  "deletionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -389,6 +393,8 @@ export const GetBookingResponse = zod.object({
   "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
+  "deletedAt": zod.string().nullish(),
+  "deletionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -419,6 +425,8 @@ export const UpdateBookingStatusResponse = zod.object({
   "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
+  "deletedAt": zod.string().nullish(),
+  "deletionReason": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -428,6 +436,10 @@ export const UpdateBookingStatusResponse = zod.object({
  */
 export const DeleteBookingParams = zod.object({
   "id": zod.coerce.number()
+})
+
+export const DeleteBookingBody = zod.object({
+  "reason": zod.string().optional().describe('Optional reason recorded in the customer\'s history when the job is deleted')
 })
 
 
@@ -487,6 +499,8 @@ export const GetCustomerResponse = zod.object({
   "status": zod.enum(['pending', 'confirmed', 'scheduled', 'completed', 'cancelled']),
   "adminNotes": zod.string().optional(),
   "referralSource": zod.string().nullish(),
+  "deletedAt": zod.string().nullish(),
+  "deletionReason": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 }))

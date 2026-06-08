@@ -1,6 +1,6 @@
 import { useListBookings, useDeleteBooking, getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2, ImageIcon, Search, X, ChevronRight, Download } from "lucide-react";
+import { Trash2, ImageIcon, Search, X, ChevronRight, Download, AlertTriangle } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { useState, useMemo } from "react";
 import BookingDetailDrawer from "./BookingDetailDrawer";
@@ -68,16 +68,23 @@ export default function AdminBookings() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<typeof STATUS_OPTIONS[number]>("all");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Booking | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
 
-  function handleDelete(id: number) {
-    if (confirm("Delete this booking?")) {
-      deleteBooking.mutate({ id }, {
+  function confirmDelete() {
+    if (!deleteTarget) return;
+    const id = deleteTarget.id;
+    deleteBooking.mutate(
+      { id, data: { reason: deleteReason.trim() || undefined } },
+      {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
           if (selectedBooking?.id === id) setSelectedBooking(null);
+          setDeleteTarget(null);
+          setDeleteReason("");
         },
-      });
-    }
+      }
+    );
   }
 
   const filtered = useMemo(() => {
@@ -227,7 +234,7 @@ export default function AdminBookings() {
                             <ChevronRight size={16} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(b.id); }}
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(b); setDeleteReason(""); }}
                             className="text-red-500 hover:text-red-700 p-1 rounded"
                             data-testid={`button-delete-booking-${b.id}`}
                           >
@@ -265,6 +272,67 @@ export default function AdminBookings() {
           onLightbox={(url) => setLightboxUrl(url)}
           onUpdate={(updated) => setSelectedBooking(updated)}
         />
+
+        {/* Delete-with-reason modal */}
+        {deleteTarget && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
+            onClick={() => { if (!deleteBooking.isPending) { setDeleteTarget(null); setDeleteReason(""); } }}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3 px-6 pt-6">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[hsl(214,60%,14%)]">Delete this job?</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    {deleteTarget.customerName} · {deleteTarget.jobType} · {deleteTarget.suburb}
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-sm text-gray-600 mb-3">
+                  The job is removed from your bookings list, but the customer's contact details are
+                  kept and this job stays in their history with the reason below.
+                </p>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Reason <span className="text-gray-400">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Customer got someone else"
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") confirmDelete(); }}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]"
+                />
+              </div>
+              <div className="flex items-center justify-end gap-2 px-6 pb-6">
+                <button
+                  onClick={() => { setDeleteTarget(null); setDeleteReason(""); }}
+                  disabled={deleteBooking.isPending}
+                  className="text-sm font-medium px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleteBooking.isPending}
+                  className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                  data-testid="button-confirm-delete-booking"
+                >
+                  <Trash2 size={15} />
+                  {deleteBooking.isPending ? "Deleting…" : "Delete job"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

@@ -523,6 +523,12 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteBookingBody"
       responses:
         "204":
           description: Deleted
@@ -1130,6 +1136,12 @@ components:
         referralSource:
           type: string
           nullable: true
+        deletedAt:
+          type: string
+          nullable: true
+        deletionReason:
+          type: string
+          nullable: true
         createdAt:
           type: string
       required:
@@ -1183,6 +1195,13 @@ components:
           enum: [pending, confirmed, scheduled, completed, cancelled]
       required:
         - status
+
+    DeleteBookingBody:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Optional reason recorded in the customer's history when the job is deleted
 
     ConfirmBookingBody:
       type: object

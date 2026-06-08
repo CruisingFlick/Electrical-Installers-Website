@@ -33,6 +33,8 @@ type Booking = {
   photoUrl?: string | null;
   adminNotes?: string | null;
   status: string;
+  deletedAt?: string | null;
+  deletionReason?: string | null;
   createdAt: string;
 };
 
@@ -197,15 +199,28 @@ function CustomerDetailPanel({
                   <button
                     key={b.id}
                     onClick={() => setSelectedBooking(b)}
-                    className="w-full flex items-center gap-3 bg-gray-50 hover:bg-blue-50 border border-gray-100 hover:border-blue-200 rounded-xl px-4 py-3 text-left transition-colors group"
+                    className={`w-full flex items-center gap-3 border rounded-xl px-4 py-3 text-left transition-colors group ${
+                      b.deletedAt
+                        ? "bg-red-50/60 border-red-100 hover:bg-red-50"
+                        : "bg-gray-50 hover:bg-blue-50 border-gray-100 hover:border-blue-200"
+                    }`}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-sm font-medium text-[hsl(214,60%,14%)] truncate capitalize">{b.serviceType}</p>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${statusColors[b.status] ?? "bg-gray-100 text-gray-700"}`}>{b.status}</span>
+                        <p className={`text-sm font-medium truncate capitalize ${b.deletedAt ? "text-gray-500 line-through" : "text-[hsl(214,60%,14%)]"}`}>{b.serviceType}</p>
+                        {b.deletedAt ? (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Deleted</span>
+                        ) : (
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${statusColors[b.status] ?? "bg-gray-100 text-gray-700"}`}>{b.status}</span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">{b.jobType} · {b.suburb}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{b.preferredDate}</p>
+                      {b.deletedAt && (
+                        <p className="text-xs text-red-600 mt-1">
+                          Job deleted{b.deletionReason ? ` — Reason: ${b.deletionReason}` : ""} · {new Date(b.deletedAt).toLocaleDateString("en-AU")}
+                        </p>
+                      )}
                     </div>
                     <ChevronRight size={16} className="text-gray-300 group-hover:text-[hsl(25,95%,53%)] transition-colors shrink-0" />
                   </button>

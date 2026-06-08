@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, bookingsTable, customersTable } from "@workspace/db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, isNull } from "drizzle-orm";
 import {
   CreateBookingBody,
   UpdateBookingStatusBody,
@@ -24,6 +24,7 @@ const router = Router();
 function formatBooking(b: typeof bookingsTable.$inferSelect) {
   return {
     ...b,
+    deletedAt: b.deletedAt ? b.deletedAt.toISOString() : null,
     createdAt: b.createdAt.toISOString(),
   };
 }
@@ -150,6 +151,32 @@ async function upsertCustomer(booking: typeof bookingsTable.$inferSelect) {
   }
 }
 
+async function preserveCustomer(booking: typeof bookingsTable.$inferSelect) {
+  try {
+    await db
+      .insert(customersTable)
+      .values({
+        email: booking.customerEmail,
+        name: booking.customerName,
+        phone: booking.customerPhone ?? null,
+        suburb: booking.suburb,
+        jobCount: 0,
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: customersTable.email,
+        set: {
+          name: booking.customerName,
+          phone: booking.customerPhone ?? null,
+          suburb: booking.suburb,
+          updatedAt: new Date(),
+        },
+      });
+  } catch (err) {
+    logger.error({ err, customerEmail: booking.customerEmail }, "Failed to preserve customer record on delete");
+  }
+}
+
 const STATUS_LABELS: Record<string, string> = {
   pending: "Received",
   confirmed: "Confirmed",
@@ -203,7 +230,7 @@ router.get("/track", async (req, res, next) => {
       .from(bookingsTable)
       .where(ref ? eq(bookingsTable.referenceNumber, ref) : eq(bookingsTable.id, id));
 
-    if (!row || row.customerEmail.toLowerCase() !== email) {
+    if (!row || row.deletedAt || row.customerEmail.toLowerCase() !== email) {
       res.status(404).json({ error: "Booking not found. Please check your reference number and email address." });
       return;
     }
@@ -232,7 +259,11 @@ router.get("/", requireAdmin, async (req, res, next) => {
     const rows = await db
       .select()
       .from(bookingsTable)
-      .where(status ? eq(bookingsTable.status, status) : undefined)
+      .where(
+        status
+          ? and(eq(bookingsTable.status, status), isNull(bookingsTable.deletedAt))
+          : isNull(bookingsTable.deletedAt)
+      )
       .orderBy(desc(bookingsTable.createdAt));
 
     res.json(rows.map(formatBooking));
@@ -246,6 +277,7 @@ router.get("/export", requireAdmin, async (req, res, next) => {
     const rows = await db
       .select()
       .from(bookingsTable)
+      .where(isNull(bookingsTable.deletedAt))
       .orderBy(desc(bookingsTable.createdAt));
 
     const header = "ID,Name,Email,Phone,Service,Job Type,Suburb,Preferred Date,Status,Created\n";
@@ -324,7 +356,7 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
     const [row] = await db
       .update(bookingsTable)
       .set({ status: "confirmed" })
-      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .where(and(eq(bookingsTable.id, paramParsed.data.id), isNull(bookingsTable.deletedAt)))
       .returning();
 
     if (!row) {
@@ -450,7 +482,7 @@ router.patch("/:id", requireAdmin, async (req, res, next) => {
     const [row] = await db
       .update(bookingsTable)
       .set({ status: bodyParsed.data.status })
-      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .where(and(eq(bookingsTable.id, paramParsed.data.id), isNull(bookingsTable.deletedAt)))
       .returning();
 
     if (!row) {
@@ -489,7 +521,7 @@ router.patch("/:id/notes", requireAdmin, async (req, res, next) => {
     const [row] = await db
       .update(bookingsTable)
       .set({ adminNotes: adminNotes ?? null })
-      .where(eq(bookingsTable.id, paramParsed.data.id))
+      .where(and(eq(bookingsTable.id, paramParsed.data.id), isNull(bookingsTable.deletedAt)))
       .returning();
 
     if (!row) {
@@ -510,8 +542,24 @@ router.delete("/:id", requireAdmin, async (req, res, next) => {
     return;
   }
 
+  const reason = typeof (req.body as { reason?: unknown })?.reason === "string"
+    ? ((req.body as { reason: string }).reason.trim() || null)
+    : null;
+
   try {
-    await db.delete(bookingsTable).where(eq(bookingsTable.id, parsed.data.id));
+    const [row] = await db
+      .update(bookingsTable)
+      .set({ deletedAt: new Date(), deletionReason: reason })
+      .where(eq(bookingsTable.id, parsed.data.id))
+      .returning();
+
+    if (!row) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    void preserveCustomer(row);
+
     res.status(204).send();
   } catch (err) {
     next(err);

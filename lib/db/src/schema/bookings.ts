@@ -17,12 +17,16 @@ export const bookingsTable = pgTable("bookings", {
   status: text("status").notNull().default("pending"),
   adminNotes: text("admin_notes"),
   referralSource: text("referral_source"),
+  deletedAt: timestamp("deleted_at"),
+  deletionReason: text("deletion_reason"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({
   id: true,
   referenceNumber: true,
+  deletedAt: true,
+  deletionReason: true,
   createdAt: true,
 });
 
