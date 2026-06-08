@@ -54,9 +54,7 @@ function FaqAccordion({ faqs }: { faqs: { q: string; a: string }[] }) {
               <ChevronDown size={16} className="text-gray-400 shrink-0" />
             )}
           </button>
-          {open === i && (
-            <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed">{faq.a}</div>
-          )}
+          <div className={`px-5 pb-4 text-sm text-gray-600 leading-relaxed${open === i ? "" : " hidden"}`}>{faq.a}</div>
         </div>
       ))}
     </div>

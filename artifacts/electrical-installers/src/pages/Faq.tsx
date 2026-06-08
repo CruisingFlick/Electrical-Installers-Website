@@ -65,9 +65,7 @@ export default function FaqPage() {
                     <span className="font-semibold text-[hsl(214,60%,14%)]">{faq.question}</span>
                     <ChevronDown size={20} className={`shrink-0 text-[hsl(25,95%,53%)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 -mt-1 text-gray-600 leading-relaxed whitespace-pre-wrap">{faq.answer}</div>
-                  )}
+                  <div className={`px-5 pb-5 -mt-1 text-gray-600 leading-relaxed whitespace-pre-wrap${isOpen ? "" : " hidden"}`}>{faq.answer}</div>
                 </div>
               );
             })}

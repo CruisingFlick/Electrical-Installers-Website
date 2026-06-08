@@ -39,6 +39,7 @@ function injectMeta(
     ogImage?: string;
     ogType?: string;
     bodyHtml?: string;
+    jsonLd?: object | null;
   },
 ): string {
   const {
@@ -48,6 +49,7 @@ function injectMeta(
     ogImage = DEFAULT_OG_IMAGE,
     ogType = "website",
     bodyHtml,
+    jsonLd,
   } = opts;
 
   const canonicalUrl = `${BASE_URL}${canonicalPath}`;
@@ -86,6 +88,11 @@ function injectMeta(
   ].join("\n");
 
   result = result.replace("</head>", `${seoTags}\n</head>`);
+
+  if (jsonLd) {
+    const ldScript = `  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`;
+    result = result.replace("</head>", `${ldScript}\n</head>`);
+  }
 
   if (bodyHtml) {
     // Inject static HTML into #root. Since the app uses createRoot().render()
@@ -150,6 +157,13 @@ type SuburbPageRow = {
   localTestimonialAuthor: string | null;
   nearbyAreas: string | null;
   localFaqs: string | null;
+};
+
+type FaqRow = {
+  id: number;
+  question: string;
+  answer: string;
+  sortOrder: number;
 };
 
 function renderBlogListBody(posts: BlogPostRow[]): string {
@@ -354,6 +368,28 @@ function renderSuburbPageBody(page: SuburbPageRow): string {
   return html;
 }
 
+function renderFaqPageBody(faqs: FaqRow[]): string {
+  const style = "font-family:sans-serif;max-width:720px;margin:0 auto;padding:2rem 1rem;";
+  let html = `<div style="${style}">`;
+  html += `<h1>Frequently Asked Questions</h1>`;
+  html += `<p>Common questions about electrical work — answered by our licensed electricians. Learn about safety, pricing, permits, switchboards, underground power, and what to expect when you book an electrician on the Mornington Peninsula.</p>`;
+  if (faqs.length > 0) {
+    html += `<dl style="margin-top:1.5rem;">`;
+    for (const faq of faqs) {
+      html += `<dt style="font-weight:600;color:#1e3a5f;margin-top:1.25rem;font-size:1.05rem;">${escapeHtml(faq.question)}</dt>`;
+      html += `<dd style="margin-left:0;margin-top:0.4rem;color:#374151;line-height:1.7;">${escapeHtml(faq.answer)}</dd>`;
+    }
+    html += `</dl>`;
+  }
+  html += `<div style="margin-top:2rem;background:#1e3a5f;color:#fff;border-radius:1rem;padding:2rem;text-align:center;">`;
+  html += `<h3>Still have questions?</h3>`;
+  html += `<p>We&#39;re happy to help — no obligation.</p>`;
+  html += `<a href="tel:0419868703" style="color:#ea6c00;font-weight:600;">Call 0419 868 703</a>`;
+  html += `</div>`;
+  html += `</div>`;
+  return html;
+}
+
 const STATIC_ROUTES: Array<{
   path: string;
   title: string;
@@ -463,17 +499,6 @@ const STATIC_ROUTES: Array<{
       "</div>",
   },
   {
-    path: "/faq",
-    title: "Electrical FAQs | Mornington Peninsula Electricians",
-    description:
-      "Frequently asked questions about electrical work on the Mornington Peninsula. Answers from licensed electricians on safety, pricing, permits, switchboards, and more.",
-    bodyHtml:
-      '<div style="font-family:sans-serif;max-width:900px;margin:0 auto;padding:2rem 1rem;">' +
-      "<h1>Frequently Asked Questions</h1>" +
-      "<p>Common questions about electrical work — answered by our licensed electricians. Learn about safety, pricing, permits, switchboards, underground power, and what to expect when you book an electrician on the Mornington Peninsula.</p>" +
-      "</div>",
-  },
-  {
     path: "/pricing",
     title: "Electrical Pricing Guide | Mornington Peninsula",
     description:
@@ -562,11 +587,11 @@ async function main() {
   // Dynamic import keeps @workspace/db from throwing at module load time when
   // DATABASE_URL happens to be missing, but here we know it is present so any
   // error propagates and fails the build.
-  const { db, blogPostsTable, servicePagesTable, suburbPagesTable } =
+  const { db, blogPostsTable, servicePagesTable, suburbPagesTable, faqsTable } =
     await import("@workspace/db");
-  const { eq } = await import("drizzle-orm");
+  const { eq, asc } = await import("drizzle-orm");
 
-  const [blogPosts, servicePages, suburbPages] = await Promise.all([
+  const [blogPosts, servicePages, suburbPages, faqs] = await Promise.all([
     db
       .select({
         slug: blogPostsTable.slug,
@@ -607,6 +632,16 @@ async function main() {
         localFaqs: suburbPagesTable.localFaqs,
       })
       .from(suburbPagesTable),
+
+    db
+      .select({
+        id: faqsTable.id,
+        question: faqsTable.question,
+        answer: faqsTable.answer,
+        sortOrder: faqsTable.sortOrder,
+      })
+      .from(faqsTable)
+      .orderBy(asc(faqsTable.sortOrder), asc(faqsTable.id)),
   ]);
 
   // --- Listing pages with real crawlable content and links ---
@@ -644,7 +679,36 @@ async function main() {
     }),
   );
 
+  // --- FAQ page with real Q&A content and FAQPage schema ---
+
+  writeRoute(
+    "/faq",
+    injectMeta(baseHtml, {
+      title: "Electrical FAQs | Mornington Peninsula Electricians",
+      description:
+        "Frequently asked questions about electrical work on the Mornington Peninsula. Answers from licensed electricians on safety, pricing, permits, switchboards, and more.",
+      canonicalPath: "/faq",
+      bodyHtml: renderFaqPageBody(faqs),
+      jsonLd: faqs.length > 0 ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map((faq) => ({
+          "@type": "Question",
+          "name": faq.question,
+          "acceptedAnswer": { "@type": "Answer", "text": faq.answer },
+        })),
+      } : null,
+    }),
+  );
+
   // --- Individual detail pages ---
+
+  const PUBLISHER = {
+    "@type": "Organization",
+    "@id": `${BASE_URL}/#business`,
+    "name": "Electrical Installers",
+    "url": BASE_URL,
+  };
 
   for (const post of blogPosts) {
     const canonicalPath = `/blog/${post.slug}`;
@@ -655,6 +719,17 @@ async function main() {
       ogImage: post.imageUrl ?? DEFAULT_OG_IMAGE,
       ogType: "article",
       bodyHtml: renderBlogPostBody(post),
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
+        "headline": post.title,
+        "description": post.excerpt,
+        ...(post.imageUrl ? { "image": post.imageUrl } : {}),
+        ...(post.publishedAt ? { "datePublished": post.publishedAt.toISOString() } : {}),
+        "publisher": PUBLISHER,
+        "author": PUBLISHER,
+      },
     });
     writeRoute(canonicalPath, html);
   }
@@ -667,6 +742,21 @@ async function main() {
       canonicalPath,
       ogImage: page.heroImageUrl ?? DEFAULT_OG_IMAGE,
       bodyHtml: renderServicePageBody(page),
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": page.title,
+        "description": page.shortDescription || page.fullDescription,
+        ...(page.heroImageUrl ? { "image": page.heroImageUrl } : {}),
+        "url": `${BASE_URL}${canonicalPath}`,
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": `${BASE_URL}/#business`,
+          "name": "Electrical Installers",
+          "url": BASE_URL,
+        },
+      },
     });
     writeRoute(canonicalPath, html);
   }
@@ -674,11 +764,39 @@ async function main() {
   for (const page of suburbPages) {
     const canonicalPath = `/${page.slug}`;
     const description = truncate(page.intro, 160);
+    const localFaqs = parseLocalFaqs(page.localFaqs ?? "");
     const html = injectMeta(baseHtml, {
       title: `${page.heading} | Electrical Installers`,
       description,
       canonicalPath,
       bodyHtml: renderSuburbPageBody(page),
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Service",
+            "name": page.heading,
+            "description": page.intro,
+            "areaServed": { "@type": "Place", "name": page.suburb },
+            "url": `${BASE_URL}${canonicalPath}`,
+            "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
+            "provider": {
+              "@type": "LocalBusiness",
+              "@id": `${BASE_URL}/#business`,
+              "name": "Electrical Installers",
+              "url": BASE_URL,
+            },
+          },
+          ...(localFaqs.length > 0 ? [{
+            "@type": "FAQPage",
+            "mainEntity": localFaqs.map((f) => ({
+              "@type": "Question",
+              "name": f.q,
+              "acceptedAnswer": { "@type": "Answer", "text": f.a },
+            })),
+          }] : []),
+        ],
+      },
     });
     writeRoute(canonicalPath, html);
   }
