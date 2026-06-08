@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Home, Factory, Zap, Cable, Warehouse, CheckCircle, ArrowRight } from "lucide-react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 import { apiGet, type ServicePage } from "@/lib/cms";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const services = [
   {
@@ -46,6 +47,11 @@ const services = [
 ];
 
 export default function ServicesPage() {
+  usePageMeta({
+    title: "Electrical Services | Mornington Peninsula Electricians",
+    description: "Full range of residential and commercial electrical services on the Mornington Peninsula. New homes, renovations, switchboard upgrades, underground power, 3-phase upgrades, and more.",
+    path: "/services",
+  });
   const { data: servicePages = [] } = useQuery({
     queryKey: ["service-pages"],
     queryFn: () => apiGet<ServicePage[]>("/service-pages"),

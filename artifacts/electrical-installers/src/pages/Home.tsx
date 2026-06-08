@@ -1,8 +1,14 @@
 import { Link } from "wouter";
 import { useListReviews, useListPortfolioItems, useGetAnalyticsSummary } from "@workspace/api-client-react";
 import { Star, Zap, Home as HomeIcon, Factory, Cable, ArrowRight, Phone, CheckCircle, Warehouse, MapPin } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function HomePage() {
+  usePageMeta({
+    title: "Electrical Installers | Licensed Electricians Mornington Peninsula",
+    description: "Victorian licensed electricians serving Mornington Peninsula, Bayside and South East Melbourne. Specialists in residential & commercial electrical, underground power, renovations and 3-phase upgrades. Call 0419 868 703.",
+    path: "/",
+  });
   const { data: reviews = [] } = useListReviews({ status: "approved" });
   const { data: portfolio = [] } = useListPortfolioItems();
   const approvedReviews = reviews.slice(0, 3);

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { CheckCircle, Calendar, Phone, Clock, ShieldCheck, Star, ImagePlus, X, CalendarPlus, Download } from "lucide-react";
 import { useState, useRef, useCallback, useMemo } from "react";
 import { buildIcs, googleCalendarUrl, downloadIcs, parseSlotDate, type CalEvent } from "@/lib/calendar";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 function getTimeSlotsForDate(dateStr: string): string[] {
   if (!dateStr) return [];
@@ -72,6 +73,11 @@ const WHAT_HAPPENS = [
 ];
 
 export default function BookPage() {
+  usePageMeta({
+    title: "Book an Electrician | Mornington Peninsula",
+    description: "Book a licensed electrician on the Mornington Peninsula. Request a consultation, quote, or job booking online. Fast confirmation — call 0419 868 703.",
+    path: "/book",
+  });
   const createBooking = useCreateBooking();
   const [submitted, setSubmitted] = useState(false);
 

@@ -3,6 +3,7 @@ import { Link, useParams } from "wouter";
 import { ArrowLeft, Check, Phone, Wrench, ArrowRight } from "lucide-react";
 import { apiGet, type ServicePage } from "@/lib/cms";
 import { useJsonLd } from "@/hooks/useJsonLd";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function ServiceDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -12,6 +13,13 @@ export default function ServiceDetailPage() {
     queryFn: () => apiGet<ServicePage>(`/service-pages/${slug}`),
     enabled: !!slug,
     retry: false,
+  });
+
+  usePageMeta({
+    title: service ? `${service.title} | Mornington Peninsula Electricians` : "Electrical Services | Electrical Installers",
+    description: service?.shortDescription ?? "Specialist electrical services on the Mornington Peninsula. Licensed electricians for residential and commercial work.",
+    path: `/services/${slug}`,
+    ogImage: service?.heroImageUrl ?? undefined,
   });
 
   const pageUrl = `https://www.electricalinstallers.com.au/services/${slug}`;

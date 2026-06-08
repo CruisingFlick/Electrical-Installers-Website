@@ -7,6 +7,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
 import { Send, ImagePlus, X, MessageSquare, ChevronLeft } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const STORAGE_KEY = "ei_message_thread";
 const MAX_PHOTO_BYTES = 1_500_000;
@@ -281,6 +282,11 @@ function Conversation({ stored, onReset }: { stored: StoredThread; onReset: () =
 }
 
 export default function MessagesPage() {
+  usePageMeta({
+    title: "Message Us | Electrical Installers",
+    description: "Send a message to our electrical team about your project. Start a private conversation — no account needed. We reply promptly.",
+    path: "/messages",
+  });
   const [stored, setStored] = useState<StoredThread | null>(() => loadStored());
 
   return (

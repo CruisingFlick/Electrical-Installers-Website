@@ -4,6 +4,7 @@ import { MapPin, Phone, Check, Shield, Clock, Star } from "lucide-react";
 import { apiGet, type SuburbPage } from "@/lib/cms";
 import NotFound from "@/pages/not-found";
 import { useJsonLd } from "@/hooks/useJsonLd";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const HIGHLIGHTS = [
   { icon: Shield, label: "Licensed & insured", desc: "REC 25510 — fully compliant work" },
@@ -19,6 +20,12 @@ export default function SuburbDetailPage() {
     queryFn: () => apiGet<SuburbPage>(`/suburb-pages/${slug}`),
     enabled: !!slug,
     retry: false,
+  });
+
+  usePageMeta({
+    title: page ? `${page.heading} | Electrical Installers` : "Local Electricians | Electrical Installers",
+    description: page ? (page.intro.length > 160 ? page.intro.slice(0, 157) + "..." : page.intro) : "Licensed electricians serving your area. Residential and commercial electrical work.",
+    path: `/${slug}`,
   });
 
   const pageUrl = `https://www.electricalinstallers.com.au/${slug}`;

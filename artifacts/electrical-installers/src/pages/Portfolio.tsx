@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useListPortfolioItems, getListPortfolioItemsQueryKey } from "@workspace/api-client-react";
 import { Filter, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const categories = ["All", "New Homes", "3-Phase Upgrade", "Underground Power", "Commercial", "Renovations"];
 
@@ -18,6 +19,11 @@ interface LightboxState {
 }
 
 export default function PortfolioPage() {
+  usePageMeta({
+    title: "Electrical Work Portfolio | Before & After Photos",
+    description: "Browse before and after photos of our completed electrical projects across the Mornington Peninsula, Bayside, and South East Melbourne. Residential and commercial work.",
+    path: "/portfolio",
+  });
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [lightbox, setLightbox] = useState<LightboxState | null>(null);
 

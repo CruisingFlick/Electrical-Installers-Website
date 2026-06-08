@@ -10,6 +10,7 @@ import {
   Wrench,
   CheckCircle,
 } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const services = [
   {
@@ -84,6 +85,11 @@ const whyUs = [
 ];
 
 export default function AboutPage() {
+  usePageMeta({
+    title: "About Us | Electrical Installers",
+    description: "Licensed Victorian electricians with 35 years of experience. Serving Mornington Peninsula, Bayside, and South East Melbourne. Honest, reliable, fully insured electrical contractors.",
+    path: "/about",
+  });
   return (
     <div>
       {/* Header */}

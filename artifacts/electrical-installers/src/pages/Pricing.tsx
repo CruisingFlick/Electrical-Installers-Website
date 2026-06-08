@@ -2,8 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { DollarSign, Phone, Check } from "lucide-react";
 import { apiGet, type PricingItem } from "@/lib/cms";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function PricingPage() {
+  usePageMeta({
+    title: "Electrical Pricing Guide | Mornington Peninsula",
+    description: "Indicative electrical pricing for common jobs on the Mornington Peninsula — power points, switchboard upgrades, underground power, lighting, and more.",
+    path: "/pricing",
+  });
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["pricing"],
     queryFn: () => apiGet<PricingItem[]>("/pricing"),

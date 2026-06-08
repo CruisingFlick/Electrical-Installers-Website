@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CheckCircle, Camera, ImagePlus, X, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -309,6 +310,11 @@ function PhotoUploadZone({ label, hint, value, onChange, testId }: PhotoUploadZo
 }
 
 export default function QuotePage() {
+  usePageMeta({
+    title: "Get a Free Electrical Quote | Electrical Installers",
+    description: "Request a free virtual electrical quote. Describe your project and attach photos — we'll provide indicative pricing without needing a site visit first.",
+    path: "/quote",
+  });
   const createQuote = useCreateQuote();
   const [submitted, setSubmitted] = useState(false);
   const [photos, setPhotos] = useState({ switchboard: "", fasci: "", street: "" });

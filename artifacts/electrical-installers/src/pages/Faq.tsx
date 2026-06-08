@@ -4,8 +4,14 @@ import { Link } from "wouter";
 import { ChevronDown, HelpCircle, Phone } from "lucide-react";
 import { apiGet, type Faq } from "@/lib/cms";
 import { useJsonLd } from "@/hooks/useJsonLd";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export default function FaqPage() {
+  usePageMeta({
+    title: "Electrical FAQs | Mornington Peninsula Electricians",
+    description: "Frequently asked questions about electrical work on the Mornington Peninsula. Answers from licensed electricians on safety, pricing, permits, switchboards, and more.",
+    path: "/faq",
+  });
   const { data: faqs = [], isLoading } = useQuery({
     queryKey: ["faqs"],
     queryFn: () => apiGet<Faq[]>("/faqs"),

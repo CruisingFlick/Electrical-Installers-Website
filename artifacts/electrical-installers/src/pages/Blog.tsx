@@ -2,10 +2,16 @@ import { useListBlogPosts } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { BookOpen, Calendar, Tag, ArrowRight } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const CATEGORIES = ["All", "Tips", "Guides", "Safety", "News"];
 
 export default function BlogPage() {
+  usePageMeta({
+    title: "Electrical Tips & Guides | Electrical Installers",
+    description: "Practical electrical tips and guides from our licensed electricians. Learn about home electrical systems, safety, switchboards, underground power, and more.",
+    path: "/blog",
+  });
   const [category, setCategory] = useState<string | undefined>(undefined);
   const { data: posts = [], isLoading } = useListBlogPosts(
     category ? { category: category.toLowerCase() } : undefined

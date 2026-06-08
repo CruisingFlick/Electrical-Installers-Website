@@ -1,4 +1,11 @@
+import { usePageMeta } from "@/hooks/usePageMeta";
+
 export default function PrivacyPolicyPage() {
+  usePageMeta({
+    title: "Privacy Policy | Electrical Installers",
+    description: "Privacy policy for Electrical Installers — how we collect, use, and protect your personal information.",
+    path: "/privacy-policy",
+  });
   return (
     <div className="min-h-screen bg-[hsl(210,20%,98%)]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ClipboardList, FileText, Clock, Shovel, Truck, AlertTriangle, ArrowRight, CheckCircle } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const steps = [
   {
@@ -40,6 +41,11 @@ const steps = [
 ];
 
 export default function UndergroundPowerPage() {
+  usePageMeta({
+    title: "Underground Power Specialists | Mornington Peninsula",
+    description: "Expert underground power connection on the Mornington Peninsula. We manage the full United Energy 5-step process — inspection to final connection. Get a free quote today.",
+    path: "/underground-power",
+  });
   return (
     <div>
       <div className="bg-[hsl(214,60%,14%)] text-white py-16">

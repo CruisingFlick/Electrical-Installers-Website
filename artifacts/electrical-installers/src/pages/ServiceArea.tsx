@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { apiGet, type SuburbPage } from "../lib/cms";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const SERVICE_AREAS = [
   {
@@ -87,6 +88,11 @@ const SERVICE_AREAS = [
 const CENTER: [number, number] = [-38.20, 145.35];
 
 export default function ServiceAreaPage() {
+  usePageMeta({
+    title: "Service Areas | Mornington Peninsula Electricians",
+    description: "Electrical Installers serves the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding South East Melbourne areas. Licensed local electricians.",
+    path: "/service-area",
+  });
   const [activeArea, setActiveArea] = useState<string | null>(null);
 
   const { data: suburbPages = [] } = useQuery<SuburbPage[]>({

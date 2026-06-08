@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const reviewSchema = z.object({
   customerName: z.string().min(2, "Name is required"),
@@ -55,6 +56,11 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 }
 
 export default function ReviewsPage() {
+  usePageMeta({
+    title: "Customer Reviews | Electrical Installers",
+    description: "Read genuine customer reviews for Electrical Installers. Highly rated licensed electricians serving Mornington Peninsula, Bayside, and South East Melbourne.",
+    path: "/reviews",
+  });
   const queryClient = useQueryClient();
   const { data: reviews = [], isLoading } = useListReviews({ status: "approved" }, { query: { queryKey: getListReviewsQueryKey({ status: "approved" }) } });
   const createReview = useCreateReview();

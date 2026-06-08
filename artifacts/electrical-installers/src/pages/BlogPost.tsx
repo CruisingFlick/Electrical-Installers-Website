@@ -2,6 +2,7 @@ import { useGetBlogPost, getGetBlogPostQueryKey, useListBlogPosts } from "@works
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Calendar, Tag, BookOpen, Phone, ArrowRight } from "lucide-react";
 import { useJsonLd } from "@/hooks/useJsonLd";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const PUBLISHER = {
   "@type": "Organization",
@@ -19,6 +20,14 @@ export default function BlogPostPage() {
     .filter((p) => p.slug !== slug)
     .sort((a, b) => (a.category === post?.category ? -1 : 0) - (b.category === post?.category ? -1 : 0))
     .slice(0, 3);
+
+  usePageMeta({
+    title: post ? `${post.title} | Electrical Installers` : "Electrical Tips & Guides | Electrical Installers",
+    description: post?.excerpt ?? "Practical electrical tips and guides from our licensed electricians on the Mornington Peninsula.",
+    path: `/blog/${slug}`,
+    ogImage: post?.imageUrl ?? undefined,
+    ogType: "article",
+  });
 
   const pageUrl = `https://www.electricalinstallers.com.au/blog/${slug}`;
   useJsonLd(post ? {

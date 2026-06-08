@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, CheckCircle, Clock, AlertCircle, XCircle, Phone, CalendarCheck, Wrench } from "lucide-react";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 type BookingStatus = {
   id: number;
@@ -97,6 +98,11 @@ function Stepper({ status }: { status: string }) {
 }
 
 export default function TrackBookingPage() {
+  usePageMeta({
+    title: "Track Your Booking | Electrical Installers",
+    description: "Track the status of your electrical booking using your reference number. See real-time updates on your job progress.",
+    path: "/track",
+  });
   const [reference, setReference] = useState("");
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<BookingStatus | null>(null);
