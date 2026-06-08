@@ -1,8 +1,10 @@
 import { MapContainer, TileLayer, Polygon, Tooltip } from "react-leaflet";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { apiGet, type SuburbPage } from "../lib/cms";
 
 const SERVICE_AREAS = [
   {
@@ -86,6 +88,11 @@ const CENTER: [number, number] = [-38.20, 145.35];
 
 export default function ServiceAreaPage() {
   const [activeArea, setActiveArea] = useState<string | null>(null);
+
+  const { data: suburbPages = [] } = useQuery<SuburbPage[]>({
+    queryKey: ["suburb-pages"],
+    queryFn: () => apiGet<SuburbPage[]>("/suburb-pages"),
+  });
 
   return (
     <div>
@@ -204,6 +211,29 @@ export default function ServiceAreaPage() {
             ))}
           </div>
         </div>
+
+        {/* Suburb landing page links — crawlable internal links for SEO */}
+        {suburbPages.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-3 text-center">
+              Electrician Service Guides by Suburb
+            </h2>
+            <p className="text-center text-gray-500 text-sm mb-8">
+              Detailed local electrical guides for suburbs across our service area.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {suburbPages.map((page) => (
+                <Link
+                  key={page.slug}
+                  href={`/${page.slug}`}
+                  className="text-sm font-medium bg-white border border-gray-200 hover:border-[hsl(25,95%,53%)] hover:text-[hsl(25,95%,53%)] text-[hsl(214,60%,14%)] px-4 py-2 rounded-full shadow-sm transition-colors"
+                >
+                  {page.suburb}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import pinoHttp from "pino-http";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
 import router from "./routes";
+import sitemapRouter from "./routes/sitemap";
 import { logger } from "./lib/logger";
 
 const sessionSecret = process.env["SESSION_SECRET"];
@@ -101,6 +102,8 @@ const loginLimiter = rateLimit({
   max: 5,
   message: { error: "Too many login attempts. Try again in 15 minutes." },
 });
+
+app.use(sitemapRouter);
 
 app.use("/api/bookings", formLimiter);
 app.use("/api/quotes", formLimiter);

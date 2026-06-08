@@ -1,0 +1,28 @@
+# Electrical Installers
+
+Electrical Installers is a licensed electrical contracting business serving the Mornington Peninsula, Bayside/St Kilda, and Warragul/Gippsland regions of Victoria, Australia. Services include residential and commercial electrical work, switchboard upgrades, underground power connections, EV charger installations, data and communications cabling, lighting design, and general fault-finding and repairs.
+
+## Key pages
+
+- Home: https://www.electricalinstallers.com.au/
+- Services overview: https://www.electricalinstallers.com.au/services
+- Underground power (United Energy process): https://www.electricalinstallers.com.au/underground-power
+- Service area: https://www.electricalinstallers.com.au/service-area
+- Portfolio (before/after photos): https://www.electricalinstallers.com.au/portfolio
+- Customer reviews: https://www.electricalinstallers.com.au/reviews
+- Pricing guide: https://www.electricalinstallers.com.au/pricing
+- FAQ: https://www.electricalinstallers.com.au/faq
+- Tips & guides (blog): https://www.electricalinstallers.com.au/blog
+- Request a quote: https://www.electricalinstallers.com.au/quote
+- Book an appointment: https://www.electricalinstallers.com.au/book
+
+## Dynamic content
+
+- Individual service guides: https://www.electricalinstallers.com.au/services/{slug}
+- Blog articles: https://www.electricalinstallers.com.au/blog/{slug}
+- Suburb landing pages: https://www.electricalinstallers.com.au/{suburb-slug}
+
+## Contact
+
+Phone: 0419 868 703
+Service regions: Mornington Peninsula, St Kilda / Bayside, Warragul & Gippsland
