@@ -18,7 +18,8 @@ import nodemailer from "nodemailer";
 import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { logger } from "../lib/logger";
-import { BUSINESS_EMAIL, ADMIN_BASE_URL } from "../lib/constants";
+import { BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
+import { sendSms } from "../lib/sms";
 
 const MAX_BODY_LEN = 5000;
 const MAX_PHOTO_LEN = 4_000_000; // ~3MB base64 data URL
@@ -160,6 +161,16 @@ publicRouter.post("/", async (req, res, next) => {
       hasPhoto: Boolean(parsed.data.photoUrl),
     });
 
+    const isCallback = thread.referenceType === "callback";
+    const snippet =
+      parsed.data.message.length > 120
+        ? parsed.data.message.slice(0, 117) + "..."
+        : parsed.data.message;
+    void sendSms(
+      ADMIN_PHONE,
+      `${isCallback ? "New callback request" : "New customer message"} from ${thread.customerName} (${thread.customerPhone}): "${snippet}"${parsed.data.photoUrl ? " [photo]" : ""} — reply: ${ADMIN_BASE_URL}/messages`
+    );
+
     res.status(201).json({
       ...formatThread(thread),
       messages: message ? [formatMessage(message)] : [],
@@ -265,6 +276,15 @@ publicRouter.post("/:id/messages", async (req, res, next) => {
       body: bodyParsed.data.body,
       hasPhoto: Boolean(bodyParsed.data.photoUrl),
     });
+
+    const followUpSnippet =
+      bodyParsed.data.body.length > 120
+        ? bodyParsed.data.body.slice(0, 117) + "..."
+        : bodyParsed.data.body;
+    void sendSms(
+      ADMIN_PHONE,
+      `New reply from ${thread.customerName} (${thread.customerPhone}): "${followUpSnippet}"${bodyParsed.data.photoUrl ? " [photo]" : ""} — reply: ${ADMIN_BASE_URL}/messages`
+    );
 
     res.status(201).json(message ? formatMessage(message) : null);
   } catch (err) {

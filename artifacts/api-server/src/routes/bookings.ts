@@ -16,7 +16,7 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
 import { logger } from "../lib/logger";
-import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, SITE_BASE_URL } from "../lib/constants";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE, SITE_BASE_URL } from "../lib/constants";
 import { parseAuDateTime, buildSingleEventIcs } from "../lib/ical";
 
 const router = Router();
@@ -329,6 +329,11 @@ router.post("/", async (req, res, next) => {
     void sendSms(
       parsed.data.customerPhone,
       `Hi ${parsed.data.customerName}, your booking request with Electrical Installers has been received. Ref: ${referenceNumber}. We'll be in touch within one business day to confirm. Track it: ${SITE_BASE_URL}/track — or call ${BUSINESS_PHONE}`
+    );
+
+    void sendSms(
+      ADMIN_PHONE,
+      `New booking ${referenceNumber}: ${parsed.data.customerName} — ${parsed.data.jobType} in ${parsed.data.suburb}, ${parsed.data.preferredDate}. Ph ${parsed.data.customerPhone}. View: ${ADMIN_BASE_URL}/bookings`
     );
 
     res.status(201).json(formatBooking(row));

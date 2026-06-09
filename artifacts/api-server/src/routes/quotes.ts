@@ -11,7 +11,7 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { sendSms } from "../lib/sms";
 import { logger } from "../lib/logger";
-import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL } from "../lib/constants";
+import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
 
 const router = Router();
 
@@ -119,6 +119,11 @@ router.post("/", async (req, res, next) => {
     void sendSms(
       parsed.data.customerPhone,
       `Hi ${parsed.data.customerName}, your quote request with Electrical Installers has been received. We'll review it and be in touch shortly. Call us: ${BUSINESS_PHONE}`
+    );
+
+    void sendSms(
+      ADMIN_PHONE,
+      `New quote request from ${parsed.data.customerName} (${parsed.data.customerPhone}). View: ${ADMIN_BASE_URL}/quotes`
     );
 
     res.status(201).json(formatQuote(row));
