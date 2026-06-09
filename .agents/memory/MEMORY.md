@@ -4,6 +4,7 @@
 - [Calendar event timezone](calendar-timezone.md) — all ICS/Google Calendar events must use Australia/Melbourne wall-clock → UTC (server host is UTC), via wallClockToUtc helper.
 - [Calendar feed subscribe token](calendar-feed-token.md) — auto-sync ICS feed token is persisted in settings table (not derived from SESSION_SECRET) so "subscribe once" URLs survive secret rotation.
 - [CMS feature routes use raw fetch](cms-raw-fetch-convention.md) — FAQ/Pricing/Service/Suburb/Google-reviews routes intentionally use local Zod + raw fetch (not Orval codegen), matching blog/settings; don't "fix" the OpenAPI drift.
+- [Vite manualChunks React cycle](vite-manualchunks-react-cycle.md) — split react chunk MUST include scheduler, else prod-only crash "Cannot set properties of undefined (setting 'Children')" leaves prerender fallback visible; dev fine.
 - [Admin inquiry notifications](admin-inquiry-notifications.md) — every customer-initiated entrypoint alerts admin via BOTH email + Twilio SMS (ADMIN_PHONE); mirror both when adding a new entrypoint.
 - [Prerender prod schema lag](prerender-prod-schema-lag.md) — build-time prerender queries prod DB before publish applies schema diff; it must warn-and-continue on DB errors, never process.exit(1).
 - [Booking soft-delete consistency](booking-soft-delete.md) — soft-deleted bookings (deletedAt) must be excluded from list/export/track/analytics/mutations/customer-sync, but STILL shown in customer job history.

@@ -66,8 +66,18 @@ export default defineConfig({
           if (id.includes("leaflet") || id.includes("react-leaflet")) return "leaflet";
           // Recharts — only on admin dashboard
           if (id.includes("recharts") || id.includes("victory")) return "charts";
-          // React core
-          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) return "react";
+          // React core — keep react, react-dom AND scheduler together.
+          // scheduler is a dependency of react-dom; if it lands in the
+          // "vendor" chunk (which also holds libs that import react) it
+          // creates a circular chunk dependency that breaks React's init
+          // in the minified build ("Cannot set properties of undefined
+          // (setting 'Children')") and prevents the app from mounting.
+          if (
+            id.includes("node_modules/react/") ||
+            id.includes("node_modules/react-dom/") ||
+            id.includes("node_modules/scheduler/")
+          )
+            return "react";
           // Other large vendor libs
           if (id.includes("node_modules/")) return "vendor";
         },
