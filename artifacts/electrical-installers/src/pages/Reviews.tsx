@@ -84,10 +84,17 @@ export default function ReviewsPage() {
 
   const effectiveReviewsUrl = google?.reviewsUrl || googleReviewsUrl;
 
+  const [selectedRating, setSelectedRating] = useState(0);
+
   const form = useForm<ReviewForm>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: { customerName: "", suburb: "", rating: 5, comment: "", serviceType: "" },
+    defaultValues: { customerName: "", suburb: "", rating: 0, comment: "", serviceType: "" },
   });
+
+  function handleRatingSelect(value: number) {
+    setSelectedRating(value);
+    form.setValue("rating", value);
+  }
 
   async function onSubmit(data: ReviewForm) {
     await createReview.mutateAsync({ data }, {
@@ -95,9 +102,13 @@ export default function ReviewsPage() {
         queryClient.invalidateQueries({ queryKey: getListReviewsQueryKey({ status: "approved" }) });
         setSubmitted(true);
         form.reset();
+        setSelectedRating(0);
       },
     });
   }
+
+  const isHighRating = selectedRating >= 4;
+  const isLowRating = selectedRating >= 1 && selectedRating <= 3;
 
   return (
     <div>
@@ -192,26 +203,6 @@ export default function ReviewsPage() {
           </div>
         )}
 
-        {/* Google Reviews CTA */}
-        {effectiveReviewsUrl && (
-          <div className="bg-[hsl(214,60%,14%)] text-white rounded-2xl p-6 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <p className="font-bold text-lg">Happy with our work?</p>
-              <p className="text-gray-300 text-sm mt-0.5">Leaving a Google review helps other locals find us — it only takes 30 seconds.</p>
-            </div>
-            <a
-              href={effectiveReviewsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 inline-flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white font-semibold px-5 py-2.5 rounded-lg transition-colors text-sm whitespace-nowrap"
-            >
-              <Star size={15} className="fill-white" />
-              Leave a Google Review
-              <ExternalLink size={13} />
-            </a>
-          </div>
-        )}
-
         {/* Submit Review */}
         <div className="bg-[hsl(210,20%,97%)] rounded-2xl p-8 border border-gray-100">
           <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-2">Leave a Review</h2>
@@ -220,55 +211,93 @@ export default function ReviewsPage() {
           {submitted ? (
             <div className="text-center py-8">
               <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-[hsl(214,60%,14%)]">Thank you for your review!</h3>
-              <p className="text-gray-500 mt-2">It will appear once approved by our team.</p>
-              <button onClick={() => setSubmitted(false)} className="mt-4 text-[hsl(25,95%,53%)] underline text-sm">Submit another review</button>
+              <h3 className="text-xl font-semibold text-[hsl(214,60%,14%)]">Thank you for your feedback!</h3>
+              <p className="text-gray-500 mt-2">Our team will review it and be in touch if needed.</p>
+              <button onClick={() => setSubmitted(false)} className="mt-4 text-[hsl(25,95%,53%)] underline text-sm">Leave another review</button>
             </div>
           ) : (
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-                  <input {...form.register("customerName")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="John Smith" data-testid="input-review-name" />
-                  {form.formState.errors.customerName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.customerName.message}</p>}
+            <>
+              {/* Step 1: rating selector (gates the next step) */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">How would you rate us?</label>
+                <StarRating value={selectedRating} onChange={handleRatingSelect} />
+                {selectedRating === 0 && (
+                  <p className="text-gray-400 text-sm mt-2">Select a rating to continue.</p>
+                )}
+              </div>
+
+              {/* Step 2a: high rating -> steer to Google */}
+              {isHighRating && (
+                <div className="bg-white rounded-xl p-6 border border-gray-100" data-testid="high-rating-prompt">
+                  <h3 className="text-lg font-bold text-[hsl(214,60%,14%)]">That's wonderful to hear! 🎉</h3>
+                  <p className="text-gray-600 text-sm mt-1 mb-5">
+                    Would you mind sharing your experience on Google? It only takes 30 seconds and helps other locals find us.
+                  </p>
+                  {effectiveReviewsUrl ? (
+                    <a
+                      href={effectiveReviewsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-[hsl(25,95%,53%)] hover:bg-[hsl(25,95%,45%)] text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm"
+                      data-testid="button-google-review-redirect"
+                    >
+                      <Star size={15} className="fill-white" />
+                      Leave a Google Review
+                      <ExternalLink size={13} />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-gray-500">Thanks so much for the {selectedRating}-star rating!</p>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Suburb</label>
-                  <input {...form.register("suburb")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="Frankston" data-testid="input-review-suburb" />
-                  {form.formState.errors.suburb && <p className="text-red-500 text-xs mt-1">{form.formState.errors.suburb.message}</p>}
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-                <select {...form.register("serviceType")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" data-testid="select-review-service">
-                  <option value="">Select service...</option>
-                  <option value="New Home Wiring">New Home Wiring</option>
-                  <option value="Renovation">Renovation</option>
-                  <option value="3-Phase Upgrade">3-Phase Upgrade</option>
-                  <option value="Underground Power">Underground Power</option>
-                  <option value="Commercial">Commercial / Industrial</option>
-                  <option value="Other">Other</option>
-                </select>
-                {form.formState.errors.serviceType && <p className="text-red-500 text-xs mt-1">{form.formState.errors.serviceType.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                <StarRating value={form.watch("rating")} onChange={(v) => form.setValue("rating", v)} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Your Review</label>
-                <textarea {...form.register("comment")} rows={4} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="Tell us about your experience..." data-testid="input-review-comment" />
-                {form.formState.errors.comment && <p className="text-red-500 text-xs mt-1">{form.formState.errors.comment.message}</p>}
-              </div>
-              <button
-                type="submit"
-                disabled={createReview.isPending}
-                className="bg-[hsl(25,95%,53%)] text-white font-semibold px-8 py-3 rounded-lg hover:bg-[hsl(25,95%,45%)] transition-colors disabled:opacity-60"
-                data-testid="button-submit-review"
-              >
-                {createReview.isPending ? "Submitting..." : "Submit Review"}
-              </button>
-            </form>
+              )}
+
+              {/* Step 2b: low rating -> private feedback to admin */}
+              {isLowRating && (
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" data-testid="low-rating-form">
+                  <p className="text-sm text-gray-600 bg-white border border-gray-100 rounded-lg p-4">
+                    We're sorry your experience wasn't perfect. Your feedback goes straight to our team so we can make it right — it won't be posted publicly.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                      <input {...form.register("customerName")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="John Smith" data-testid="input-review-name" />
+                      {form.formState.errors.customerName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.customerName.message}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Suburb</label>
+                      <input {...form.register("suburb")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="Frankston" data-testid="input-review-suburb" />
+                      {form.formState.errors.suburb && <p className="text-red-500 text-xs mt-1">{form.formState.errors.suburb.message}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+                    <select {...form.register("serviceType")} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" data-testid="select-review-service">
+                      <option value="">Select service...</option>
+                      <option value="New Home Wiring">New Home Wiring</option>
+                      <option value="Renovation">Renovation</option>
+                      <option value="3-Phase Upgrade">3-Phase Upgrade</option>
+                      <option value="Underground Power">Underground Power</option>
+                      <option value="Commercial">Commercial / Industrial</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {form.formState.errors.serviceType && <p className="text-red-500 text-xs mt-1">{form.formState.errors.serviceType.message}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">What could we have done better?</label>
+                    <textarea {...form.register("comment")} rows={4} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(25,95%,53%)]" placeholder="Tell us about your experience..." data-testid="input-review-comment" />
+                    {form.formState.errors.comment && <p className="text-red-500 text-xs mt-1">{form.formState.errors.comment.message}</p>}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={createReview.isPending}
+                    className="bg-[hsl(25,95%,53%)] text-white font-semibold px-8 py-3 rounded-lg hover:bg-[hsl(25,95%,45%)] transition-colors disabled:opacity-60"
+                    data-testid="button-submit-review"
+                  >
+                    {createReview.isPending ? "Submitting..." : "Send Feedback"}
+                  </button>
+                </form>
+              )}
+            </>
           )}
         </div>
       </div>
