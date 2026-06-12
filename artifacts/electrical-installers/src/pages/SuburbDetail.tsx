@@ -77,7 +77,7 @@ export default function SuburbDetailPage() {
     path: `/${slug}`,
   });
 
-  const pageUrl = `https://www.electricalinstallers.com.au/${slug}`;
+  const pageUrl = `https://electricalinstallers.com.au/${slug}`;
 
   const localFaqs = page?.localFaqs ? parseLocalFaqs(page.localFaqs) : [];
 
@@ -93,9 +93,9 @@ export default function SuburbDetailPage() {
         "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
         "provider": {
           "@type": "LocalBusiness",
-          "@id": "https://www.electricalinstallers.com.au/#business",
+          "@id": "https://electricalinstallers.com.au/#business",
           "name": "Electrical Installers",
-          "url": "https://www.electricalinstallers.com.au",
+          "url": "https://electricalinstallers.com.au",
         },
       },
       ...(localFaqs.length > 0 ? [{

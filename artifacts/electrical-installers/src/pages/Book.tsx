@@ -74,7 +74,7 @@ const WHAT_HAPPENS = [
 
 export default function BookPage() {
   usePageMeta({
-    title: "Book an Electrician | Mornington Peninsula",
+    title: "Book an Electrician | Electrical Installers Mornington Peninsula",
     description: "Book a licensed electrician on the Mornington Peninsula. Request a consultation, quote, or job booking online. Fast confirmation — call 0419 868 703.",
     path: "/book",
   });

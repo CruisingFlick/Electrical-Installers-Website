@@ -31,6 +31,7 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 - **Home** (`/`) — hero section, service cards, portfolio highlights, customer reviews, CTA
 - **Services** (`/services`) — detailed service descriptions with images + links to detailed service guides
 - **Service Detail** (`/services/:slug`) — CMS-driven detailed service page (DB-backed, admin editable)
+- **Local suburb landing** (`/electrician-{suburb}`) — 8 static SEO landing pages (Mornington, Mount Eliza, Frankston, Dromana, Rosebud, Rye, Sorrento, Hastings) with unique intros, per-page title/meta + `Service`/`Electrician` JSON-LD, click-to-call, booking CTA, and 3 nearby-area links. Content sourced from shared lib `@workspace/site-content` (`LocalSuburb.tsx`). Routes are declared BEFORE the CMS `/:slug` catch-all in `App.tsx`.
 - **Suburb landing** (`/:slug`) — CMS-driven suburb/service-area landing pages (catch-all route, before NotFound)
 - **Underground Power** (`/underground-power`) — 5-step United Energy process guide with disclaimer
 - **Portfolio** (`/portfolio`) — before/after photo grid with category filtering + before/after slider in lightbox

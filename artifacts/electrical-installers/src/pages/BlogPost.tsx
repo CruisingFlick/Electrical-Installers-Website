@@ -6,9 +6,9 @@ import { usePageMeta } from "@/hooks/usePageMeta";
 
 const PUBLISHER = {
   "@type": "Organization",
-  "@id": "https://www.electricalinstallers.com.au/#business",
+  "@id": "https://electricalinstallers.com.au/#business",
   "name": "Electrical Installers",
-  "url": "https://www.electricalinstallers.com.au",
+  "url": "https://electricalinstallers.com.au",
 } as const;
 
 export default function BlogPostPage() {
@@ -29,7 +29,7 @@ export default function BlogPostPage() {
     ogType: "article",
   });
 
-  const pageUrl = `https://www.electricalinstallers.com.au/blog/${slug}`;
+  const pageUrl = `https://electricalinstallers.com.au/blog/${slug}`;
   useJsonLd(post ? {
     "@context": "https://schema.org",
     "@type": "BlogPosting",

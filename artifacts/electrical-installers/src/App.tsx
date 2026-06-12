@@ -9,6 +9,7 @@ import QrButton from "@/components/QrButton";
 import ChatWidget from "@/components/ChatWidget";
 import { Phone } from "lucide-react";
 import { useState, useEffect, lazy, Suspense } from "react";
+import { LOCAL_SUBURBS } from "@workspace/site-content";
 
 const HomePage = lazy(() => import("@/pages/Home"));
 const AboutPage = lazy(() => import("@/pages/About"));
@@ -44,6 +45,7 @@ const FaqPage = lazy(() => import("@/pages/Faq"));
 const PricingPage = lazy(() => import("@/pages/Pricing"));
 const ServiceDetailPage = lazy(() => import("@/pages/ServiceDetail"));
 const SuburbDetailPage = lazy(() => import("@/pages/SuburbDetail"));
+const LocalSuburbPage = lazy(() => import("@/pages/LocalSuburb"));
 
 const AdminFaqs = lazy(() => import("@/pages/admin/Faqs"));
 const AdminPricing = lazy(() => import("@/pages/admin/Pricing"));
@@ -159,7 +161,16 @@ function Router() {
         <Route path="/admin/service-pages" component={() => <AdminGuard component={AdminServicePages} />} />
         <Route path="/admin/suburb-pages" component={() => <AdminGuard component={AdminSuburbPages} />} />
 
-        {/* Suburb landing pages — catch-all before NotFound */}
+        {/* Static suburb landing pages — must come before the CMS catch-all */}
+        {LOCAL_SUBURBS.map((s) => (
+          <Route
+            key={s.slug}
+            path={`/${s.slug}`}
+            component={() => <PublicLayout><LocalSuburbPage slug={s.slug} /></PublicLayout>}
+          />
+        ))}
+
+        {/* CMS suburb landing pages — catch-all before NotFound */}
         <Route path="/:slug" component={() => <PublicLayout><SuburbDetailPage /></PublicLayout>} />
 
         <Route component={NotFound} />

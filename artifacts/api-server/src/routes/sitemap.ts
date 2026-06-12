@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { db, blogPostsTable, servicePagesTable, suburbPagesTable } from "@workspace/db";
 import { eq, asc, desc } from "drizzle-orm";
+import { LOCAL_SUBURBS } from "@workspace/site-content";
 import { logger } from "../lib/logger";
 
 const sitemapRouter = Router();
 
-const BASE_URL = "https://www.electricalinstallers.com.au";
+const BASE_URL = "https://electricalinstallers.com.au";
 
 function url(
   loc: string,
@@ -37,6 +38,7 @@ const STATIC_URLS: string[] = [
   url("/messages", "monthly", "0.5"),
   url("/track", "monthly", "0.5"),
   url("/privacy-policy", "yearly", "0.3"),
+  ...LOCAL_SUBURBS.map((s) => url(`/${s.slug}`, "monthly", "0.8")),
 ];
 
 sitemapRouter.get("/sitemap.xml", async (_req, res, next) => {

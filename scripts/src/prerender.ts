@@ -1,7 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { LOCAL_SUBURBS, REC_NUMBER, BUSINESS_PHONE } from "@workspace/site-content";
 
-const BASE_URL = "https://www.electricalinstallers.com.au";
+const BASE_URL = "https://electricalinstallers.com.au";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/logo.png`;
 
 const DIST_DIR = path.resolve(
@@ -477,7 +478,7 @@ const STATIC_ROUTES: Array<{
   },
   {
     path: "/book",
-    title: "Book an Electrician | Mornington Peninsula",
+    title: "Book an Electrician | Electrical Installers Mornington Peninsula",
     description:
       "Book a licensed electrician on the Mornington Peninsula. Request a consultation, quote, or job booking online. Fast confirmation — call 0419 868 703.",
     bodyHtml:
@@ -545,6 +546,32 @@ const STATIC_ROUTES: Array<{
   },
 ];
 
+function renderLocalSuburbBody(page: (typeof LOCAL_SUBURBS)[number]): string {
+  let html =
+    '<div style="font-family:sans-serif;max-width:900px;margin:0 auto;padding:2rem 1rem;">';
+  html += `<h1 style="color:#0f2a4a;">${escapeHtml(page.heading)}</h1>`;
+  html += `<p style="color:#374151;">Licensed Victorian electricians (${escapeHtml(REC_NUMBER)}) serving ${escapeHtml(page.suburb)} and the surrounding Mornington Peninsula. Call ${escapeHtml(BUSINESS_PHONE)}.</p>`;
+  html += `<p style="color:#374151;line-height:1.6;">${escapeHtml(page.intro)}</p>`;
+  html += `<h2 style="color:#0f2a4a;">Electrical services in ${escapeHtml(page.suburb)}</h2>`;
+  html += "<ul>";
+  for (const s of page.services) {
+    html += `<li style="color:#374151;">${escapeHtml(s)}</li>`;
+  }
+  html += "</ul>";
+  const nearby = page.nearby
+    .map((slug) => LOCAL_SUBURBS.find((x) => x.slug === slug))
+    .filter((x): x is (typeof LOCAL_SUBURBS)[number] => Boolean(x));
+  if (nearby.length > 0) {
+    html += `<h2 style="color:#0f2a4a;">Nearby areas we cover</h2><p>`;
+    html += nearby
+      .map((n) => `<a href="${BASE_URL}/${n.slug}">Electrician ${escapeHtml(n.suburb)}</a>`)
+      .join(" &middot; ");
+    html += "</p>";
+  }
+  html += "</div>";
+  return html;
+}
+
 async function main() {
   console.log("\nPrerendering public routes for SEO...\n");
 
@@ -567,6 +594,35 @@ async function main() {
     });
     writeRoute(route.path, html);
   }
+
+  console.log("\nStatic suburb landing pages:");
+  for (const page of LOCAL_SUBURBS) {
+    const canonicalPath = `/${page.slug}`;
+    const html = injectMeta(baseHtml, {
+      title: page.title,
+      description: page.description,
+      canonicalPath,
+      bodyHtml: renderLocalSuburbBody(page),
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": `Electrician in ${page.suburb}`,
+        "description": page.intro,
+        "areaServed": { "@type": "Place", "name": page.suburb },
+        "url": `${BASE_URL}${canonicalPath}`,
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
+        "provider": {
+          "@type": "Electrician",
+          "@id": `${BASE_URL}/#business`,
+          "name": "Electrical Installers",
+          "url": BASE_URL,
+          "telephone": "+61419868703",
+        },
+      },
+    });
+    writeRoute(canonicalPath, html);
+  }
+  console.log(`  ${LOCAL_SUBURBS.length} static suburb pages`);
 
   console.log("\nListing pages + dynamic detail routes (from database):");
 

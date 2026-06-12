@@ -8,3 +8,4 @@
 - [Admin inquiry notifications](admin-inquiry-notifications.md) — every customer-initiated entrypoint alerts admin via BOTH email + Twilio SMS (ADMIN_PHONE); mirror both when adding a new entrypoint.
 - [Prerender prod schema lag](prerender-prod-schema-lag.md) — build-time prerender queries prod DB before publish applies schema diff; it must warn-and-continue on DB errors, never process.exit(1).
 - [Booking soft-delete consistency](booking-soft-delete.md) — soft-deleted bookings (deletedAt) must be excluded from list/export/track/analytics/mutations/customer-sync, but STILL shown in customer job history.
+- [Prerender not idempotent](prerender-idempotency.md) — only run prerender on a fresh `vite build`; a second pass copies the home-page body into every route. Use `rm -rf dist` + full `build`.

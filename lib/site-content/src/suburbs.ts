@@ -1,0 +1,177 @@
+export interface LocalSuburb {
+  /** Full route slug, e.g. "electrician-mornington" */
+  slug: string;
+  /** Display name, e.g. "Mornington" */
+  suburb: string;
+  /** <title> tag */
+  title: string;
+  /** Meta description, 140-160 chars */
+  description: string;
+  /** H1 */
+  heading: string;
+  /** Unique intro paragraph, 80-120 words */
+  intro: string;
+  /** Services emphasised for this suburb */
+  services: string[];
+  /** Slugs of 3 nearby suburb pages */
+  nearby: string[];
+}
+
+export const LOCAL_SUBURBS: LocalSuburb[] = [
+  {
+    slug: "electrician-mornington",
+    suburb: "Mornington",
+    title: "Electrician Mornington | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Mornington for switchboard upgrades, renovations and new wiring. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Mornington",
+    intro:
+      "Mornington blends established period homes around Main Street with a steady stream of new builds and renovations, and each one has its own electrical quirks. We've rewired tired weatherboards, upgraded ageing switchboards to meet current safety-switch requirements, and fitted out brand-new kitchens and extensions across the township. As fully licensed Victorian electricians (REC 25510), we take care of the detail — tidy cable runs, compliant circuits and proper certification — so your home is safe and ready for modern loads like induction cooktops, air conditioning and EV charging. Whether it's a single power point or a full renovation fit-out, we turn up on time and leave the site clean.",
+    services: [
+      "Switchboard & safety-switch upgrades",
+      "Renovation & extension wiring",
+      "New power points & LED lighting",
+      "Smoke alarm installation",
+      "EV charger installation",
+      "Safety inspections",
+    ],
+    nearby: ["electrician-mount-eliza", "electrician-frankston", "electrician-dromana"],
+  },
+  {
+    slug: "electrician-mount-eliza",
+    suburb: "Mount Eliza",
+    title: "Electrician Mount Eliza | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Mount Eliza for renovations, new builds and premium home fit-outs. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Mount Eliza",
+    intro:
+      "Mount Eliza is renovation and new-build territory — large family homes, architect-designed extensions and premium fit-outs that demand a careful electrical hand. We work alongside builders and homeowners to plan lighting schemes, data and AV cabling, three-phase supply for pools and workshops, and switchboards built with room to grow. Our licensed electricians (REC 25510) sweat the details that matter on higher-end projects: balanced circuits, discreet downlights, smart-home wiring and certified safety switches throughout. From a full new-home wire-up to upgrading an older home for today's appliances, we deliver compliant, neatly finished work and clear documentation you can hand to your builder or buyer.",
+    services: [
+      "New home & renovation wiring",
+      "Designer lighting & downlights",
+      "Data, AV & smart-home cabling",
+      "3-phase supply for pools & sheds",
+      "Switchboard upgrades",
+      "Safety inspections",
+    ],
+    nearby: ["electrician-mornington", "electrician-frankston", "electrician-dromana"],
+  },
+  {
+    slug: "electrician-frankston",
+    suburb: "Frankston",
+    title: "Electrician Frankston | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Frankston for commercial, industrial and residential work. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Frankston",
+    intro:
+      "Frankston is the commercial hub of the Peninsula, so alongside everyday home electrical we do a lot of shopfront, office and light-industrial work here. We handle factory and warehouse fit-outs, machinery wiring, three-phase upgrades, emergency and exit lighting, and switchboard design built to keep businesses compliant and running. For homeowners we cover the full range too — switchboard upgrades, renovations, power points and safety inspections. As licensed Victorian electricians (REC 25510) we understand the compliance and certification demands that come with commercial premises, and we schedule work to minimise downtime. Whether you run a café, a workshop or a household, you get reliable, fully certified electrical work.",
+    services: [
+      "Commercial & industrial fit-outs",
+      "3-phase power upgrades",
+      "Emergency & exit lighting",
+      "Machinery & equipment wiring",
+      "Switchboard design & upgrades",
+      "Residential electrical & safety inspections",
+    ],
+    nearby: ["electrician-mornington", "electrician-mount-eliza", "electrician-hastings"],
+  },
+  {
+    slug: "electrician-dromana",
+    suburb: "Dromana",
+    title: "Electrician Dromana | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Dromana for holiday homes, switchboard upgrades and safety checks. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Dromana",
+    intro:
+      "Dromana sits between the foreshore and the hills, with a mix of permanent residences and holiday homes that often sit empty for stretches at a time. That makes safety switches, RCD protection and a sound switchboard especially important — the last thing you want is a fault in a house no one is checking. We upgrade older boards, install safety switches and smoke alarms, sort out lighting and power for decks and outdoor entertaining, and run pre-summer safety inspections on rental and holiday properties. As licensed electricians (REC 25510), we make sure your Dromana home is protected, compliant and ready whenever you or your guests arrive.",
+    services: [
+      "Switchboard & safety-switch upgrades",
+      "Holiday & rental safety inspections",
+      "Outdoor & deck lighting",
+      "Smoke alarm installation",
+      "New power points & lighting",
+      "Renovation wiring",
+    ],
+    nearby: ["electrician-rosebud", "electrician-mornington", "electrician-rye"],
+  },
+  {
+    slug: "electrician-rosebud",
+    suburb: "Rosebud",
+    title: "Electrician Rosebud | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Rosebud for holiday homes, safety inspections and EV chargers. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Rosebud",
+    intro:
+      "Rosebud swells every summer, and the camping and holiday-home crowd puts real demand on local electrical systems. We help permanent residents and holiday owners alike keep things safe and current — upgrading older switchboards, adding safety switches, installing EV chargers for the drive down from town, and fitting out granny flats and extensions for growing families. We also carry out pre-season safety inspections so rental properties pass muster before guests arrive. As licensed Victorian electricians (REC 25510), we deliver tidy, certified work and explain exactly what we've done. From a quick fault-find to a full renovation rewire, your Rosebud property is in safe hands.",
+    services: [
+      "Switchboard & safety-switch upgrades",
+      "EV charger installation",
+      "Holiday & rental safety inspections",
+      "Granny flat & extension wiring",
+      "New power points & LED lighting",
+      "Fault finding & repairs",
+    ],
+    nearby: ["electrician-dromana", "electrician-rye", "electrician-sorrento"],
+  },
+  {
+    slug: "electrician-rye",
+    suburb: "Rye",
+    title: "Electrician Rye | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Rye for coastal homes, salt-air corrosion and holiday rentals. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Rye",
+    intro:
+      "Right on the bay, Rye's coastal location is hard on electrical fittings — salt air corrodes outdoor power points, light fittings and switchboard components faster than it does inland. We use corrosion-resistant fittings and weatherproof enclosures suited to the seaside, and we keep a close eye on ageing outdoor wiring during inspections. Plenty of Rye homes are holiday rentals, so we handle pre-season safety checks, switchboard upgrades and safety switches to keep them compliant and guest-ready. As licensed electricians (REC 25510), we look after everything from a corroded outdoor GPO to a full renovation, with neat, certified work built to last by the coast.",
+    services: [
+      "Salt-air resistant outdoor power & lighting",
+      "Switchboard & safety-switch upgrades",
+      "Holiday & rental safety inspections",
+      "Weatherproof power points",
+      "Renovation wiring",
+      "Fault finding & repairs",
+    ],
+    nearby: ["electrician-sorrento", "electrician-rosebud", "electrician-dromana"],
+  },
+  {
+    slug: "electrician-sorrento",
+    suburb: "Sorrento",
+    title: "Electrician Sorrento | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Sorrento for coastal & heritage homes and salt-air corrosion. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Sorrento",
+    intro:
+      "Sorrento pairs grand heritage limestone homes with high-end coastal properties, and both bring particular electrical challenges. Salt air attacks outdoor fittings and switchboards, while older heritage homes often hide outdated wiring behind beautiful facades that need careful, respectful upgrading. We specialise in sympathetic rewires, discreet lighting that suits period interiors, corrosion-resistant outdoor fittings and modern switchboards that meet today's safety standards without spoiling the character. Many Sorrento homes are second residences, so we also run pre-season safety inspections. As licensed Victorian electricians (REC 25510), we deliver premium, certified work and treat every home — heritage or contemporary — with the care it deserves.",
+    services: [
+      "Heritage home rewiring",
+      "Salt-air resistant outdoor fittings",
+      "Designer & period lighting",
+      "Switchboard & safety-switch upgrades",
+      "Holiday-home safety inspections",
+      "Renovation wiring",
+    ],
+    nearby: ["electrician-rye", "electrician-rosebud", "electrician-dromana"],
+  },
+  {
+    slug: "electrician-hastings",
+    suburb: "Hastings",
+    title: "Electrician Hastings | Electrical Installers REC 25510",
+    description:
+      "Licensed electrician in Hastings for sheds, 3-phase power and industrial work. REC 25510. Call Electrical Installers on 0419 868 703 for a free quote.",
+    heading: "Licensed Electrician in Hastings",
+    intro:
+      "Hastings has a semi-rural and industrial character thanks to its Western Port setting, so we do a lot of shed, workshop and three-phase work here alongside standard home electrical. We install single and three-phase power to sheds and garages, wire workshops and machinery, fit LED high-bay lighting and sub-boards, and handle industrial fit-outs and compliance for local businesses. For households we cover switchboard upgrades, renovations, power points and safety inspections. As licensed Victorian electricians (REC 25510), we're comfortable with the heavier loads rural and industrial properties demand, and we deliver robust, fully certified installations whether it's a backyard shed or a working factory.",
+    services: [
+      "Shed & garage power (single & 3-phase)",
+      "3-phase power upgrades",
+      "Workshop & machinery wiring",
+      "Industrial fit-outs & compliance",
+      "Switchboard & sub-board installation",
+      "Residential electrical & safety inspections",
+    ],
+    nearby: ["electrician-frankston", "electrician-mornington", "electrician-mount-eliza"],
+  },
+];
+
+export const SUBURB_BY_SLUG: Record<string, LocalSuburb> = Object.fromEntries(
+  LOCAL_SUBURBS.map((s) => [s.slug, s]),
+);

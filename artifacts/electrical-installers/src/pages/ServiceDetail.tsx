@@ -22,7 +22,7 @@ export default function ServiceDetailPage() {
     ogImage: service?.heroImageUrl ?? undefined,
   });
 
-  const pageUrl = `https://www.electricalinstallers.com.au/services/${slug}`;
+  const pageUrl = `https://electricalinstallers.com.au/services/${slug}`;
   useJsonLd(service ? {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -33,9 +33,9 @@ export default function ServiceDetailPage() {
     "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
     "provider": {
       "@type": "LocalBusiness",
-      "@id": "https://www.electricalinstallers.com.au/#business",
+      "@id": "https://electricalinstallers.com.au/#business",
       "name": "Electrical Installers",
-      "url": "https://www.electricalinstallers.com.au",
+      "url": "https://electricalinstallers.com.au",
     },
   } : null);
 

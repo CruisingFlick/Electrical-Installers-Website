@@ -4,23 +4,23 @@ Electrical Installers is a licensed electrical contracting business serving the 
 
 ## Key pages
 
-- Home: https://www.electricalinstallers.com.au/
-- Services overview: https://www.electricalinstallers.com.au/services
-- Underground power (United Energy process): https://www.electricalinstallers.com.au/underground-power
-- Service area: https://www.electricalinstallers.com.au/service-area
-- Portfolio (before/after photos): https://www.electricalinstallers.com.au/portfolio
-- Customer reviews: https://www.electricalinstallers.com.au/reviews
-- Pricing guide: https://www.electricalinstallers.com.au/pricing
-- FAQ: https://www.electricalinstallers.com.au/faq
-- Tips & guides (blog): https://www.electricalinstallers.com.au/blog
-- Request a quote: https://www.electricalinstallers.com.au/quote
-- Book an appointment: https://www.electricalinstallers.com.au/book
+- Home: https://electricalinstallers.com.au/
+- Services overview: https://electricalinstallers.com.au/services
+- Underground power (United Energy process): https://electricalinstallers.com.au/underground-power
+- Service area: https://electricalinstallers.com.au/service-area
+- Portfolio (before/after photos): https://electricalinstallers.com.au/portfolio
+- Customer reviews: https://electricalinstallers.com.au/reviews
+- Pricing guide: https://electricalinstallers.com.au/pricing
+- FAQ: https://electricalinstallers.com.au/faq
+- Tips & guides (blog): https://electricalinstallers.com.au/blog
+- Request a quote: https://electricalinstallers.com.au/quote
+- Book an appointment: https://electricalinstallers.com.au/book
 
 ## Dynamic content
 
-- Individual service guides: https://www.electricalinstallers.com.au/services/{slug}
-- Blog articles: https://www.electricalinstallers.com.au/blog/{slug}
-- Suburb landing pages: https://www.electricalinstallers.com.au/{suburb-slug}
+- Individual service guides: https://electricalinstallers.com.au/services/{slug}
+- Blog articles: https://electricalinstallers.com.au/blog/{slug}
+- Suburb landing pages: https://electricalinstallers.com.au/{suburb-slug}
 
 ## Contact
 

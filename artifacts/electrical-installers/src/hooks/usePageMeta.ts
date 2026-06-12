@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const BASE_URL = "https://www.electricalinstallers.com.au";
+const BASE_URL = "https://electricalinstallers.com.au";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/logo.png`;
 
 export interface PageMetaOptions {
