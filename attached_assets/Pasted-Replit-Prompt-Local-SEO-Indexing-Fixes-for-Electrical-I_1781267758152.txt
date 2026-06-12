@@ -1,0 +1,157 @@
+Replit Prompt — Local SEO & Indexing Fixes for Electrical Installers
+
+Copy everything below this line into Replit AI.
+
+
+I need you to implement a set of local SEO and indexing fixes for this site (React 19 + Vite frontend, Express 5 TypeScript backend). The site is live at https://electricalinstallers.com.au and is currently not indexed by Google. Work through every item in order. Read the relevant source files before changing them, stay strictly within the scope of each fix, and summarise what you changed at the end, flagging anything you could not complete.
+
+Business facts (use these exactly — do not invent or alter)
+
+
+Business name: Electrical Installers
+Licence: REC 25510 (Victorian Registered Electrical Contractor)
+Phone: 0419 868 703
+Canonical domain: https://electricalinstallers.com.au (non-www)
+Service areas: Mornington Peninsula, Bayside, South East Melbourne — including Mornington, Mount Eliza, Mount Martha, Frankston, Dromana, Rosebud, Rye, Sorrento, Portsea, St Kilda, Warragul
+Core services: new homes & renovations wiring, commercial & industrial electrical, 3-phase power upgrades, sheds & garages, underground power (United Energy 5-step process), switchboard upgrades
+
+
+
+FIX 1 — Canonical URL consistency (critical)
+
+The canonical tag currently points to https://www.electricalinstallers.com.au/ (www) while the site serves on the non-www domain. This conflict can stall Google indexing entirely.
+
+
+Find every canonical tag, Open Graph og:url, og:image, and Twitter card URL in the codebase (check index.html and any meta/SEO components).
+Change all of them to use the non-www domain https://electricalinstallers.com.au consistently.
+Canonical tags must be self-referencing per route (e.g. the /book page canonical is https://electricalinstallers.com.au/book), not all pointing at the homepage.
+Search the codebase for any other hardcoded www.electricalinstallers.com.au references and update them.
+
+
+FIX 2 — robots.txt and sitemap.xml (critical)
+
+
+Create public/robots.txt (or the equivalent location that serves at the site root):
+
+
+User-agent: *
+Allow: /
+
+Sitemap: https://electricalinstallers.com.au/sitemap.xml
+
+
+Confirm there is NO noindex meta tag or X-Robots-Tag header anywhere in the production build. If one exists from development, remove it.
+Create sitemap.xml served at the site root, listing every public route: homepage, services/booking pages, Tips & Guides index and articles, and the new suburb pages from Fix 5. Use absolute non-www URLs. If routes are dynamic (e.g. articles from the database), generate the sitemap from an Express route (GET /sitemap.xml) that queries the current routes/articles, rather than a static file, so it stays current automatically.
+Verify both https://electricalinstallers.com.au/robots.txt and /sitemap.xml return correctly in production.
+
+
+FIX 3 — Per-route titles and meta descriptions
+
+
+Install and configure a head-management solution if not already present (e.g. react-helmet-async).
+Every public route must have a unique <title> and <meta name="description"> following this pattern:
+
+Homepage: Electrical Installers | Licensed Electricians Mornington Peninsula (keep existing — it's correct)
+Booking: Book an Electrician | Electrical Installers Mornington Peninsula
+Tips & Guides index: Electrical Tips & Guides | Electrical Installers
+Each article: {Article Title} | Electrical Installers
+Suburb pages: see Fix 5
+
+
+
+Descriptions: 140–160 characters, naturally including the location and service.
+
+
+FIX 4 — LocalBusiness structured data (JSON-LD)
+
+Add a JSON-LD script to the site <head> (rendered on all pages) with this schema. Fill in real values from the business facts above:
+
+json{
+  "@context": "https://schema.org",
+  "@type": "Electrician",
+  "name": "Electrical Installers",
+  "url": "https://electricalinstallers.com.au",
+  "logo": "https://electricalinstallers.com.au/logo.png",
+  "image": "https://electricalinstallers.com.au/logo.png",
+  "telephone": "+61419868703",
+  "identifier": {
+    "@type": "PropertyValue",
+    "name": "Victorian REC",
+    "value": "REC 25510"
+  },
+  "address": {
+    "@type": "PostalAddress",
+    "addressRegion": "VIC",
+    "addressCountry": "AU"
+  },
+  "areaServed": [
+    "Mornington Peninsula", "Bayside", "South East Melbourne",
+    "Mornington", "Mount Eliza", "Mount Martha", "Frankston",
+    "Dromana", "Rosebud", "Rye", "Sorrento", "Portsea",
+    "St Kilda", "Warragul"
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Electrical Services",
+    "itemListElement": [
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "New Home & Renovation Wiring" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Commercial & Industrial Electrical" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "3-Phase Power Upgrades" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Switchboard Upgrades" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Underground Power" } },
+      { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Shed & Garage Electrical" } }
+    ]
+  },
+  "priceRange": "$$"
+}
+
+If a real street address or suburb base is configured anywhere in the app, include it in address. Validate the output with the schema.org JSON-LD format (no trailing commas, valid JSON).
+
+FIX 5 — Suburb landing pages
+
+Create a reusable suburb landing page template and routes for these eight suburbs:
+
+/electrician-mornington, /electrician-mount-eliza, /electrician-frankston, /electrician-dromana, /electrician-rosebud, /electrician-rye, /electrician-sorrento, /electrician-hastings
+
+Requirements for each page:
+
+
+Title: Electrician {Suburb} | Electrical Installers REC 25510
+Meta description mentioning the suburb and 2–3 core services.
+H1: Licensed Electrician in {Suburb}
+Page content driven by a per-suburb data file (suburb name, short unique intro paragraph of 80–120 words, list of services, nearby suburbs links). Write a distinct intro for each suburb — do NOT use one identical paragraph with only the suburb name swapped, as duplicate content undermines the purpose. Vary the angle: e.g. coastal homes and salt-air corrosion for Sorrento/Rye, renovations and new builds for Mount Eliza, commercial/industrial for Frankston, holiday homes and switchboard age for Rosebud/Dromana.
+Each page includes: the services list, REC 25510, click-to-call button for 0419 868 703, the booking CTA, and links to 3 nearby suburb pages.
+Add all eight routes to the sitemap from Fix 2 and link them from the site footer under a "Service Areas" heading.
+
+
+FIX 6 — Make content visible without JavaScript (prerendering)
+
+This is a client-rendered Vite SPA. Google indexes JS-rendered pages slower and less reliably, which matters for a brand-new domain.
+
+
+Implement build-time prerendering for the public marketing routes (homepage, suburb pages, Tips & Guides) so their HTML content — headings, text, meta tags — is present in the initial server response. Acceptable approaches: a Vite prerender plugin, react-snap-style snapshotting at build, or rendering static HTML for these routes served by Express with the React app hydrating on top.
+Choose the approach that fits the existing build pipeline with the least disruption, and explain your choice in the summary.
+Admin, portal, and authenticated routes must NOT be prerendered and should be excluded from the sitemap. Add Disallow: /admin (and any other private route prefixes that exist) to robots.txt.
+After implementing, verify with curl https://localhost:{port}/ (or the build output) that the H1 and body text appear in the raw HTML response.
+
+
+FIX 7 — Footer NAP consistency
+
+Ensure every public page footer shows, in plain crawlable text: business name, REC 25510, phone 0419 868 703, the service region line ("Serving the Mornington Peninsula, Bayside & South East Melbourne"), and the Service Areas links from Fix 5. If a constants file for contact details exists, source everything from it; if not, create shared/constants.ts and use it.
+
+Constraints
+
+
+Do not change any backend business logic, database schema, booking flow, chat widget, or admin functionality.
+Do not alter the visual design beyond adding the footer Service Areas section and the new suburb pages (which should reuse existing components and styling).
+Do not modify authentication or any API routes except adding GET /sitemap.xml if you choose the dynamic sitemap approach.
+
+
+Verification checklist (run after all fixes)
+
+
+/robots.txt and /sitemap.xml load and are valid.
+View-source on the homepage shows the correct non-www canonical, the JSON-LD block, and the H1 text in raw HTML.
+All eight suburb pages load, have unique titles/descriptions/intros, and appear in the sitemap.
+No noindex anywhere in the production build.
+Server starts and /api/healthz returns { status: "ok" }.
