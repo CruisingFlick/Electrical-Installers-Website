@@ -73,9 +73,9 @@ export default function QrButton() {
   }, [open]);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "website", label: "Website", icon: <Globe size={13} /> },
-    { id: "contact", label: "Save Contact", icon: <UserPlus size={13} /> },
     { id: "app", label: "Add to Phone", icon: <Smartphone size={13} /> },
+    { id: "contact", label: "Save Contact", icon: <UserPlus size={13} /> },
+    { id: "website", label: "Website", icon: <Globe size={13} /> },
   ];
 
   async function handleNativeShare() {
