@@ -1,0 +1,36 @@
+It looks like you have a clean, modern foundation for electricalinstallers.com.au (it appears to be built using Replit, which is excellent for a lightweight, fast-loading site!). However, the electrical trade niche in Victoria—specifically covering the Mornington Peninsula, Bayside, and the South East Melbourne corridor—is highly competitive on Google.
+
+To get your site onto the front page, you need to transition it from a sleek digital business card into a local SEO powerhouse.
+
+Here is an actionable game plan, including how to leverage your .com.au presence to win local rankings.
+
+1. Expand Beyond a Single-Page Layout
+Right now, your site operates largely as a single-page layout. While this looks sharp, Google ranks individual pages, not just websites. It is incredibly difficult to rank on the front page for "3-Phase Upgrades" and "Electrician Mornington Peninsula" using the exact same URL.
+
+Create Service Pages: Build dedicated landing pages for your high-margin services (e.g., /3-phase-upgrades, /underground-power-installation, /commercial-electrician).
+
+Create Location Pages: Build geo-targeted pages for your main service hubs (e.g., /electrician-mornington-peninsula, /electrician-bayside). This allows you to tailor the text, headings, and meta tags to specific local searches.
+
+2. Dominate the Google Map Pack (Local SEO)
+For local trades in Australia, the "Map Pack" (the three map listings at the top of Google search results) is where the majority of clicks happen.
+
+Optimize Your Google Business Profile (GBP): If you haven’t claimed it, do so immediately. Ensure your service areas are explicitly defined across the Mornington Peninsula and South East Melbourne.
+
+Review Velocity: Actively ask your clients for 5-star Google reviews. When replying to them, naturally weave in local keywords (e.g., "Thanks John, glad we could help with your switchboard upgrade in Frankston!").
+
+3. Sharp On-Page SEO & Keyword Targeting
+Google needs explicit signals to understand what you do and where you do it within seconds of crawling your site.
+
+H1 Headers: Your primary headline on the homepage shouldn't just say "Electrical Installers." Update it to a targeted H1 tag like: <h1>Licensed Electricians & Electrical Installers Mornington Peninsula</h1>.
+
+Meta Descriptions: Write compelling snippets for Google search results that include your primary service locations, your phone number (0419 868 703), and a clear call-to-action (e.g., "Get a free quote today").
+
+4. Maximize the .com.au Ecosystem
+(Regarding your note on .com.au signals)
+Google Australia (google.com.au) heavily rewards local digital footprints. Simply owning a .com.au domain isn't enough; you need to anchor it into the Australian web ecosystem.
+
+Australian Directory Citations: Build foundational links on authoritative Australian trade directories like Hipages, ServiceSeeking, TrueLocal, Word of Mouth (WOMO), and Yellow Pages AU.
+
+NAP Consistency: Ensure your Name, Address, and Phone number (NAP) are identical across your website, your GBP, and every external directory. Discrepancies confuse Google's algorithm.
+
+Local Business Schema: Inject LocalBusiness structured data (Schema markup) into your site's code. Make sure to include your ABN inside this data—Google uses Australian Business Register data to verify legitimate, local operations.
