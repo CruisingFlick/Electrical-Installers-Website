@@ -46,6 +46,7 @@ const PricingPage = lazy(() => import("@/pages/Pricing"));
 const ServiceDetailPage = lazy(() => import("@/pages/ServiceDetail"));
 const SuburbDetailPage = lazy(() => import("@/pages/SuburbDetail"));
 const LocalSuburbPage = lazy(() => import("@/pages/LocalSuburb"));
+const GetAppPage = lazy(() => import("@/pages/GetApp"));
 
 const AdminFaqs = lazy(() => import("@/pages/admin/Faqs"));
 const AdminPricing = lazy(() => import("@/pages/admin/Pricing"));
@@ -160,6 +161,8 @@ function Router() {
         <Route path="/admin/pricing" component={() => <AdminGuard component={AdminPricing} />} />
         <Route path="/admin/service-pages" component={() => <AdminGuard component={AdminServicePages} />} />
         <Route path="/admin/suburb-pages" component={() => <AdminGuard component={AdminSuburbPages} />} />
+
+        <Route path="/get-app" component={() => <PublicLayout><GetAppPage /></PublicLayout>} />
 
         {/* Static suburb landing pages — must come before the CMS catch-all */}
         {LOCAL_SUBURBS.map((s) => (
