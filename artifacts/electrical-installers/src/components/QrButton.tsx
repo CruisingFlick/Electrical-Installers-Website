@@ -141,9 +141,8 @@ export default function QrButton() {
         data-testid="qr-button"
       >
         <QrCode size={16} />
-        <span>Share with your phone</span>
+        <span>Get our Web App</span>
       </button>
-
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40">
           <div
