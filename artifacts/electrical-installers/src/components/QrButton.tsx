@@ -132,6 +132,17 @@ export default function QrButton() {
     }
   }
 
+  // Tapping the QR code on the same phone: scanning your own screen is
+  // impossible, so trigger the install flow directly when we can, otherwise
+  // open the step-by-step instructions tab.
+  async function handleQrTap() {
+    if (installPrompt || (isIos && canShare)) {
+      await handleAddToPhone();
+    } else {
+      setTab("app");
+    }
+  }
+
   return (
     <>
       <button
@@ -188,8 +199,13 @@ export default function QrButton() {
                     {isMobile ? "Share this website or scan the QR code on another device" : "Scan with your phone camera to open the website"}
                   </p>
 
-                  <div className="flex justify-center mb-4">
-                    <div className="p-3 bg-white border-2 border-[hsl(214,60%,14%)] rounded-xl">
+                  <div className="flex justify-center mb-2">
+                    <button
+                      type="button"
+                      onClick={isMobile ? handleQrTap : undefined}
+                      className={`p-3 bg-white border-2 border-[hsl(214,60%,14%)] rounded-xl ${isMobile ? "cursor-pointer hover:shadow-md transition-shadow" : "cursor-default"}`}
+                      aria-label={isMobile ? "Tap to add our app to your phone" : undefined}
+                    >
                       <QRCodeSVG
                         value={siteUrl}
                         size={160}
@@ -203,8 +219,14 @@ export default function QrButton() {
                           excavate: true,
                         }}
                       />
-                    </div>
+                    </button>
                   </div>
+
+                  {isMobile && (
+                    <p className="text-[11px] text-[hsl(25,95%,53%)] text-center font-semibold mb-3">
+                      Tap the code to add our app to your phone
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400 mb-4">
                     <Globe size={12} />
@@ -404,12 +426,17 @@ export default function QrButton() {
 
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex-1 h-px bg-gray-100" />
-                    <span className="text-xs text-gray-400">scan to open on your phone first</span>
+                    <span className="text-xs text-gray-400">{isMobile ? "or tap the code below to add it now" : "scan to open on your phone first"}</span>
                     <div className="flex-1 h-px bg-gray-100" />
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2.5 bg-white border-2 border-[hsl(214,60%,14%)] rounded-xl">
+                    <button
+                      type="button"
+                      onClick={isMobile ? handleQrTap : undefined}
+                      className={`p-2.5 bg-white border-2 border-[hsl(214,60%,14%)] rounded-xl ${isMobile ? "cursor-pointer hover:shadow-md transition-shadow" : "cursor-default"}`}
+                      aria-label={isMobile ? "Tap to add our app to your phone" : undefined}
+                    >
                       <QRCodeSVG
                         value={siteUrl}
                         size={120}
@@ -417,7 +444,7 @@ export default function QrButton() {
                         bgColor="#ffffff"
                         level="M"
                       />
-                    </div>
+                    </button>
                   </div>
                 </>
               )}
