@@ -2,6 +2,8 @@ import { Link } from "wouter";
 import { useListReviews, useListPortfolioItems, useGetAnalyticsSummary } from "@workspace/api-client-react";
 import { Star, Zap, Home as HomeIcon, Factory, Cable, ArrowRight, Phone, CheckCircle, Warehouse, MapPin } from "lucide-react";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { useJsonLd } from "@/hooks/useJsonLd";
+import { BUSINESS_SCHEMA } from "@workspace/site-content";
 
 export default function HomePage() {
   usePageMeta({
@@ -9,6 +11,7 @@ export default function HomePage() {
     description: "Victorian licensed electricians serving Mornington Peninsula, Bayside and South East Melbourne. Specialists in residential & commercial electrical, underground power, renovations and 3-phase upgrades. Call 0419 868 703.",
     path: "/",
   });
+  useJsonLd(BUSINESS_SCHEMA);
   const { data: reviews = [] } = useListReviews({ status: "approved" });
   const { data: portfolio = [] } = useListPortfolioItems();
   const approvedReviews = reviews.slice(0, 3);
@@ -26,7 +29,7 @@ export default function HomePage() {
               Victorian Licensed Electricians
             </div>
             <h1 className="text-4xl lg:text-6xl font-extrabold leading-tight mb-4">
-              Mornington Peninsula&apos;s Electrical Specialists
+              Licensed Electricians &amp; Electrical Installers, Mornington Peninsula
             </h1>
             <p className="text-[hsl(25,95%,63%)] font-semibold text-lg mb-4 tracking-wide">
               35 Years of Design Expertise. Precision Installation.

@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Phone, Wrench, ArrowRight } from "lucide-react";
 import { apiGet, type ServicePage } from "@/lib/cms";
 import { useJsonLd } from "@/hooks/useJsonLd";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { BUSINESS_PROVIDER } from "@workspace/site-content";
 
 export default function ServiceDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -31,12 +32,7 @@ export default function ServiceDetailPage() {
     ...(service.heroImageUrl ? { "image": service.heroImageUrl } : {}),
     "url": pageUrl,
     "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
-    "provider": {
-      "@type": "LocalBusiness",
-      "@id": "https://electricalinstallers.com.au/#business",
-      "name": "Electrical Installers",
-      "url": "https://electricalinstallers.com.au",
-    },
+    "provider": BUSINESS_PROVIDER,
   } : null);
 
   if (isLoading) {

@@ -6,6 +6,7 @@ import { apiGet, type SuburbPage } from "@/lib/cms";
 import NotFound from "@/pages/not-found";
 import { useJsonLd } from "@/hooks/useJsonLd";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { BUSINESS_PROVIDER } from "@workspace/site-content";
 
 const HIGHLIGHTS = [
   { icon: Shield, label: "Licensed & insured", desc: "REC 25510 — fully compliant work" },
@@ -91,12 +92,7 @@ export default function SuburbDetailPage() {
         "areaServed": { "@type": "Place", "name": page.suburb },
         "url": pageUrl,
         "mainEntityOfPage": { "@type": "WebPage", "@id": pageUrl },
-        "provider": {
-          "@type": "LocalBusiness",
-          "@id": "https://electricalinstallers.com.au/#business",
-          "name": "Electrical Installers",
-          "url": "https://electricalinstallers.com.au",
-        },
+        "provider": BUSINESS_PROVIDER,
       },
       ...(localFaqs.length > 0 ? [{
         "@type": "FAQPage",

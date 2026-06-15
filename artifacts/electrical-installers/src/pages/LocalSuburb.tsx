@@ -6,6 +6,7 @@ import {
   BUSINESS_PHONE,
   BUSINESS_PHONE_TEL,
   SITE_URL,
+  BUSINESS_PROVIDER,
 } from "@workspace/site-content";
 import NotFound from "@/pages/not-found";
 import { useJsonLd } from "@/hooks/useJsonLd";
@@ -40,13 +41,7 @@ export default function LocalSuburbPage({ slug }: { slug: string }) {
           areaServed: { "@type": "Place", name: page.suburb },
           url: pageUrl,
           mainEntityOfPage: { "@type": "WebPage", "@id": pageUrl },
-          provider: {
-            "@type": "Electrician",
-            "@id": `${SITE_URL}/#business`,
-            name: "Electrical Installers",
-            url: SITE_URL,
-            telephone: "+61419868703",
-          },
+          provider: BUSINESS_PROVIDER,
         }
       : null,
   );
