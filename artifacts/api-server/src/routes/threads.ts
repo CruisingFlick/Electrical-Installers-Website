@@ -14,12 +14,11 @@ import {
   UpdateThreadBody,
   UpdateThreadParams,
 } from "@workspace/api-zod";
-import nodemailer from "nodemailer";
 import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { logger } from "../lib/logger";
 import { BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
-import { sendSms } from "../lib/sms";
+import { sendSms, sendEmail } from "../lib/clicksend";
 
 const MAX_BODY_LEN = 5000;
 const MAX_PHOTO_LEN = 4_000_000; // ~3MB base64 data URL
@@ -57,18 +56,6 @@ function validateContent(body: string, photoUrl?: string | null): string | null 
   return null;
 }
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: (process.env["SMTP_HOST"] || "smtp.gmail.com").trim(),
-    port: Number(process.env["SMTP_PORT"] || 587),
-    secure: false,
-    auth: {
-      user: process.env["SMTP_USER"],
-      pass: process.env["SMTP_PASS"],
-    },
-  });
-}
-
 async function sendNewMessageEmail(opts: {
   customerName: string;
   customerPhone: string;
@@ -76,11 +63,7 @@ async function sendNewMessageEmail(opts: {
   hasPhoto: boolean;
 }) {
   try {
-    const transporter = createTransporter();
-    const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
-
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: BUSINESS_EMAIL,
       subject: `New customer message — ${opts.customerName}`,
       text: [

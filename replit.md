@@ -17,7 +17,7 @@ Full-stack business website for "Electrical Installers" serving Mornington Penin
 - **Validation**: Zod, drizzle-zod
 - **Charts**: recharts (admin analytics dashboard)
 - **Maps**: react-leaflet + leaflet (OpenStreetMap) for job map
-- **Email**: nodemailer (best-effort, requires SMTP env vars)
+- **Email & SMS**: ClickSend REST API (transactional email + SMS, best-effort; requires ClickSend env vars)
 - **API codegen**: Orval (from OpenAPI spec)
 
 ## Features
@@ -93,15 +93,20 @@ Tables in `lib/db/src/schema/index.ts`:
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-## Email Configuration (Optional)
+## Email & SMS Configuration (ClickSend)
 
-Set these env vars to enable thank-you emails on booking/quote submissions:
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USER`
-- `SMTP_PASS`
+Both email and SMS go through ClickSend's REST API (`src/lib/clicksend.ts`). Set these to enable notifications:
 
-Emails are best-effort — the request will succeed even if SMTP is not configured.
+**Secrets:**
+- `CLICKSEND_USERNAME` — ClickSend account username
+- `CLICKSEND_API_KEY` — ClickSend API key (Account → API Credentials)
+
+**Config:**
+- `CLICKSEND_FROM_EMAIL` — verified ClickSend sending address (must be verified in ClickSend → Email → Sending Addresses). Used to resolve the `email_address_id` at runtime via `GET /v3/email/addresses` (cached after first lookup).
+- `CLICKSEND_EMAIL_ADDRESS_ID` — optional; set directly to skip the address lookup.
+- `CLICKSEND_SMS_FROM` — optional SMS sender ID (dedicated number or alphanumeric sender). Omit to use ClickSend's shared number.
+
+Both email and SMS are best-effort — requests succeed even if ClickSend is not configured (helpers no-op when credentials are missing). AU phone numbers are auto-formatted to `+61`.
 
 ## Workflows
 

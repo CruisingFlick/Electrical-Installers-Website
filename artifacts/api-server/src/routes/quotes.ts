@@ -6,10 +6,9 @@ import {
   UpdateQuoteStatusBody,
   UpdateQuoteStatusParams,
 } from "@workspace/api-zod";
-import nodemailer from "nodemailer";
 import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
-import { sendSms } from "../lib/sms";
+import { sendSms, sendEmail } from "../lib/clicksend";
 import { logger } from "../lib/logger";
 import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
 
@@ -22,18 +21,6 @@ function formatQuote(q: typeof quotesTable.$inferSelect) {
   };
 }
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: (process.env["SMTP_HOST"] || "smtp.gmail.com").trim(),
-    port: Number(process.env["SMTP_PORT"] || 587),
-    secure: false,
-    auth: {
-      user: process.env["SMTP_USER"],
-      pass: process.env["SMTP_PASS"],
-    },
-  });
-}
-
 async function sendQuoteEmails(quote: {
   customerName: string;
   customerEmail: string;
@@ -43,19 +30,14 @@ async function sendQuoteEmails(quote: {
   description: string;
 }) {
   try {
-    const transporter = createTransporter();
-    const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
-
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: quote.customerEmail,
       subject: "Thank you for your quote request — Electrical Installers",
       text: `Hi ${quote.customerName},\n\nThank you for contacting Electrical Installers. We've received your quote request and will review it and be in touch shortly.\n\nIf you have any urgent questions, please call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers\nMornington Peninsula & Surrounding Areas`,
       html: `<p>Hi ${he.escape(quote.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your quote request and will review it and be in touch shortly.</p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: BUSINESS_EMAIL,
       subject: `New Quote Request — ${quote.customerName} (${quote.jobType})`,
       text: [

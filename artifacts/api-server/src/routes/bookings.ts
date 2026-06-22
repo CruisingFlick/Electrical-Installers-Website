@@ -11,10 +11,9 @@ import {
   ConfirmBookingBody,
   ConfirmBookingParams,
 } from "@workspace/api-zod";
-import nodemailer from "nodemailer";
 import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
-import { sendSms } from "../lib/sms";
+import { sendSms, sendEmail } from "../lib/clicksend";
 import { logger } from "../lib/logger";
 import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE, SITE_BASE_URL } from "../lib/constants";
 import { parseAuDateTime, buildSingleEventIcs } from "../lib/ical";
@@ -34,18 +33,6 @@ function csvCell(value: string | number | null | undefined): string {
   return `"${str.replace(/"/g, '""')}"`;
 }
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: (process.env["SMTP_HOST"] || "smtp.gmail.com").trim(),
-    port: Number(process.env["SMTP_PORT"] || 587),
-    secure: false,
-    auth: {
-      user: process.env["SMTP_USER"],
-      pass: process.env["SMTP_PASS"],
-    },
-  });
-}
-
 async function sendBookingEmails(booking: {
   customerName: string;
   customerEmail: string;
@@ -58,8 +45,6 @@ async function sendBookingEmails(booking: {
   referenceNumber?: string | null;
 }) {
   try {
-    const transporter = createTransporter();
-    const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
     const ref = booking.referenceNumber ?? "";
     const trackUrl = `${SITE_BASE_URL}/track`;
 
@@ -72,8 +57,7 @@ async function sendBookingEmails(booking: {
       `  Date:   ${booking.preferredDate}`,
     ].join("\n");
 
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: booking.customerEmail,
       subject: ref
         ? `We've received your booking (${ref}) — Electrical Installers`
@@ -82,8 +66,7 @@ async function sendBookingEmails(booking: {
       html: `<p>Hi ${he.escape(booking.customerName)},</p><p>Thank you for contacting <strong>Electrical Installers</strong>. We've received your booking request and will contact you within one business day to confirm your appointment.</p>${ref ? `<p style="font-size:15px;">Your reference number: <strong>${he.escape(ref)}</strong></p>` : ""}<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px;margin:8px 0;"><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Job</td><td style="padding:4px 0;"><strong>${he.escape(booking.jobType)}</strong></td></tr><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Suburb</td><td style="padding:4px 0;"><strong>${he.escape(booking.suburb)}</strong></td></tr><tr><td style="padding:4px 12px 4px 0;color:#64748b;">Date</td><td style="padding:4px 0;"><strong>${he.escape(booking.preferredDate)}</strong></td></tr></table><p><a href="${trackUrl}" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold;">Track your booking</a></p><p>If you have any urgent questions, please call us on <strong>${BUSINESS_PHONE}</strong>.</p><p>Kind regards,<br><strong>Electrical Installers</strong><br>Mornington Peninsula &amp; Surrounding Areas</p>`,
     });
 
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: BUSINESS_EMAIL,
       subject: `New Booking Request — ${booking.customerName} (${booking.jobType})`,
       text: [
@@ -199,11 +182,8 @@ async function sendStatusUpdateEmail(booking: typeof bookingsTable.$inferSelect)
     const message = STATUS_MESSAGES[booking.status] ?? "";
     const ref = booking.referenceNumber ?? `#${booking.id}`;
     const trackUrl = `${SITE_BASE_URL}/track`;
-    const transporter = createTransporter();
-    const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
 
-    await transporter.sendMail({
-      from,
+    await sendEmail({
       to: booking.customerEmail,
       subject: `Booking ${ref} update: ${label} — Electrical Installers`,
       text: `Hi ${booking.customerName},\n\nThere's an update on your booking (${ref}).\n\nStatus: ${label}\n${message}\n\nJob:    ${booking.jobType}\nSuburb: ${booking.suburb}\n\nTrack your booking: ${trackUrl}\n\nQuestions? Call us on ${BUSINESS_PHONE}.\n\nKind regards,\nElectrical Installers`,
@@ -372,8 +352,6 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
     const { confirmedDate, adminNote } = bodyParsed.data;
 
     try {
-      const transporter = createTransporter();
-      const from = `"Electrical Installers" <${process.env["SMTP_USER"] || BUSINESS_EMAIL}>`;
       const noteSection = adminNote
         ? `\n\nMessage from us:\n${adminNote}`
         : "";
@@ -395,11 +373,10 @@ router.post("/:id/confirm", requireAdmin, async (req, res, next) => {
           ]
         : undefined;
 
-      await transporter.sendMail({
-        from,
+      await sendEmail({
         to: row.customerEmail,
         subject: "Your booking is confirmed — Electrical Installers",
-        ...(icsAttachment ? { attachments: icsAttachment, icalEvent: { method: "PUBLISH", content: icsAttachment[0]!.content } } : {}),
+        ...(icsAttachment ? { attachments: icsAttachment } : {}),
         text: [
           `Hi ${row.customerName},`,
           "",
