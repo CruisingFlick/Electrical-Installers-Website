@@ -93,20 +93,28 @@ Tables in `lib/db/src/schema/index.ts`:
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-## Email & SMS Configuration (ClickSend)
+## Email & SMS Configuration
 
-Both email and SMS go through ClickSend's REST API (`src/lib/clicksend.ts`). Set these to enable notifications:
+SMS goes through **ClickSend** (`src/lib/clicksend.ts`); transactional email goes through **Resend** (`src/lib/resend.ts`). They are separate providers: ClickSend discontinued email sending for new customers, so email was moved to Resend while SMS stayed on ClickSend.
 
+### SMS — ClickSend
 **Secrets:**
 - `CLICKSEND_USERNAME` — ClickSend account username
 - `CLICKSEND_API_KEY` — ClickSend API key (Account → API Credentials)
 
 **Config:**
-- `CLICKSEND_FROM_EMAIL` — verified ClickSend sending address (must be verified in ClickSend → Email → Sending Addresses). Used to resolve the `email_address_id` at runtime via `GET /v3/email/addresses` (cached after first lookup).
-- `CLICKSEND_EMAIL_ADDRESS_ID` — optional; set directly to skip the address lookup.
-- `CLICKSEND_SMS_FROM` — optional SMS sender ID (dedicated number or alphanumeric sender). Omit to use ClickSend's shared number.
+- `CLICKSEND_SMS_FROM` — optional SMS sender ID (dedicated number or alphanumeric "alpha tag", max 11 chars). Omit/blank to use ClickSend's shared number. Note: alpha tags and shared numbers are one-way (recipients can't reply). AU phone numbers are auto-formatted to `+61`.
 
-Both email and SMS are best-effort — requests succeed even if ClickSend is not configured (helpers no-op when credentials are missing). AU phone numbers are auto-formatted to `+61`.
+### Email — Resend
+**Secret:**
+- `RESEND_API_KEY` — Resend API key (starts with `re_`; "Sending access" is sufficient). Get one at resend.com → API Keys.
+
+**Config:**
+- `EMAIL_FROM` — optional full from header override, e.g. `Electrical Installers <info@electricalinstallers.com.au>`. Defaults to `Electrical Installers <${BUSINESS_EMAIL}>`.
+
+The sending domain (`electricalinstallers.com.au`) must be verified in Resend (Domains → add domain → add the SPF/DKIM DNS records). Until verified, Resend rejects real sends with a 403 (only test sends to the account owner's own email are allowed).
+
+Both email and SMS are best-effort — requests succeed even if the provider is unconfigured (helpers no-op when credentials are missing).
 
 ## Workflows
 
