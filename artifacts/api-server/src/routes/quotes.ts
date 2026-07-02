@@ -8,7 +8,8 @@ import {
 } from "@workspace/api-zod";
 import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
-import { sendSms, sendEmail } from "../lib/clicksend";
+import { sendSms } from "../lib/clicksend";
+import { sendEmail } from "../lib/resend";
 import { logger } from "../lib/logger";
 import { BUSINESS_PHONE, BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
 

@@ -18,7 +18,8 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { logger } from "../lib/logger";
 import { BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
-import { sendSms, sendEmail } from "../lib/clicksend";
+import { sendSms } from "../lib/clicksend";
+import { sendEmail } from "../lib/resend";
 
 const MAX_BODY_LEN = 5000;
 const MAX_PHOTO_LEN = 4_000_000; // ~3MB base64 data URL
