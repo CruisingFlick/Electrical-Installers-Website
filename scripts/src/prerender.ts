@@ -4,6 +4,18 @@ import { LOCAL_SUBURBS, REC_NUMBER, BUSINESS_PHONE } from "@workspace/site-conte
 
 const BASE_URL = "https://electricalinstallers.com.au";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/logo.png`;
+const MAIN_NAV_LINKS = [
+  ["/about", "About"],
+  ["/services", "Services"],
+  ["/service-area", "Service Area"],
+  ["/portfolio", "Portfolio"],
+  ["/reviews", "Reviews"],
+  ["/blog", "Tips & Guides"],
+  ["/pricing", "Pricing"],
+  ["/faq", "FAQ"],
+] as const;
+let crawlableSuburbLinks: Array<{ slug: string; suburb: string }> =
+  LOCAL_SUBURBS.map(({ slug, suburb }) => ({ slug, suburb }));
 
 const DIST_DIR = path.resolve(
   import.meta.dirname,
@@ -29,6 +41,28 @@ function escapeHtml(str: string): string {
 function truncate(str: string, maxLen: number): string {
   if (str.length <= maxLen) return str;
   return str.slice(0, maxLen - 3) + "...";
+}
+
+function renderCrawlableShell(bodyHtml: string): string {
+  const navLinks = MAIN_NAV_LINKS.map(
+    ([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`,
+  ).join(" &middot; ");
+  const suburbLinks = crawlableSuburbLinks.map(
+    (suburb) =>
+      `<li><a href="/${escapeAttr(suburb.slug)}">Electrician ${escapeHtml(suburb.suburb)}</a></li>`,
+  ).join("");
+
+  return (
+    `<header style="font-family:sans-serif;background:#0f2a4a;color:#fff;padding:1rem;">` +
+    `<nav aria-label="Main navigation"><a href="/" style="color:#fff;font-weight:700;">Electrical Installers</a> &middot; ${navLinks}</nav>` +
+    `</header>` +
+    `<main>${bodyHtml}</main>` +
+    `<footer style="font-family:sans-serif;background:#0b2038;color:#fff;padding:2rem 1rem;">` +
+    `<nav aria-label="Footer navigation" style="margin-bottom:1.5rem;">${navLinks}</nav>` +
+    `<h2 style="font-size:1rem;">Electricians by suburb</h2>` +
+    `<ul style="columns:3;list-style:none;padding:0;">${suburbLinks}</ul>` +
+    `</footer>`
+  );
 }
 
 function injectMeta(
@@ -102,7 +136,7 @@ function injectMeta(
     // see the full page content immediately.
     result = result.replace(
       '<div id="root"></div>',
-      `<div id="root">${bodyHtml}</div>`,
+      `<div id="root">${renderCrawlableShell(bodyHtml)}</div>`,
     );
   }
 
@@ -231,14 +265,17 @@ function renderSuburbListBody(suburbPages: SuburbPageRow[]): string {
   let html = `<div style="${style}">`;
   html += `<h1>Our Service Areas</h1>`;
   html += `<p>We serve residential and commercial customers across the Mornington Peninsula, Bayside, St Kilda, Warragul, and surrounding areas of South East Melbourne with professional electrical services.</p>`;
-  if (suburbPages.length > 0) {
-    html += `<ul style="list-style:none;padding:0;display:grid;gap:0.75rem;">`;
-    for (const p of suburbPages) {
-      html += `<li><a href="/${escapeAttr(p.slug)}" style="color:#1e3a5f;font-weight:600;">${escapeHtml(p.suburb)}</a>`;
-      html += ` — ${escapeHtml(truncate(p.intro, 120))}</li>`;
-    }
-    html += `</ul>`;
+  html += `<ul style="list-style:none;padding:0;display:grid;gap:0.75rem;">`;
+  for (const suburb of LOCAL_SUBURBS) {
+    html += `<li><a href="/${escapeAttr(suburb.slug)}" style="color:#1e3a5f;font-weight:600;">Electrician ${escapeHtml(suburb.suburb)}</a>`;
+    html += ` — ${escapeHtml(truncate(suburb.intro, 120))}</li>`;
   }
+  for (const p of suburbPages) {
+    if (LOCAL_SUBURBS.some((suburb) => suburb.slug === p.slug)) continue;
+    html += `<li><a href="/${escapeAttr(p.slug)}" style="color:#1e3a5f;font-weight:600;">Electrician ${escapeHtml(p.suburb)}</a>`;
+    html += ` — ${escapeHtml(truncate(p.intro, 120))}</li>`;
+  }
+  html += `</ul>`;
   html += `</div>`;
   return html;
 }
@@ -417,6 +454,7 @@ const STATIC_ROUTES: Array<{
       "</ul>" +
       "<h2>Service Areas</h2>" +
       "<p>Mornington Peninsula, Bayside, St Kilda, Frankston, Mount Eliza, Mornington, Rosebud, Rye, Sorrento, Portsea, and Warragul.</p>" +
+      '<p><a href="/service-area" style="color:#ea6c00;font-weight:700;">View every electrician service area</a></p>' +
       '<p><a href="/book" style="color:#ea6c00;font-weight:600;">Book an Appointment</a> or call <a href="tel:0419868703" style="color:#1e3a5f;font-weight:600;">0419 868 703</a></p>' +
       "</div>",
   },
@@ -584,46 +622,6 @@ async function main() {
 
   const baseHtml = fs.readFileSync(INDEX_HTML, "utf-8");
 
-  console.log("Static routes:");
-  for (const route of STATIC_ROUTES) {
-    const html = injectMeta(baseHtml, {
-      title: route.title,
-      description: route.description,
-      canonicalPath: route.path,
-      bodyHtml: route.bodyHtml,
-    });
-    writeRoute(route.path, html);
-  }
-
-  console.log("\nStatic suburb landing pages:");
-  for (const page of LOCAL_SUBURBS) {
-    const canonicalPath = `/${page.slug}`;
-    const html = injectMeta(baseHtml, {
-      title: page.title,
-      description: page.description,
-      canonicalPath,
-      bodyHtml: renderLocalSuburbBody(page),
-      jsonLd: {
-        "@context": "https://schema.org",
-        "@type": "Service",
-        "name": `Electrician in ${page.suburb}`,
-        "description": page.intro,
-        "areaServed": { "@type": "Place", "name": page.suburb },
-        "url": `${BASE_URL}${canonicalPath}`,
-        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
-        "provider": {
-          "@type": "Electrician",
-          "@id": `${BASE_URL}/#business`,
-          "name": "Electrical Installers",
-          "url": BASE_URL,
-          "telephone": "+61419868703",
-        },
-      },
-    });
-    writeRoute(canonicalPath, html);
-  }
-  console.log(`  ${LOCAL_SUBURBS.length} static suburb pages`);
-
   console.log("\nListing pages + dynamic detail routes (from database):");
 
   // Dynamic SEO routes are sourced from the database. Two realities make a hard
@@ -741,6 +739,56 @@ async function main() {
 
   const { blogPosts, servicePages, suburbPages, faqs } =
     await loadDynamicData();
+
+  crawlableSuburbLinks = [
+    ...LOCAL_SUBURBS.map(({ slug, suburb }) => ({ slug, suburb })),
+    ...(suburbPages as SuburbPageRow[])
+      .filter(
+        (page) =>
+          !LOCAL_SUBURBS.some((suburb) => suburb.slug === page.slug),
+      )
+      .map(({ slug, suburb }) => ({ slug, suburb })),
+  ];
+
+  console.log("\nStatic routes:");
+  for (const route of STATIC_ROUTES) {
+    const html = injectMeta(baseHtml, {
+      title: route.title,
+      description: route.description,
+      canonicalPath: route.path,
+      bodyHtml: route.bodyHtml,
+    });
+    writeRoute(route.path, html);
+  }
+
+  console.log("\nStatic suburb landing pages:");
+  for (const page of LOCAL_SUBURBS) {
+    const canonicalPath = `/${page.slug}`;
+    const html = injectMeta(baseHtml, {
+      title: page.title,
+      description: page.description,
+      canonicalPath,
+      bodyHtml: renderLocalSuburbBody(page),
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": `Electrician in ${page.suburb}`,
+        "description": page.intro,
+        "areaServed": { "@type": "Place", "name": page.suburb },
+        "url": `${BASE_URL}${canonicalPath}`,
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}${canonicalPath}` },
+        "provider": {
+          "@type": "Electrician",
+          "@id": `${BASE_URL}/#business`,
+          "name": "Electrical Installers",
+          "url": BASE_URL,
+          "telephone": "+61419868703",
+        },
+      },
+    });
+    writeRoute(canonicalPath, html);
+  }
+  console.log(`  ${LOCAL_SUBURBS.length} static suburb pages`);
 
   // --- Listing pages with real crawlable content and links ---
 

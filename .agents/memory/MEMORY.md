@@ -11,3 +11,4 @@
 - [Booking soft-delete consistency](booking-soft-delete.md) — soft-deleted bookings (deletedAt) must be excluded from list/export/track/analytics/mutations/customer-sync, but STILL shown in customer job history.
 - [Prerender not idempotent](prerender-idempotency.md) — only run prerender on a fresh `vite build`; a second pass copies the home-page body into every route. Use `rm -rf dist` + full `build`.
 - [drizzle peer-variant dedupe](drizzle-peer-variant-dedupe.md) — dep add/remove in api-server can flip drizzle-orm to bare variant → phantom TS2769 on untouched query code; fix with `pnpm dedupe`.
+- [Prerender crawlable links](prerender-crawlable-links.md) — SEO output replaces React root content, so crawler-critical nav and suburb links must be injected into every generated HTML page.

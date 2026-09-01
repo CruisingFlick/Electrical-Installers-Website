@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Menu, X, Phone } from "lucide-react";
 
 const navLinks = [
@@ -26,14 +26,14 @@ export default function Navbar() {
     <header className="bg-[hsl(214,60%,14%)] text-white sticky top-0 z-50 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2.5 font-bold shrink-0">
+          <a href="/" className="flex items-center gap-2.5 font-bold shrink-0">
             <img src="/logo.png" alt="Electrical Installers logo" className="h-11 sm:h-12 w-auto" />
             <span className="text-lg sm:text-xl leading-tight">Electrical<br />Installers</span>
-          </Link>
+          </a>
 
           <nav className="hidden lg:flex items-center gap-0.5">
             {navLinks.map((l) => (
-              <Link
+              <a
                 key={l.href}
                 href={l.href}
                 className={`px-2.5 py-1.5 rounded text-sm font-medium transition-colors whitespace-nowrap ${
@@ -44,7 +44,7 @@ export default function Navbar() {
                 data-testid={`nav-${l.label.toLowerCase().replace(/\s+/g, "-")}`}
               >
                 {l.label}
-              </Link>
+              </a>
             ))}
           </nav>
 
@@ -68,20 +68,21 @@ export default function Navbar() {
         </div>
       </div>
 
-      {open && (
-        <div className="lg:hidden bg-[hsl(214,60%,12%)] px-4 py-2 space-y-1">
+        <div
+          className={`${open ? "block" : "hidden"} lg:hidden bg-[hsl(214,60%,12%)] px-4 py-2 space-y-1`}
+          aria-hidden={!open}
+        >
           {navLinks.map((l) => (
-            <Link
+            <a
               key={l.href}
               href={l.href}
               className="block px-3 py-2 rounded text-sm text-gray-300 hover:text-white hover:bg-[hsl(214,50%,22%)]"
               onClick={() => setOpen(false)}
             >
               {l.label}
-            </Link>
+            </a>
           ))}
         </div>
-      )}
     </header>
   );
 }

@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
-import { apiGet, type SuburbPage } from "../lib/cms";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { LOCAL_SUBURBS } from "@workspace/site-content";
+import { apiGet, type SuburbPage } from "../lib/cms";
 
 const SERVICE_AREAS = [
   {
@@ -94,11 +95,16 @@ export default function ServiceAreaPage() {
     path: "/service-area",
   });
   const [activeArea, setActiveArea] = useState<string | null>(null);
-
-  const { data: suburbPages = [] } = useQuery<SuburbPage[]>({
+  const { data: cmsSuburbPages = [] } = useQuery<SuburbPage[]>({
     queryKey: ["suburb-pages"],
     queryFn: () => apiGet<SuburbPage[]>("/suburb-pages"),
   });
+  const suburbPages = [
+    ...LOCAL_SUBURBS.map(({ slug, suburb }) => ({ slug, suburb })),
+    ...cmsSuburbPages.filter(
+      (page) => !LOCAL_SUBURBS.some((suburb) => suburb.slug === page.slug),
+    ),
+  ];
 
   return (
     <div>
@@ -219,7 +225,6 @@ export default function ServiceAreaPage() {
         </div>
 
         {/* Suburb landing page links — crawlable internal links for SEO */}
-        {suburbPages.length > 0 && (
           <div className="mt-16">
             <h2 className="text-2xl font-bold text-[hsl(214,60%,14%)] mb-3 text-center">
               Electrician Service Guides by Suburb
@@ -229,17 +234,16 @@ export default function ServiceAreaPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               {suburbPages.map((page) => (
-                <Link
+                <a
                   key={page.slug}
                   href={`/${page.slug}`}
                   className="text-sm font-medium bg-white border border-gray-200 hover:border-[hsl(25,95%,53%)] hover:text-[hsl(25,95%,53%)] text-[hsl(214,60%,14%)] px-4 py-2 rounded-full shadow-sm transition-colors"
                 >
-                  {page.suburb}
-                </Link>
+                  Electrician {page.suburb}
+                </a>
               ))}
             </div>
           </div>
-        )}
       </div>
     </div>
   );

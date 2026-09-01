@@ -13,6 +13,17 @@ import {
   SERVICE_REGION_LINE,
 } from "@workspace/site-content";
 
+const FOOTER_NAV_LINKS = [
+  { href: "/about", label: "About" },
+  { href: "/services", label: "Services" },
+  { href: "/service-area", label: "Service Area" },
+  { href: "/portfolio", label: "Portfolio" },
+  { href: "/reviews", label: "Reviews" },
+  { href: "/blog", label: "Tips & Guides" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/faq", label: "FAQ" },
+];
+
 export default function Footer() {
   const [, navigate] = useLocation();
   const tapCount = useRef(0);
@@ -36,10 +47,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-3 mb-3 group">
+            <a href="/" className="inline-flex items-center gap-3 mb-3 group">
               <img src="/logo.png" alt="Electrical Installers logo" className="h-14 w-auto" />
               <span className="font-bold text-white text-lg group-hover:text-[hsl(25,95%,63%)] transition-colors">{BUSINESS_NAME}</span>
-            </Link>
+            </a>
             <p className="text-sm leading-relaxed mb-4">
               Licensed electricians serving the Mornington Peninsula and surrounding areas. Residential, commercial, industrial, and underground power specialists.
             </p>
@@ -83,13 +94,24 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-[hsl(214,40%,20%)]">
+          <h3 className="text-white font-semibold mb-3">Explore</h3>
+          <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {FOOTER_NAV_LINKS.map((link) => (
+              <a key={link.href} href={link.href} className="hover:text-white transition-colors">
+                {link.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+
+        <div className="mt-10 pt-8 border-t border-[hsl(214,40%,20%)]">
           <h3 className="text-white font-semibold mb-3">Service Areas</h3>
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2 text-sm">
             {LOCAL_SUBURBS.map((s) => (
               <li key={s.slug}>
-                <Link href={`/${s.slug}`} className="hover:text-white transition-colors">
+                <a href={`/${s.slug}`} className="hover:text-white transition-colors">
                   Electrician {s.suburb}
-                </Link>
+                </a>
               </li>
             ))}
           </ul>

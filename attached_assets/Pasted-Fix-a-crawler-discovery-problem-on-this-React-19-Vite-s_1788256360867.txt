@@ -1,0 +1,46 @@
+Fix a crawler discovery problem on this React 19 + Vite site.
+
+THE PROBLEM:
+A raw non-JavaScript fetch of the homepage returns real body
+text, but contains only two <a href> elements in the entire
+document: /book and a tel: link. The main nav and all 21 suburb
+page links are missing from the raw HTML — they only appear
+after JavaScript executes. Googlebot's first crawl pass sees no
+internal links, so 21 suburb pages sit undiscovered.
+
+TASKS:
+
+1. Diagnose why the nav links are absent from prerendered
+   output while body text is present. Check whether the nav is
+   conditionally rendered based on viewport width, mobile menu
+   open state, or mounted in a portal — anything that would not
+   be present at the moment the prerenderer snapshots the DOM.
+   Report what you find before changing anything.
+
+2. Add a static footer link block to every page, rendered
+   unconditionally as plain <a href> elements with no viewport
+   or state conditions. It must contain all 21 suburb page
+   links plus the main nav links (/about, /services,
+   /service-area, /portfolio, /reviews, /blog, /pricing, /faq).
+   Not React Router Link with onClick navigation — real anchor
+   tags with real href attributes that survive prerendering.
+
+3. Build or verify a /service-area hub page that links to all
+   21 suburb pages in plain HTML, and link to it prominently
+   from the homepage.
+
+4. Ensure the primary nav renders as real <a href> anchors in
+   prerendered output regardless of viewport. If it collapses
+   to a hamburger on mobile, the links must still exist in the
+   DOM and be hidden with CSS, not conditionally rendered.
+
+VERIFICATION — this is required, do not skip it:
+After the changes, run:
+
+curl -s https://[deployed-url]/ | grep -o 'href="[^"]*"' | sort -u
+
+Paste the full output. I expect to see all 21 electrician-*
+URLs and every nav link. If they are not in that output, the
+fix has not worked, regardless of how the page looks in a
+browser. Repeat the same check on /service-area and on one
+suburb page.

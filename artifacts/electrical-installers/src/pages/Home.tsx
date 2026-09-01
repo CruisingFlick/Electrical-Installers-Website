@@ -102,6 +102,9 @@ export default function HomePage() {
               <div>
                 <p className="text-xs uppercase tracking-widest text-[hsl(25,95%,63%)] font-semibold mb-1">Service Areas</p>
                 <p className="text-sm text-gray-300">We service all surrounding suburbs in this corridor</p>
+                <a href="/service-area" className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-white hover:text-[hsl(25,95%,63%)] transition-colors">
+                  View all service areas <ArrowRight size={14} />
+                </a>
               </div>
             </div>
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-300 justify-center md:justify-end">
