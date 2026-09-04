@@ -1,6 +1,16 @@
 import { Router, type IRouter } from "express";
 import { db, threads, threadMessages } from "@workspace/db";
-import { eq, desc, asc, sql, and, isNotNull } from "drizzle-orm";
+import {
+  eq,
+  desc,
+  asc,
+  sql,
+  and,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+} from "drizzle-orm";
 import {
   CreateThreadBody,
   CreateThreadMessageBody,
@@ -18,11 +28,17 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { logger } from "../lib/logger";
 import { BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
-import { getSmsDeliveryStatus, sendSms } from "../lib/clicksend";
+import {
+  getSmsDeliveryStatus,
+  parseSmsDeliveryReceipt,
+  sendSms,
+  verifyClickSendWebhookToken,
+} from "../lib/clicksend";
 import { sendEmail } from "../lib/resend";
 
 const MAX_BODY_LEN = 5000;
 const MAX_PHOTO_LEN = 4_000_000; // ~3MB base64 data URL
+const SMS_STATUS_FALLBACK_INTERVAL_MS = 5 * 60 * 1000;
 
 function formatThread(t: typeof threads.$inferSelect) {
   return {
@@ -57,19 +73,49 @@ async function refreshSmsDeliveryStatuses(
       if (message.sender !== "admin" || message.smsStatus !== "sent" || !message.smsMessageId) {
         return message;
       }
-      const status = await getSmsDeliveryStatus(message.smsMessageId);
-      if (!status || status === message.smsStatus) return message;
+      const now = new Date();
+      const staleBefore = new Date(now.getTime() - SMS_STATUS_FALLBACK_INTERVAL_MS);
+      if (message.smsStatusUpdatedAt && message.smsStatusUpdatedAt > staleBefore) {
+        return message;
+      }
+
+      // Atomically claim this fallback check before contacting ClickSend. Frequent
+      // or concurrent admin reads then use the stored state instead of polling.
+      const [claimed] = await db
+        .update(threadMessages)
+        .set({ smsStatusUpdatedAt: now })
+        .where(
+          and(
+            eq(threadMessages.id, message.id),
+            eq(threadMessages.smsStatus, "sent"),
+            or(
+              isNull(threadMessages.smsStatusUpdatedAt),
+              lte(threadMessages.smsStatusUpdatedAt, staleBefore),
+            ),
+          ),
+        )
+        .returning();
+      if (!claimed) return message;
+
+      const status = await getSmsDeliveryStatus(claimed.smsMessageId!);
+      if (!status || status === claimed.smsStatus) return claimed;
       const [updated] = await db
         .update(threadMessages)
         .set({ smsStatus: status, smsStatusUpdatedAt: new Date() })
         .where(
           and(
-            eq(threadMessages.id, message.id),
+            eq(threadMessages.id, claimed.id),
+            eq(threadMessages.smsStatus, "sent"),
             isNotNull(threadMessages.smsMessageId),
           ),
         )
         .returning();
-      return updated ?? message;
+      if (updated) return updated;
+      const [current] = await db
+        .select()
+        .from(threadMessages)
+        .where(eq(threadMessages.id, claimed.id));
+      return current ?? claimed;
     }),
   );
   return refreshed;
@@ -122,6 +168,48 @@ async function sendNewMessageEmail(opts: {
 
 // ---------- Public routes (mounted at /threads) ----------
 const publicRouter: IRouter = Router();
+const webhookRouter: IRouter = Router();
+
+webhookRouter.post("/sms-receipts", async (req, res, next) => {
+  const token =
+    req.get("x-clicksend-webhook-token") ??
+    (typeof req.query["token"] === "string" ? req.query["token"] : undefined);
+  if (!verifyClickSendWebhookToken(token)) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const receipt = parseSmsDeliveryReceipt(req.body);
+  if (!receipt) {
+    res.status(400).json({ error: "Invalid delivery receipt" });
+    return;
+  }
+
+  try {
+    // Only pending messages may transition. This makes duplicate callbacks safe
+    // and prevents a late/out-of-order receipt from downgrading a terminal state.
+    const updated = await db
+      .update(threadMessages)
+      .set({ smsStatus: receipt.status, smsStatusUpdatedAt: new Date() })
+      .where(
+        and(
+          eq(threadMessages.smsMessageId, receipt.messageId),
+          eq(threadMessages.smsStatus, "sent"),
+        ),
+      )
+      .returning({ id: threadMessages.id });
+
+    if (updated.length === 0) {
+      logger.info(
+        { messageId: receipt.messageId, status: receipt.status },
+        "ClickSend receipt was already applied or did not match a pending message",
+      );
+    }
+    res.status(200).json({ received: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 publicRouter.post("/", async (req, res, next) => {
   const parsed = CreateThreadBody.safeParse(req.body);
@@ -474,4 +562,8 @@ adminRouter.post("/:id/reply", requireAdmin, async (req, res, next) => {
   }
 });
 
-export { publicRouter as threadsPublicRouter, adminRouter as threadsAdminRouter };
+export {
+  publicRouter as threadsPublicRouter,
+  adminRouter as threadsAdminRouter,
+  webhookRouter as clickSendWebhookRouter,
+};

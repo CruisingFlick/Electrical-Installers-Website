@@ -1,4 +1,5 @@
 import { logger } from "./logger";
+import { timingSafeEqual } from "node:crypto";
 
 const CLICKSEND_BASE = "https://rest.clicksend.com/v3";
 
@@ -25,7 +26,7 @@ function normaliseStatus(status: string | null | undefined): SmsDeliveryStatus {
   return "sent";
 }
 
-function normaliseReceiptStatus(
+export function normaliseSmsReceiptStatus(
   statusCode: string | number | null | undefined,
   statusText: string | null | undefined,
 ): SmsDeliveryStatus {
@@ -38,7 +39,64 @@ function normaliseReceiptStatus(
   ) {
     return "delivered";
   }
-  return normaliseStatus(text);
+  const textStatus = normaliseStatus(text);
+  if (textStatus === "failed") return "failed";
+  const numericCode = Number(statusCode);
+  if (Number.isFinite(numericCode) && numericCode >= 300) return "failed";
+  // ClickSend code 200 is queued, and other non-terminal/unknown receipt
+  // states must remain pending so a later 201 webhook can deliver them.
+  return "sent";
+}
+
+export type SmsDeliveryReceipt = {
+  messageId: string;
+  status: SmsDeliveryStatus;
+};
+
+export function parseSmsDeliveryReceipt(
+  payload: unknown,
+): SmsDeliveryReceipt | null {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const root = payload as Record<string, unknown>;
+  const data =
+    root["data"] && typeof root["data"] === "object" && !Array.isArray(root["data"])
+      ? (root["data"] as Record<string, unknown>)
+      : root;
+  const rawMessageId = data["message_id"] ?? data["messageId"];
+  const messageId =
+    typeof rawMessageId === "string"
+      ? rawMessageId.trim()
+      : typeof rawMessageId === "number"
+        ? String(rawMessageId)
+        : "";
+  if (!messageId) return null;
+
+  const statusCode =
+    typeof data["status_code"] === "string" || typeof data["status_code"] === "number"
+      ? data["status_code"]
+      : null;
+  const statusText =
+    typeof data["status_text"] === "string"
+      ? data["status_text"]
+      : typeof data["status"] === "string"
+        ? data["status"]
+        : null;
+  if (statusCode === null && statusText === null) return null;
+  return {
+    messageId,
+    status: normaliseSmsReceiptStatus(statusCode, statusText),
+  };
+}
+
+export function verifyClickSendWebhookToken(candidate: unknown): boolean {
+  const expected = process.env["CLICKSEND_WEBHOOK_SECRET"];
+  if (!expected || typeof candidate !== "string") return false;
+  const expectedBuffer = Buffer.from(expected);
+  const candidateBuffer = Buffer.from(candidate);
+  return (
+    expectedBuffer.length === candidateBuffer.length &&
+    timingSafeEqual(expectedBuffer, candidateBuffer)
+  );
 }
 
 async function readResponse(
@@ -157,7 +215,7 @@ export async function getSmsDeliveryStatus(
         ? data["status_code"]
         : null;
     const statusText = typeof data?.["status_text"] === "string" ? data["status_text"] : null;
-    return statusCode || statusText ? normaliseReceiptStatus(statusCode, statusText) : null;
+    return statusCode || statusText ? normaliseSmsReceiptStatus(statusCode, statusText) : null;
   } catch (err) {
     logger.error({ err, messageId }, "Failed to check SMS delivery status");
     return null;

@@ -101,9 +101,11 @@ SMS goes through **ClickSend** (`src/lib/clicksend.ts`); transactional email goe
 **Secrets:**
 - `CLICKSEND_USERNAME` — ClickSend account username
 - `CLICKSEND_API_KEY` — ClickSend API key (Account → API Credentials)
+- `CLICKSEND_WEBHOOK_SECRET` — random secret used to verify SMS delivery receipts
 
 **Config:**
 - `CLICKSEND_SMS_FROM` — optional SMS sender ID (dedicated number or alphanumeric "alpha tag", max 11 chars). Omit/blank to use ClickSend's shared number. Note: alpha tags and shared numbers are one-way (recipients can't reply). AU phone numbers are auto-formatted to `+61`.
+- Configure ClickSend's SMS delivery-receipt URL as the published app URL plus `/api/webhooks/clicksend/sms-receipts?token=<CLICKSEND_WEBHOOK_SECRET>`. The API also accepts the secret in the `X-ClickSend-Webhook-Token` header.
 
 ### Email — Resend
 **Secret:**

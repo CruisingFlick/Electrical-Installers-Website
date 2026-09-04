@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import request from "supertest";
 import { eq, inArray } from "drizzle-orm";
 import app from "../app";
@@ -173,5 +173,150 @@ describe("admin thread access", () => {
     const unreadBefore = before.body.unreadForAdmin;
     const after = await adminAgent.get(`/api/admin/threads/${id}`);
     expect(after.body.unreadForAdmin).toBe(unreadBefore);
+  });
+
+  it("reads a recently pending SMS from the database without checking ClickSend", async () => {
+    const messageId = `vitest-recent-sms-${id}`;
+    await db.insert(threadMessages).values({
+      threadId: id,
+      sender: "admin",
+      body: "Recently sent SMS",
+      smsMessageId: messageId,
+      smsStatus: "sent",
+      smsStatusUpdatedAt: new Date(),
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const response = await adminAgent.get(`/api/admin/threads/${id}`);
+      expect(response.status).toBe(200);
+      expect(
+        response.body.messages.find(
+          (message: { smsMessageId?: string }) => message.smsMessageId === messageId,
+        )?.smsStatus,
+      ).toBe("sent");
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("uses one bounded ClickSend lookup as a fallback for a stale pending SMS", async () => {
+    const messageId = `vitest-stale-sms-${id}`;
+    await db.insert(threadMessages).values({
+      threadId: id,
+      sender: "admin",
+      body: "Stale pending SMS",
+      smsMessageId: messageId,
+      smsStatus: "sent",
+      smsStatusUpdatedAt: new Date(Date.now() - 10 * 60 * 1000),
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          response_code: "SUCCESS",
+          data: {
+            message_id: messageId,
+            status_code: "201",
+            status_text: "Success: Message received on handset.",
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const response = await adminAgent.get(`/api/admin/threads/${id}`);
+      expect(response.status).toBe(200);
+      expect(
+        response.body.messages.find(
+          (message: { smsMessageId?: string }) => message.smsMessageId === messageId,
+        )?.smsStatus,
+      ).toBe("delivered");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+
+      await adminAgent.get(`/api/admin/threads/${id}`);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe("ClickSend delivery receipts", () => {
+  it("updates a pending SMS once and safely accepts duplicate receipts", async () => {
+    const threadResponse = await createThread();
+    const threadId = threadResponse.body.id as number;
+    const messageId = `vitest-sms-${threadId}`;
+    const [message] = await db
+      .insert(threadMessages)
+      .values({
+        threadId,
+        sender: "admin",
+        body: "Delivery receipt test",
+        smsMessageId: messageId,
+        smsStatus: "sent",
+        smsStatusUpdatedAt: new Date(),
+      })
+      .returning();
+    expect(message).toBeDefined();
+
+    const previousSecret = process.env["CLICKSEND_WEBHOOK_SECRET"];
+    process.env["CLICKSEND_WEBHOOK_SECRET"] = "vitest-webhook-secret";
+    try {
+      const sendReceipt = (statusCode: string, statusText: string) =>
+        request(app)
+          .post("/api/webhooks/clicksend/sms-receipts")
+          .set("x-clicksend-webhook-token", "vitest-webhook-secret")
+          .send({
+            message_id: messageId,
+            status_code: statusCode,
+            status_text: statusText,
+          });
+
+      expect((await sendReceipt("200", "Message queued for delivery")).status).toBe(200);
+      const [queued] = await db
+        .select()
+        .from(threadMessages)
+        .where(eq(threadMessages.id, message!.id));
+      expect(queued?.smsStatus).toBe("sent");
+
+      expect(
+        (await sendReceipt("201", "Success: Message received on handset.")).status,
+      ).toBe(200);
+      const [delivered] = await db
+        .select()
+        .from(threadMessages)
+        .where(eq(threadMessages.id, message!.id));
+      expect(delivered?.smsStatus).toBe("delivered");
+      const updatedAt = delivered?.smsStatusUpdatedAt?.getTime();
+
+      expect(
+        (await sendReceipt("201", "Success: Message received on handset.")).status,
+      ).toBe(200);
+      const [afterDuplicate] = await db
+        .select()
+        .from(threadMessages)
+        .where(eq(threadMessages.id, message!.id));
+      expect(afterDuplicate?.smsStatus).toBe("delivered");
+      expect(afterDuplicate?.smsStatusUpdatedAt?.getTime()).toBe(updatedAt);
+    } finally {
+      if (previousSecret === undefined) delete process.env["CLICKSEND_WEBHOOK_SECRET"];
+      else process.env["CLICKSEND_WEBHOOK_SECRET"] = previousSecret;
+    }
+  });
+
+  it("rejects an unverified receipt", async () => {
+    const previousSecret = process.env["CLICKSEND_WEBHOOK_SECRET"];
+    process.env["CLICKSEND_WEBHOOK_SECRET"] = "vitest-webhook-secret";
+    try {
+      const response = await request(app)
+        .post("/api/webhooks/clicksend/sms-receipts")
+        .send({ message_id: "unknown", status_code: "201" });
+      expect(response.status).toBe(401);
+    } finally {
+      if (previousSecret === undefined) delete process.env["CLICKSEND_WEBHOOK_SECRET"];
+      else process.env["CLICKSEND_WEBHOOK_SECRET"] = previousSecret;
+    }
   });
 });

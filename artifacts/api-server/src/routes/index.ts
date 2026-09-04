@@ -13,7 +13,11 @@ import mediaRouter from "./media";
 import customersRouter from "./customers";
 import { publicBlogRouter, adminBlogRouter } from "./blog";
 import settingsRouter from "./settings";
-import { threadsPublicRouter, threadsAdminRouter } from "./threads";
+import {
+  threadsPublicRouter,
+  threadsAdminRouter,
+  clickSendWebhookRouter,
+} from "./threads";
 import { calendarPublicRouter, calendarAdminRouter } from "./calendar";
 import { publicFaqsRouter, adminFaqsRouter } from "./faqs";
 import { publicPricingRouter, adminPricingRouter } from "./pricing";
@@ -33,6 +37,7 @@ router.use("/bookings", bookingsRouter);
 router.use("/portfolio", portfolioRouter);
 router.use("/reviews", reviewsRouter);
 router.use("/quotes", quotesRouter);
+router.use("/webhooks/clicksend", clickSendWebhookRouter);
 router.use("/threads", threadsPublicRouter);
 router.use("/admin/threads", threadsAdminRouter);
 router.use("/analytics", analyticsRouter);
