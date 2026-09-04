@@ -2,22 +2,63 @@ import { logger } from "./logger";
 
 const CLICKSEND_BASE = "https://rest.clicksend.com/v3";
 
-async function checkResponse(res: Response, context: string): Promise<void> {
+export type SmsDeliveryStatus = "sent" | "delivered" | "failed";
+
+export type SmsSendResult = {
+  messageId: string | null;
+  status: SmsDeliveryStatus;
+};
+
+function normaliseStatus(status: string | null | undefined): SmsDeliveryStatus {
+  const value = status?.trim().toUpperCase();
+  if (value === "DELIVERED" || value === "COMPLETED") return "delivered";
+  if (
+    value &&
+    (value.includes("FAIL") ||
+      value.includes("INVALID") ||
+      value.includes("REJECT") ||
+      value.includes("EXPIRED") ||
+      value.includes("UNDELIVER"))
+  ) {
+    return "failed";
+  }
+  return "sent";
+}
+
+function normaliseReceiptStatus(
+  statusCode: string | number | null | undefined,
+  statusText: string | null | undefined,
+): SmsDeliveryStatus {
+  const text = statusText?.trim().toUpperCase();
+  if (
+    String(statusCode) === "201" ||
+    text?.includes("DELIVERED") ||
+    text?.includes("RECEIVED ON HANDSET") ||
+    text?.startsWith("SUCCESS")
+  ) {
+    return "delivered";
+  }
+  return normaliseStatus(text);
+}
+
+async function readResponse(
+  res: Response,
+  context: string,
+): Promise<Record<string, unknown> | null> {
+  const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    logger.error({ status: res.status, body: text }, `ClickSend ${context} failed`);
-    return;
+    logger.error({ status: res.status, body: json }, `ClickSend ${context} failed`);
+    return null;
   }
   // ClickSend can return HTTP 200 while embedding a non-success response_code.
-  const json = (await res.json().catch(() => null)) as
-    | { response_code?: string; response_msg?: string }
-    | null;
-  if (json && json.response_code && json.response_code !== "SUCCESS") {
+  if (json && typeof json["response_code"] === "string" && json["response_code"] !== "SUCCESS") {
     logger.error(
-      { responseCode: json.response_code, responseMsg: json.response_msg },
+      { responseCode: json["response_code"], responseMsg: json["response_msg"] },
       `ClickSend ${context} returned non-success response`
     );
+    return null;
   }
+  return json;
 }
 
 function getAuthHeader(): string | null {
@@ -40,17 +81,20 @@ function formatPhone(phone: string | null | undefined): string | null {
   return null;
 }
 
-export async function sendSms(to: string | null | undefined, body: string): Promise<void> {
+export async function sendSms(
+  to: string | null | undefined,
+  body: string,
+): Promise<SmsSendResult> {
   try {
     const auth = getAuthHeader();
     if (!auth) {
       logger.warn("SMS not sent: ClickSend credentials are not configured");
-      return;
+      return { messageId: null, status: "failed" };
     }
     const toFormatted = formatPhone(to);
     if (!toFormatted) {
       logger.warn({ phoneProvided: Boolean(to) }, "SMS not sent: invalid customer phone number");
-      return;
+      return { messageId: null, status: "failed" };
     }
 
     const from = process.env["CLICKSEND_SMS_FROM"];
@@ -68,10 +112,54 @@ export async function sendSms(to: string | null | undefined, body: string): Prom
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ messages: [message] }),
+      signal: AbortSignal.timeout(10_000),
     });
 
-    await checkResponse(res, "SMS send");
+    const json = await readResponse(res, "SMS send");
+    if (!json) return { messageId: null, status: "failed" };
+
+    const data = json["data"] as { messages?: Array<Record<string, unknown>> } | undefined;
+    const sentMessage = data?.messages?.[0];
+    const messageId =
+      typeof sentMessage?.["message_id"] === "string"
+        ? sentMessage["message_id"]
+        : typeof sentMessage?.["message_id"] === "number"
+          ? String(sentMessage["message_id"])
+          : null;
+    const providerStatus =
+      typeof sentMessage?.["status"] === "string" ? sentMessage["status"] : undefined;
+    return { messageId, status: normaliseStatus(providerStatus) };
   } catch (err) {
     logger.error({ err }, "Failed to send SMS notification");
+    return { messageId: null, status: "failed" };
+  }
+}
+
+export async function getSmsDeliveryStatus(
+  messageId: string,
+): Promise<SmsDeliveryStatus | null> {
+  try {
+    const auth = getAuthHeader();
+    if (!auth) return null;
+
+    const res = await fetch(`${CLICKSEND_BASE}/sms/receipts/${encodeURIComponent(messageId)}`, {
+      headers: { Authorization: auth },
+      signal: AbortSignal.timeout(5_000),
+    });
+    // ClickSend creates the receipt asynchronously, so a missing receipt is still pending.
+    if (res.status === 404) return null;
+    const json = await readResponse(res, "SMS status lookup");
+    if (!json) return null;
+
+    const data = json["data"] as Record<string, unknown> | undefined;
+    const statusCode =
+      typeof data?.["status_code"] === "string" || typeof data?.["status_code"] === "number"
+        ? data["status_code"]
+        : null;
+    const statusText = typeof data?.["status_text"] === "string" ? data["status_text"] : null;
+    return statusCode || statusText ? normaliseReceiptStatus(statusCode, statusText) : null;
+  } catch (err) {
+    logger.error({ err, messageId }, "Failed to check SMS delivery status");
+    return null;
   }
 }

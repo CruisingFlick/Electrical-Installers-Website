@@ -795,6 +795,9 @@ export const GetThreadResponse = zod.object({
   "sender": zod.string(),
   "body": zod.string(),
   "photoUrl": zod.string().nullish(),
+  "smsMessageId": zod.string().nullish(),
+  "smsStatus": zod.union([zod.literal('sent'),zod.literal('delivered'),zod.literal('failed'),zod.literal(null)]).nullish(),
+  "smsStatusUpdatedAt": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 })
@@ -861,6 +864,9 @@ export const GetAdminThreadResponse = zod.object({
   "sender": zod.string(),
   "body": zod.string(),
   "photoUrl": zod.string().nullish(),
+  "smsMessageId": zod.string().nullish(),
+  "smsStatus": zod.union([zod.literal('sent'),zod.literal('delivered'),zod.literal('failed'),zod.literal(null)]).nullish(),
+  "smsStatusUpdatedAt": zod.string().nullish(),
   "createdAt": zod.string()
 }))
 })

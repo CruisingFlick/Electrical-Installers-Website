@@ -24,6 +24,9 @@ export const threadMessages = pgTable("thread_messages", {
   sender: text("sender").notNull(),
   body: text("body").notNull(),
   photoUrl: text("photo_url"),
+  smsMessageId: text("sms_message_id"),
+  smsStatus: text("sms_status"),
+  smsStatusUpdatedAt: timestamp("sms_status_updated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

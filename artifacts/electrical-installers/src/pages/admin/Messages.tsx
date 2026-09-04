@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
-import { X, Send, ImagePlus, MessageSquare, Phone, Mail } from "lucide-react";
+import { X, Send, ImagePlus, MessageSquare, Phone, Mail, Check, CheckCheck, CircleAlert } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 
 type Thread = {
@@ -167,9 +167,12 @@ function ConversationView({ threadId }: { threadId: number }) {
                   />
                 )}
                 {m.body && m.body !== "(photo)" && <p className="text-sm whitespace-pre-wrap break-words">{m.body}</p>}
-                <p className={`text-[10px] mt-1 ${isAdmin ? "text-white/70" : "text-gray-400"}`}>
-                  {new Date(m.createdAt).toLocaleString("en-AU", { dateStyle: "short", timeStyle: "short" })}
-                </p>
+                <div className={`text-[10px] mt-1 flex items-center gap-1 ${isAdmin ? "text-white/80 justify-end" : "text-gray-400"}`}>
+                  <span>{new Date(m.createdAt).toLocaleString("en-AU", { dateStyle: "short", timeStyle: "short" })}</span>
+                  {isAdmin && m.smsStatus === "delivered" && <><CheckCheck size={12} aria-hidden="true" /><span>Delivered</span></>}
+                  {isAdmin && m.smsStatus === "failed" && <><CircleAlert size={12} aria-hidden="true" /><span>Failed</span></>}
+                  {isAdmin && m.smsStatus === "sent" && <><Check size={12} aria-hidden="true" /><span>Sent</span></>}
+                </div>
               </div>
             </div>
           );

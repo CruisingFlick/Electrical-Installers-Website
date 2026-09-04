@@ -250,12 +250,31 @@ export interface Thread {
   updatedAt: string;
 }
 
+/**
+ * @nullable
+ */
+export type ThreadMessageSmsStatus = typeof ThreadMessageSmsStatus[keyof typeof ThreadMessageSmsStatus] | null;
+
+
+export const ThreadMessageSmsStatus = {
+  sent: 'sent',
+  delivered: 'delivered',
+  failed: 'failed',
+} as const;
+
 export interface ThreadMessage {
   id: number;
   threadId: number;
   sender: string;
   body: string;
+  /** @nullable */
   photoUrl?: string | null;
+  /** @nullable */
+  smsMessageId?: string | null;
+  /** @nullable */
+  smsStatus?: ThreadMessageSmsStatus;
+  /** @nullable */
+  smsStatusUpdatedAt?: string | null;
   createdAt: string;
 }
 

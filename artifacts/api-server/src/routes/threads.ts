@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, threads, threadMessages } from "@workspace/db";
-import { eq, desc, asc, sql } from "drizzle-orm";
+import { eq, desc, asc, sql, and, isNotNull } from "drizzle-orm";
 import {
   CreateThreadBody,
   CreateThreadMessageBody,
@@ -18,7 +18,7 @@ import he from "he";
 import { requireAdmin } from "../middleware/admin-auth";
 import { logger } from "../lib/logger";
 import { BUSINESS_EMAIL, ADMIN_BASE_URL, ADMIN_PHONE } from "../lib/constants";
-import { sendSms } from "../lib/clicksend";
+import { getSmsDeliveryStatus, sendSms } from "../lib/clicksend";
 import { sendEmail } from "../lib/resend";
 
 const MAX_BODY_LEN = 5000;
@@ -45,7 +45,34 @@ function formatMessage(m: typeof threadMessages.$inferSelect) {
   return {
     ...m,
     createdAt: m.createdAt.toISOString(),
+    smsStatusUpdatedAt: m.smsStatusUpdatedAt?.toISOString() ?? null,
   };
+}
+
+async function refreshSmsDeliveryStatuses(
+  messages: Array<typeof threadMessages.$inferSelect>,
+): Promise<Array<typeof threadMessages.$inferSelect>> {
+  const refreshed = await Promise.all(
+    messages.map(async (message) => {
+      if (message.sender !== "admin" || message.smsStatus !== "sent" || !message.smsMessageId) {
+        return message;
+      }
+      const status = await getSmsDeliveryStatus(message.smsMessageId);
+      if (!status || status === message.smsStatus) return message;
+      const [updated] = await db
+        .update(threadMessages)
+        .set({ smsStatus: status, smsStatusUpdatedAt: new Date() })
+        .where(
+          and(
+            eq(threadMessages.id, message.id),
+            isNotNull(threadMessages.smsMessageId),
+          ),
+        )
+        .returning();
+      return updated ?? message;
+    }),
+  );
+  return refreshed;
 }
 
 function validateContent(body: string, photoUrl?: string | null): string | null {
@@ -312,11 +339,12 @@ adminRouter.get("/:id", requireAdmin, async (req, res, next) => {
       return;
     }
 
-    const messages = await db
+    const storedMessages = await db
       .select()
       .from(threadMessages)
       .where(eq(threadMessages.threadId, thread.id))
       .orderBy(asc(threadMessages.createdAt));
+    const messages = await refreshSmsDeliveryStatuses(storedMessages);
 
     res.json({
       ...formatThreadList(thread),
@@ -423,12 +451,24 @@ adminRouter.post("/:id/reply", requireAdmin, async (req, res, next) => {
       bodyParsed.data.body.length > 320
         ? bodyParsed.data.body.slice(0, 317) + "..."
         : bodyParsed.data.body;
-    void sendSms(
+    const smsResult = await sendSms(
       thread.customerPhone,
       `Electrical Installers: ${replySnippet}${bodyParsed.data.photoUrl ? " [A photo was attached—open your website conversation to view it.]" : ""}`,
     );
 
-    res.status(201).json(message ? formatMessage(message) : null);
+    const [messageWithSmsStatus] = message
+      ? await db
+          .update(threadMessages)
+          .set({
+            smsMessageId: smsResult.messageId,
+            smsStatus: smsResult.status,
+            smsStatusUpdatedAt: new Date(),
+          })
+          .where(eq(threadMessages.id, message.id))
+          .returning()
+      : [];
+
+    res.status(201).json(messageWithSmsStatus ? formatMessage(messageWithSmsStatus) : null);
   } catch (err) {
     next(err);
   }

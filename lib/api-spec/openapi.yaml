@@ -1512,8 +1512,14 @@ components:
         body:
           type: string
         photoUrl:
-          type: string
-          nullable: true
+          type: ["string", "null"]
+        smsMessageId:
+          type: ["string", "null"]
+        smsStatus:
+          type: ["string", "null"]
+          enum: [sent, delivered, failed, null]
+        smsStatusUpdatedAt:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:
