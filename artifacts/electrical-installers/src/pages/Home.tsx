@@ -34,7 +34,7 @@ export default function HomePage() {
             <p className="text-[hsl(25,95%,63%)] font-semibold text-lg mb-4 tracking-wide">
               35 Years of Design Expertise. Precision Installation.
             </p>
-            <p className="text-lg text-gray-300 mb-8 leading-relaxed">From new Homes-Renovation's to 3-phase industrial upgrades and underground power. Serving the Mornington Peninsula, Bayside, and South East Melbourne corridor.</p>
+            <p className="text-lg text-gray-300 mb-8 leading-relaxed">From new homes and renovations to 3-phase industrial upgrades and underground power. Serving the Mornington Peninsula, Bayside, and South East Melbourne corridor.</p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/book"
