@@ -43,9 +43,15 @@ function formatPhone(phone: string | null | undefined): string | null {
 export async function sendSms(to: string | null | undefined, body: string): Promise<void> {
   try {
     const auth = getAuthHeader();
-    if (!auth) return;
+    if (!auth) {
+      logger.warn("SMS not sent: ClickSend credentials are not configured");
+      return;
+    }
     const toFormatted = formatPhone(to);
-    if (!toFormatted) return;
+    if (!toFormatted) {
+      logger.warn({ phoneProvided: Boolean(to) }, "SMS not sent: invalid customer phone number");
+      return;
+    }
 
     const from = process.env["CLICKSEND_SMS_FROM"];
     const message: Record<string, unknown> = {

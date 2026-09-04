@@ -419,6 +419,15 @@ adminRouter.post("/:id/reply", requireAdmin, async (req, res, next) => {
       })
       .where(eq(threads.id, thread.id));
 
+    const replySnippet =
+      bodyParsed.data.body.length > 320
+        ? bodyParsed.data.body.slice(0, 317) + "..."
+        : bodyParsed.data.body;
+    void sendSms(
+      thread.customerPhone,
+      `Electrical Installers: ${replySnippet}${bodyParsed.data.photoUrl ? " [A photo was attached—open your website conversation to view it.]" : ""}`,
+    );
+
     res.status(201).json(message ? formatMessage(message) : null);
   } catch (err) {
     next(err);
