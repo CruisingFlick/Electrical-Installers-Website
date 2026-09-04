@@ -40,6 +40,7 @@ import PrivacyPolicyPage from "@/pages/PrivacyPolicy";
 import TrackBookingPage from "@/pages/TrackBooking";
 import BlogPage from "@/pages/Blog";
 import BlogPostPage from "@/pages/BlogPost";
+import SuburbPage from "@/pages/SuburbPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +118,7 @@ function Router() {
       <Route path="/track" component={() => <PublicLayout><TrackBookingPage /></PublicLayout>} />
       <Route path="/blog" component={() => <PublicLayout><BlogPage /></PublicLayout>} />
       <Route path="/blog/:slug" component={() => <PublicLayout><BlogPostPage /></PublicLayout>} />
+      <Route path="/electrician-:slug" component={() => <PublicLayout><SuburbPage /></PublicLayout>} />
 
       {/* Admin routes */}
       <Route path="/admin" component={AdminLogin} />

@@ -3,6 +3,13 @@ import { useState } from "react";
 import "leaflet/dist/leaflet.css";
 import { MapPin, Phone, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
+import { SUBURBS_BY_SLUG } from "@/data/suburbs";
+
+// Suburbs with their own dedicated page (see src/data/suburbs.ts), keyed by
+// the display name used in SERVICE_AREAS below so we can link to them.
+const SUBURB_PAGE_SLUGS: Record<string, string> = Object.fromEntries(
+  Object.values(SUBURBS_BY_SLUG).map((s) => [s.name, s.slug]),
+);
 
 const SERVICE_AREAS = [
   {
@@ -168,11 +175,22 @@ export default function ServiceAreaPage() {
                   <h3 className="font-bold text-[hsl(214,60%,14%)]">{area.name}</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {area.suburbs.split(" · ").map((suburb) => (
-                    <span key={suburb} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
-                      {suburb}
-                    </span>
-                  ))}
+                  {area.suburbs.split(" · ").map((suburb) => {
+                    const slug = SUBURB_PAGE_SLUGS[suburb];
+                    return slug ? (
+                      <Link
+                        key={suburb}
+                        href={`/electrician-${slug}`}
+                        className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full hover:bg-[hsl(25,95%,53%)] hover:text-white transition-colors"
+                      >
+                        {suburb}
+                      </Link>
+                    ) : (
+                      <span key={suburb} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+                        {suburb}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             ))}
